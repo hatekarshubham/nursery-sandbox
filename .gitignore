@@ -68,6 +68,11 @@ node_modules/
 # dataconnect generated files
 .dataconnect
 
+# Angular build artifacts and cache
+nursery-dashboard/dist/
+nursery-dashboard/.angular/
+nursery-dashboard/node_modules/
+
 # OS and local agent files
 .DS_Store
 .agents/
