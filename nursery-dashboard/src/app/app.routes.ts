@@ -19,6 +19,8 @@ import { VideosComponent } from './pages/ui-elements/videos/videos.component';
 import { SignInComponent } from './pages/auth-pages/sign-in/sign-in.component';
 import { CalenderComponent } from './pages/calender/calender.component';
 import { ProductsComponent } from './shared/components/ecommerce/products/products.component';
+import { CategoryChartComponent } from './shared/components/ecommerce/category-chart/category-chart.component';
+import { AddProductComponent } from './shared/components/ecommerce/products/add-product/add-product.component';
 export const routes: Routes = [
 
   // Root URL → Login
@@ -49,6 +51,14 @@ export const routes: Routes = [
       {
         path: 'products',
          component: ProductsComponent,
+      },
+      {
+        path: 'products/add-product',
+        component: AddProductComponent,
+      },
+      {
+        path: 'category-chart',
+        component: CategoryChartComponent,
       },
 
       // Calendar
