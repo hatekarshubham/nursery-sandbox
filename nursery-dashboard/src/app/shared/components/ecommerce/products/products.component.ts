@@ -1,133 +1,672 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+
+import { Component, OnInit } from '@angular/core';
+
+import { FormsModule } from '@angular/forms';
+
+import { ProductService } from '../../../../services/product.service';
+
+import {
+  Category,
+  CategoryService
+} from '../../../../services/category.service';
+
 
 interface Product {
-  id: number;
+
+  id?: string;
+
   name: string;
+
+  category: string;
+
+  categoryIsActive: boolean;
+
+  isAvailable: boolean;
+
   description: string;
+
   unitPrice: number;
-  quantity: string;
+
+  gst: number;
+
+  standardPackage: number | null;
+
+  stockQuantity: number;
+
+  quantity: number;
+
   image: string;
+
+  isActive: boolean;
+
+  createdAt?: any;
+
+  updatedAt?: any;
+
 }
 
+
 @Component({
+
   selector: 'app-products',
-  imports: [CommonModule],
+
+  imports: [
+    CommonModule,
+    FormsModule
+  ],
+
   templateUrl: './products.component.html',
-  styleUrl: './products.component.css',
+
+  styleUrl: './products.component.css'
+
 })
-export class ProductsComponent {
 
-  tableData: Product[] = [
 
-    {
-      id: 1,
-      name: 'KITCHENFRESH 1',
-      description:
-        'Compact kitchen storage container designed for convenient everyday food and household storage.',
-      unitPrice: 22.50,
-      quantity: 'AS/R',
-      image: '/images/product/product-01.jpg',
-    },
+export class ProductsComponent implements OnInit {
 
-    {
-      id: 2,
-      name: 'KITCHENFRESH 2',
-      description:
-        'Practical kitchen storage container suitable for organizing and storing everyday items.',
-      unitPrice: 39,
-      quantity: 'AS/R',
-      image: '/images/product/product-02.jpg',
-    },
 
-    {
-      id: 3,
-      name: 'KITCHENFRESH 3',
-      description:
-        'Useful kitchen container designed for convenient storage and everyday household use.',
-      unitPrice: 60,
-      quantity: 'AS/R',
-      image: '/images/product/product-03.jpg',
-    },
+  constructor(
 
-    {
-      id: 4,
-      name: 'KITCHENFRESH 5',
-      description:
-        'Spacious kitchen storage container designed to keep food and household items organized.',
-      unitPrice: 85,
-      quantity: 'AS/R',
-      image: '/images/product/product-04.jpg',
-    },
+    private productService: ProductService,
 
-    {
-      id: 5,
-      name: 'KITCHENFRESH 7.5',
-      description:
-        'Large-capacity kitchen storage container suitable for convenient household storage.',
-      unitPrice: 100,
-      quantity: 'AS/R',
-      image: '/images/product/product-05.jpg',
-    },
+    private categoryService: CategoryService
 
-    {
-      id: 6,
-      name: 'KITCHENFRESH 10',
-      description:
-        'Large kitchen storage container designed for storing and organizing household items.',
-      unitPrice: 140,
-      quantity: 'AS/R',
-      image: '/images/product/product-01.jpg',
-    },
+  ) {}
 
-    {
-      id: 7,
-      name: 'STOREWELL 15',
-      description:
-        'Large storage container designed to provide convenient and organized household storage.',
-      unitPrice: 215,
-      quantity: 'AS/R',
-      image: '/images/product/product-02.jpg',
-    },
 
-    {
-      id: 8,
-      name: 'KITCHENFRESH SET SMALL (1,2,3)',
-      description:
-        'Small kitchen container set containing three useful storage containers for everyday use.',
-      unitPrice: 127,
-      quantity: '96 SET',
-      image: '/images/product/product-03.jpg',
-    },
+  tableData: Product[] = [];
 
-    {
-      id: 9,
-      name: 'KITCHENFRESH SET BIG (5,7.5,10)',
-      description:
-        'Large kitchen container set containing three different sizes for convenient storage.',
-      unitPrice: 345,
-      quantity: '24 SET',
-      image: '/images/product/product-04.jpg',
-    },
+  categories: Category[] = [];
 
-    {
-      id: 10,
-      name: 'SUPER DELUXE 11',
-      description:
-        'Compact household storage container designed for practical everyday use.',
-      unitPrice: 23,
-      quantity: '288',
-      image: '/images/product/product-05.jpg',
-    },
+  isLoading = true;
 
-  ];
-  selectedProduct: any = null;
 
-  openProductDetails(product: any) {
-    this.selectedProduct = product;
+  // =========================
+  // PRODUCT DETAILS POPUP
+  // =========================
+
+  selectedProduct: Product | null = null;
+
+
+  // =========================
+  // EDIT PRODUCT
+  // =========================
+
+  isEditModalOpen = false;
+
+  editingProduct: Product | null = null;
+
+  isSavingProduct = false;
+
+
+  // =========================
+  // DELETE PRODUCT
+  // =========================
+
+  isDeleteModalOpen = false;
+
+  productToDelete: Product | null = null;
+
+  isDeletingProduct = false;
+
+
+  ngOnInit() {
+
+    this.categoryService
+
+      .getCategories()
+
+      .subscribe({
+
+        next: (categories) => {
+
+          this.categories = categories;
+
+          this.loadProducts();
+
+        },
+
+        error: (error) => {
+
+          console.error(
+            'Error loading categories:',
+            error
+          );
+
+          this.isLoading = false;
+
+        }
+
+      });
+
   }
+
+
+  // =========================
+  // LOAD PRODUCTS
+  // =========================
+
+  loadProducts() {
+
+    this.productService
+
+      .getProducts()
+
+      .subscribe({
+
+        next: (products: any[]) => {
+
+          this.tableData =
+
+            products.map((product) => {
+
+              const matchingCategory =
+
+                this.categories.find(
+
+                  (category) =>
+
+                    category.name ===
+
+                    product.category
+
+                );
+
+
+              const categoryIsActive =
+
+                matchingCategory
+
+                  ? matchingCategory.isActive
+
+                  : false;
+
+
+              const productIsActive =
+
+                product.isActive !== false;
+
+
+              // Product must have stock
+              // greater than zero.
+
+              const hasStock =
+
+                (product.stockQuantity ?? 0) > 0;
+
+
+              // Product is available only when:
+              //
+              // 1. Product is active
+              // 2. Category is active
+              // 3. Stock quantity is greater than 0
+
+              const isAvailable =
+
+                productIsActive &&
+
+                categoryIsActive &&
+
+                hasStock;
+
+
+              return {
+
+                ...product,
+
+                quantity:
+                  product.stockQuantity ?? 0,
+
+                categoryIsActive,
+
+                isAvailable
+
+              };
+
+            }) as Product[];
+
+
+          this.isLoading = false;
+
+
+          console.log(
+
+            'Products loaded:',
+
+            this.tableData
+
+          );
+
+        },
+
+
+        error: (error: any) => {
+
+          console.error(
+
+            'Error loading products:',
+
+            error
+
+          );
+
+          this.isLoading = false;
+
+        }
+
+      });
+
+  }
+
+
+  // =========================
+  // PRODUCT DETAILS
+  // =========================
+
+  openProductDetails(
+
+    product: Product
+
+  ) {
+
+    this.selectedProduct =
+
+      product;
+
+  }
+
 
   closeProductDetails() {
-    this.selectedProduct = null;
+
+    this.selectedProduct =
+
+      null;
+
   }
+
+
+  // =========================
+  // OPEN EDIT PRODUCT
+  // =========================
+
+  editProduct(
+
+    product: Product
+
+  ) {
+
+    if (!product.id) {
+
+      console.error(
+
+        'Cannot edit product without an ID.'
+
+      );
+
+      return;
+
+    }
+
+
+    this.editingProduct = {
+
+      ...product
+
+    };
+
+
+    this.isEditModalOpen = true;
+
+  }
+
+
+  // =========================
+  // CLOSE EDIT MODAL
+  // =========================
+
+  closeEditModal() {
+
+    if (this.isSavingProduct) {
+
+      return;
+
+    }
+
+
+    this.isEditModalOpen = false;
+
+    this.editingProduct = null;
+
+  }
+
+
+  // =========================
+  // SAVE EDITED PRODUCT
+  // =========================
+
+  async saveProduct() {
+
+    if (!this.editingProduct) {
+
+      return;
+
+    }
+
+
+    const product =
+
+      this.editingProduct;
+
+
+    // -------------------------
+    // PRODUCT ID
+    // -------------------------
+
+    const productId =
+
+      product.id;
+
+
+    if (!productId) {
+
+      console.error(
+
+        'Cannot update product without an ID.'
+
+      );
+
+      return;
+
+    }
+
+
+    // -------------------------
+    // VALIDATION
+    // -------------------------
+
+    if (
+
+      !product.name.trim()
+
+    ) {
+
+      alert(
+
+        'Please enter a product name.'
+
+      );
+
+      return;
+
+    }
+
+
+    if (
+
+      !product.category
+
+    ) {
+
+      alert(
+
+        'Please select a category.'
+
+      );
+
+      return;
+
+    }
+
+
+    if (
+
+      !Number.isFinite(
+
+        product.unitPrice
+
+      ) ||
+
+      product.unitPrice <= 0
+
+    ) {
+
+      alert(
+
+        'Please enter a valid unit price.'
+
+      );
+
+      return;
+
+    }
+
+
+    if (
+
+      !Number.isInteger(
+
+        product.stockQuantity
+
+      ) ||
+
+      product.stockQuantity < 0
+
+    ) {
+
+      alert(
+
+        'Please enter a valid stock quantity.'
+
+      );
+
+      return;
+
+    }
+
+
+    // -------------------------
+    // SAVE
+    // -------------------------
+
+    this.isSavingProduct = true;
+
+
+    try {
+
+      await this.productService.updateProduct(
+
+        productId,
+
+        {
+
+          ...product,
+
+          name:
+            product.name.trim(),
+
+          quantity:
+            undefined
+
+        }
+
+      );
+
+
+      this.isSavingProduct = false;
+
+      this.isEditModalOpen = false;
+
+      this.editingProduct = null;
+
+
+      alert(
+
+        'Product updated successfully.'
+
+      );
+
+
+      // Reload products so that
+      // availability is recalculated.
+
+      this.loadProducts();
+
+    }
+
+
+    catch (error) {
+
+      console.error(
+
+        'Error updating product:',
+
+        error
+
+      );
+
+
+      this.isSavingProduct = false;
+
+
+      alert(
+
+        'Failed to update product. Please try again.'
+
+      );
+
+    }
+
+  }
+
+
+  // =========================
+  // OPEN DELETE MODAL
+  // =========================
+
+  openDeleteModal(
+
+    product: Product
+
+  ) {
+
+    if (!product.id) {
+
+      console.error(
+
+        'Cannot delete product without an ID.'
+
+      );
+
+      return;
+
+    }
+
+
+    // Delete is allowed for:
+    //
+    // - Active products
+    // - Inactive products
+    // - Products with stock
+    // - Products with zero stock
+    // - Products whose category is active
+    // - Products whose category is inactive
+
+    this.productToDelete = product;
+
+    this.isDeleteModalOpen = true;
+
+  }
+
+
+  // =========================
+  // CLOSE DELETE MODAL
+  // =========================
+
+  closeDeleteModal() {
+
+    if (this.isDeletingProduct) {
+
+      return;
+
+    }
+
+
+    this.isDeleteModalOpen = false;
+
+    this.productToDelete = null;
+
+  }
+
+
+  // =========================
+  // CONFIRM DELETE PRODUCT
+  // =========================
+
+  async confirmDeleteProduct() {
+
+    if (!this.productToDelete?.id) {
+
+      return;
+
+    }
+
+
+    this.isDeletingProduct = true;
+
+
+    try {
+
+      await this.productService.deleteProduct(
+
+        this.productToDelete.id
+
+      );
+
+
+      this.isDeletingProduct = false;
+
+      this.isDeleteModalOpen = false;
+
+      this.productToDelete = null;
+
+
+      alert(
+
+        'Product deleted successfully.'
+
+      );
+
+
+      // Reload products after deletion.
+
+      this.loadProducts();
+
+    }
+
+
+    catch (error) {
+
+      console.error(
+
+        'Error deleting product:',
+
+        error
+
+      );
+
+
+      this.isDeletingProduct = false;
+
+
+      alert(
+
+        'Failed to delete product. Please try again.'
+
+      );
+
+    }
+
+  }
+
 }
