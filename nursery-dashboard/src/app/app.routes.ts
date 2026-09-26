@@ -7,6 +7,8 @@ import { SignInComponent } from './pages/auth-pages/sign-in/sign-in.component';
 import { ProductsComponent } from './shared/components/ecommerce/products/products.component';
 import { CategoryChartComponent } from './shared/components/ecommerce/category-chart/category-chart.component';
 import { AddProductComponent } from './shared/components/ecommerce/products/add-product/add-product.component';
+import { CategoriesComponent } from './shared/components/ecommerce/categories/categories.component';
+import { AddCategoryComponent } from './shared/components/ecommerce/categories/add-category/add-category.component';
 
 export const routes: Routes = [
 
@@ -28,6 +30,15 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         component: EcommerceComponent,
+      },
+      // Categories
+      {
+        path: 'categories',
+        component: CategoriesComponent,
+      },
+      {
+        path: 'categories/add-category',
+        component: AddCategoryComponent,
       },
 
       // Products

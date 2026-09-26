@@ -1,0 +1,170 @@
+<div class="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+
+    <!-- Page Header -->
+    <div class="mb-6">
+  
+      <h2 class="text-xl font-semibold text-gray-800 dark:text-white">
+        All Categories
+      </h2>
+  
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        View and manage all product categories.
+      </p>
+  
+    </div>
+  
+    <!-- Loading -->
+    <div
+      *ngIf="isLoading"
+      class="py-10 text-center text-sm text-gray-500 dark:text-gray-400"
+    >
+      Loading categories...
+    </div>
+  
+    <!-- Empty State -->
+    <div
+      *ngIf="!isLoading && categories.length === 0"
+      class="rounded-lg border border-dashed border-gray-300 py-10 text-center dark:border-gray-700"
+    >
+  
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        No categories found.
+      </p>
+  
+      <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+        Add your first category to get started.
+      </p>
+  
+    </div>
+  
+    <!-- Categories Table -->
+    <div
+      *ngIf="!isLoading && categories.length > 0"
+      class="overflow-x-auto"
+    >
+  
+      <table class="w-full min-w-[700px]">
+  
+        <!-- Table Header -->
+        <thead>
+  
+          <tr class="border-b border-gray-200 dark:border-gray-700">
+  
+            <th
+              class="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400"
+            >
+              Category ID
+            </th>
+  
+            <th
+              class="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400"
+            >
+              Category Name
+            </th>
+  
+            <th
+              class="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400"
+            >
+              Code
+            </th>
+  
+            <th
+              class="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400"
+            >
+              Status
+            </th>
+  
+            <th
+              class="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400"
+            >
+              Actions
+            </th>
+  
+          </tr>
+  
+        </thead>
+  
+        <!-- Table Body -->
+        <tbody>
+  
+          <tr
+            *ngFor="let category of categories"
+            class="border-b border-gray-100 dark:border-gray-800"
+          >
+  
+            <!-- Category ID -->
+            <td class="px-4 py-4 text-sm text-gray-600 dark:text-gray-400">
+              {{ category.id }}
+            </td>
+  
+            <!-- Category Name -->
+            <td class="px-4 py-4 text-sm font-medium text-gray-800 dark:text-white">
+              {{ category.name }}
+            </td>
+  
+            <!-- Category Code -->
+            <td class="px-4 py-4 text-sm text-gray-600 dark:text-gray-400">
+              {{ category.code }}
+            </td>
+  
+            <!-- Status -->
+            <td class="px-4 py-4">
+  
+              <span
+                *ngIf="category.isActive"
+                class="inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+              >
+                Active
+              </span>
+  
+              <span
+                *ngIf="!category.isActive"
+                class="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-500/10 dark:text-gray-400"
+              >
+                Inactive
+              </span>
+  
+            </td>
+  
+            <!-- Actions -->
+            <td class="px-4 py-4">
+  
+              <div class="flex items-center gap-2">
+  
+                <!-- Edit -->
+                <button
+                  type="button"
+                  class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  Edit
+                </button>
+  
+                <!-- Activate / Make Inactive -->
+                <button
+                  type="button"
+                  class="rounded-lg border border-blue-300 px-3 py-2 text-xs font-medium text-blue-600 hover:bg-blue-50 dark:border-blue-500/30 dark:text-blue-400 dark:hover:bg-blue-500/10"
+                >
+                  {{ category.isActive ? 'Make Inactive' : 'Activate' }}
+                </button>
+  
+                <!-- Delete -->
+                <button
+                  type="button"
+                  class="rounded-lg border border-red-300 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10"
+                >
+                  Delete
+                </button>
+  
+              </div>
+  
+            </td>
+  
+          </tr>
+  
+        </tbody>
+  
+      </table>
+  
+    </div>
+  
+  </div>

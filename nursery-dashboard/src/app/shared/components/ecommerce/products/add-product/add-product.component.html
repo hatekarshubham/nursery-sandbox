@@ -1,3 +1,4 @@
+
 <div class="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
 
   <!-- Page Header -->
@@ -5,12 +6,10 @@
     <h2 class="text-xl font-semibold text-gray-800 dark:text-white">
       Add Product
     </h2>
-
     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
       Add a new product to your product list.
     </p>
   </div>
-
 
   <!-- Form -->
   <form
@@ -18,22 +17,37 @@
     class="space-y-6"
   >
 
+    <!-- Product ID -->
+    <div>
+      <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+        Product ID
+      </label>
+      <input
+        type="text"
+        value="Auto-generated"
+        readonly
+        class="w-full rounded-lg border border-gray-300 bg-gray-100 px-4 py-3 text-sm text-gray-500 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+      />
+      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        Product ID will be generated automatically when saved.
+      </p>
+    </div>
+
     <!-- Product Name -->
     <div>
       <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
         Product Name
         <span class="text-red-500">*</span>
       </label>
-
       <input
         type="text"
         name="name"
         [(ngModel)]="product.name"
         placeholder="Enter product name"
+        required
         class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
       />
     </div>
-
 
     <!-- Category -->
     <div>
@@ -41,34 +55,27 @@
         Category
         <span class="text-red-500">*</span>
       </label>
-
       <select
         name="category"
         [(ngModel)]="product.category"
+        required
         class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
       >
-
-        <option value="">
-          Select Category
-        </option>
-
+        <option value="">Select Category</option>
         <option
           *ngFor="let category of categories"
           [value]="category"
         >
           {{ category }}
         </option>
-
       </select>
     </div>
-
 
     <!-- Description -->
     <div>
       <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
         Description
       </label>
-
       <textarea
         name="description"
         [(ngModel)]="product.description"
@@ -78,69 +85,89 @@
       ></textarea>
     </div>
 
-
-    <!-- Price + GST -->
+    <!-- Unit Price + GST -->
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
 
       <!-- Unit Price -->
       <div>
         <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Unit Price
+          Unit Price (₹)
           <span class="text-red-500">*</span>
         </label>
-
         <input
           type="number"
           name="unitPrice"
           [(ngModel)]="product.unitPrice"
           placeholder="Enter unit price"
-          min="0"
+          min="0.01"
+          step="0.01"
+          required
           class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
         />
       </div>
-
 
       <!-- GST -->
       <div>
         <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
           GST (%)
         </label>
-
         <input
           type="number"
           name="gst"
           [(ngModel)]="product.gst"
           min="0"
+          max="100"
+          step="0.01"
           class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
         />
       </div>
 
     </div>
 
+    <!-- Standard Package + Stock Quantity -->
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
 
-    <!-- Standard Package -->
-    <div>
-      <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-        Standard Package
-      </label>
+      <!-- Standard Package -->
+      <div>
+        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Standard Package
+        </label>
+        <input
+          type="number"
+          name="standardPackage"
+          [(ngModel)]="product.standardPackage"
+          placeholder="Enter package quantity"
+          min="1"
+          step="1"
+          class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+        />
+      </div>
 
-      <input
-        type="number"
-        name="standardPackage"
-        [(ngModel)]="product.standardPackage"
-        placeholder="Enter standard package quantity"
-        min="0"
-        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-      />
+      <!-- Stock Quantity -->
+      <div>
+        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Stock Quantity
+          <span class="text-red-500">*</span>
+        </label>
+        <input
+          type="number"
+          name="stockQuantity"
+          [(ngModel)]="product.stockQuantity"
+          placeholder="Enter available quantity"
+          min="0"
+          step="1"
+          required
+          class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+        />
+      </div>
+
     </div>
-
 
     <!-- Product Image -->
     <div>
       <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
         Product Image
       </label>
-
       <input
         type="file"
         accept="image/*"
@@ -149,25 +176,20 @@
       />
     </div>
 
-
     <!-- Image Preview -->
     <div
       *ngIf="selectedImage"
       class="mt-4"
     >
-
       <p class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
         Image Preview
       </p>
-
       <img
         [src]="selectedImage"
         alt="Product Preview"
         class="h-32 w-32 rounded-xl border border-gray-200 object-cover dark:border-gray-700"
       />
-
     </div>
-
 
     <!-- Buttons -->
     <div class="flex gap-3 pt-4">
@@ -190,5 +212,4 @@
     </div>
 
   </form>
-
 </div>
