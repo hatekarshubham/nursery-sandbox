@@ -1,0 +1,29 @@
+<div class="relative p-6 bg-white z-1 dark:bg-gray-900 sm:p-0">
+  <div
+    class="relative flex flex-col justify-center w-full h-screen lg:flex-row dark:bg-gray-900 sm:p-0"
+  >
+    <!-- Left Side (Login Form) -->
+    <ng-content></ng-content>
+
+    <!-- Right Side (Logo) -->
+    <div
+      class="items-center hidden w-full h-full lg:w-1/2 bg-white dark:bg-gray-900 lg:grid relative"
+    >
+      <div class="flex items-center justify-center h-full px-10 z-10">
+        <img
+          src="/images/logo/gnlogo.svg"
+          alt="Gayatri Nursery"
+          class="w-[420px] h-auto"
+        />
+      </div>
+
+      <!-- Optional Grid Background -->
+      <app-grid-shape />
+    </div>
+
+    <!-- Theme Toggle -->
+    <div class="fixed z-50 hidden bottom-6 right-6 sm:block">
+      <app-theme-toggle-two />
+    </div>
+  </div>
+</div>

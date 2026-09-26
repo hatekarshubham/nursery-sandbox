@@ -6,7 +6,7 @@
     "indexes": "firestore.indexes.json"
   },
   "hosting": {
-    "public": "public",
+    "public": "nursery-dashboard/dist/ng-tailadmin/browser",
     "ignore": [
       "firebase.json",
       "**/.*",

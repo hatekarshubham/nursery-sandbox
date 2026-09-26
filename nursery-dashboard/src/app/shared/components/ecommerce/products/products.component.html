@@ -1,0 +1,269 @@
+<div
+  class="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6"
+>
+  <!-- Header -->
+  <div
+    class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+  >
+    <div>
+      <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">
+        All Products
+      </h3>
+
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        Complete product list
+      </p>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="max-w-full overflow-x-auto">
+    <table class="w-full text-left">
+
+      <!-- Table Header -->
+      <thead class="border-y border-gray-100 dark:border-gray-800">
+        <tr>
+
+          <!-- Image -->
+          <th
+            class="min-w-[100px] py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+          >
+            Image
+          </th>
+
+          <!-- Product Name -->
+          <th
+            class="min-w-[250px] py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+          >
+            Product Name
+          </th>
+
+          <!-- Description -->
+          <th
+            class="min-w-[300px] py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+          >
+            Description
+          </th>
+
+          <!-- Unit Price -->
+          <th
+            class="min-w-[120px] py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+          >
+            Unit Price
+          </th>
+
+          <!-- Quantity -->
+          <th
+            class="min-w-[120px] py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+          >
+            Quantity
+          </th>
+
+        </tr>
+      </thead>
+
+      <!-- Table Body -->
+      <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+
+        @for (product of tableData; track product.id) {
+
+          <tr>
+
+            <!-- Product Image -->
+            <td class="py-4">
+              <div
+                class="h-14 w-14 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700"
+              >
+                <img
+                  [src]="product.image"
+                  [alt]="product.name"
+                  (click)="openProductDetails(product)"
+                  class="h-full w-full cursor-pointer object-cover transition-transform duration-200 hover:scale-105"
+                />
+              </div>
+            </td>
+
+            <!-- Product Name -->
+            <td
+              class="py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90"
+            >
+              {{ product.name }}
+            </td>
+
+            <!-- Description -->
+            <td
+              class="py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+            >
+              {{ product.description || '—' }}
+            </td>
+
+            <!-- Unit Price -->
+            <td
+              class="py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+            >
+              ₹{{ product.unitPrice | number:'1.2-2' }}
+            </td>
+
+            <!-- Quantity -->
+            <td
+              class="py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+            >
+              {{ product.quantity }}
+            </td>
+
+          </tr>
+
+        }
+
+      </tbody>
+
+    </table>
+  </div>
+</div>
+
+
+<!-- ====================================================== -->
+<!-- PRODUCT DETAILS POPUP -->
+<!-- ====================================================== -->
+
+@if (selectedProduct) {
+
+  <!-- Background Overlay -->
+  <div
+    class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4"
+    (click)="closeProductDetails()"
+  >
+
+    <!-- Popup -->
+    <div
+      class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800"
+      (click)="$event.stopPropagation()"
+    >
+
+      <!-- Popup Header -->
+      <div class="mb-4 flex items-center justify-between">
+
+        <h2
+          class="text-xl font-semibold text-gray-800 dark:text-white"
+        >
+          Product Details
+        </h2>
+
+        <!-- Close Button -->
+        <button
+          type="button"
+          (click)="closeProductDetails()"
+          class="flex h-8 w-8 items-center justify-center rounded-full text-xl text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <!-- Product Image -->
+      <div class="mb-5 flex justify-center">
+
+        <div
+          class="h-48 w-48 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700"
+        >
+          <img
+            [src]="selectedProduct.image"
+            [alt]="selectedProduct.name"
+            class="h-full w-full object-cover"
+          />
+        </div>
+
+      </div>
+
+
+      <!-- Product Name -->
+      <h3
+        class="text-center text-xl font-semibold text-gray-800 dark:text-white"
+      >
+        {{ selectedProduct.name }}
+      </h3>
+
+
+      <!-- One Line Description -->
+      <p
+        class="mt-2 text-center text-sm text-gray-500 dark:text-gray-400"
+      >
+        {{ selectedProduct.description || 'No description available' }}
+      </p>
+
+
+      <!-- Product Information -->
+      <div
+        class="mt-5 divide-y divide-gray-100 rounded-xl border border-gray-200 dark:divide-gray-700 dark:border-gray-700"
+      >
+
+        <!-- Unit Price -->
+        <div class="flex items-center justify-between px-4 py-3">
+
+          <span class="text-sm text-gray-500 dark:text-gray-400">
+            Unit Price
+          </span>
+
+          <span
+            class="font-semibold text-gray-800 dark:text-white"
+          >
+            ₹{{ selectedProduct.unitPrice | number:'1.2-2' }}
+          </span>
+
+        </div>
+
+
+        <!-- Quantity -->
+        <div class="flex items-center justify-between px-4 py-3">
+
+          <span class="text-sm text-gray-500 dark:text-gray-400">
+            Quantity
+          </span>
+
+          <span
+            class="font-semibold text-gray-800 dark:text-white"
+          >
+            {{ selectedProduct.quantity }}
+          </span>
+
+        </div>
+
+
+        <!-- Total -->
+        <div class="flex items-center justify-between px-4 py-3">
+
+          <span
+            class="font-medium text-gray-700 dark:text-gray-300"
+          >
+            Total Value
+          </span>
+
+          <span
+            class="text-lg font-bold text-gray-800 dark:text-white"
+          >
+            ₹{{
+              (selectedProduct.unitPrice * selectedProduct.quantity)
+                | number:'1.2-2'
+            }}
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- Close Button -->
+      <button
+        type="button"
+        (click)="closeProductDetails()"
+        class="mt-5 w-full rounded-lg bg-gray-800 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-700 dark:bg-white dark:text-gray-800 dark:hover:bg-gray-200"
+      >
+        Close
+      </button>
+
+    </div>
+
+  </div>
+
+}
