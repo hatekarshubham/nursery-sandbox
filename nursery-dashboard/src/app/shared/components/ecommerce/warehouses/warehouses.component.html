@@ -1,0 +1,315 @@
+<div
+  class="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6"
+>
+
+  <!-- Header -->
+
+  <div class="mb-5">
+
+    <h3
+      class="text-lg font-semibold text-gray-800 dark:text-white/90"
+    >
+      All Warehouses
+    </h3>
+
+    <p
+      class="text-sm text-gray-500 dark:text-gray-400"
+    >
+      Complete warehouse list
+    </p>
+
+  </div>
+
+
+  <!-- Loading -->
+
+  @if (isLoading) {
+
+    <div
+      class="py-10 text-center text-sm text-gray-500 dark:text-gray-400"
+    >
+      Loading warehouses...
+    </div>
+
+  }
+
+
+  <!-- Empty State -->
+
+  @else if (warehouses.length === 0) {
+
+    <div
+      class="rounded-lg border border-dashed border-gray-300 py-10 text-center dark:border-gray-700"
+    >
+
+      <p
+        class="text-sm text-gray-500 dark:text-gray-400"
+      >
+        No warehouses found.
+      </p>
+
+      <p
+        class="mt-1 text-xs text-gray-400 dark:text-gray-500"
+      >
+        Add your first warehouse to get started.
+      </p>
+
+    </div>
+
+  }
+
+
+  <!-- Warehouses Table -->
+
+  @else {
+
+    <div class="max-w-full overflow-x-auto">
+
+      <table
+        class="w-full min-w-[700px] text-left"
+      >
+
+        <!-- Table Header -->
+
+        <thead
+          class="border-y border-gray-100 dark:border-gray-800"
+        >
+
+          <tr>
+
+            <!-- Warehouse -->
+
+            <th
+              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Warehouse
+            </th>
+
+
+            <!-- Code -->
+
+            <th
+              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Code
+            </th>
+
+
+            <!-- Status -->
+
+            <th
+              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Status
+            </th>
+
+
+            <!-- Action -->
+
+            <th
+              class="px-3 py-3 text-right font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Action
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <!-- Table Body -->
+
+        <tbody
+          class="divide-y divide-gray-100 dark:divide-gray-800"
+        >
+
+          @for (
+            warehouse of warehouses;
+            track warehouse.id
+          ) {
+
+            <tr>
+
+              <!-- Warehouse Name -->
+
+              <td
+                class="px-3 py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90"
+              >
+
+                @if (
+                  editingWarehouseId !==
+                  warehouse.id
+                ) {
+
+                  {{ warehouse.name }}
+
+                } @else {
+
+                  <input
+                    type="text"
+                    [(ngModel)]="editingWarehouseName"
+                    class="w-full max-w-xs rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  />
+
+                }
+
+              </td>
+
+
+              <!-- Warehouse Code -->
+
+              <td
+                class="px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+              >
+
+                @if (
+                  editingWarehouseId !==
+                  warehouse.id
+                ) {
+
+                  <span
+                    class="inline-flex rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                  >
+                    {{ warehouse.code }}
+                  </span>
+
+                } @else {
+
+                  <input
+                    type="text"
+                    [(ngModel)]="editingWarehouseCode"
+                    class="w-40 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm uppercase text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  />
+
+                }
+
+              </td>
+
+
+              <!-- Status -->
+
+              <td class="px-3 py-4">
+
+                @if (warehouse.isActive) {
+
+                  <span
+                    class="inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+                  >
+                    Active
+                  </span>
+
+                } @else {
+
+                  <span
+                    class="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-500/10 dark:text-gray-400"
+                  >
+                    Inactive
+                  </span>
+
+                }
+
+              </td>
+
+
+              <!-- Actions -->
+
+              <td class="px-3 py-4">
+
+                <div
+                  class="flex items-center justify-end gap-2"
+                >
+
+                  <!-- Normal Actions -->
+
+                  @if (
+                    editingWarehouseId !==
+                    warehouse.id
+                  ) {
+
+                    <!-- Edit -->
+
+                    <button
+                      type="button"
+                      (click)="editWarehouse(warehouse)"
+                      class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                    >
+                      Edit
+                    </button>
+
+
+                    <!-- Activate / Make Inactive -->
+
+                    <button
+                      type="button"
+                      (click)="toggleWarehouseStatus(warehouse)"
+                      [disabled]="isUpdatingStatus"
+                      class="rounded-lg border border-blue-300 px-3 py-2 text-xs font-medium text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-500/30 dark:text-blue-400 dark:hover:bg-blue-500/10"
+                    >
+
+                      {{
+                        warehouse.isActive
+                          ? 'Make Inactive'
+                          : 'Activate'
+                      }}
+
+                    </button>
+
+                  }
+
+
+                  <!-- Edit Actions -->
+
+                  @else {
+
+                    <!-- Save -->
+
+                    <button
+                      type="button"
+                      (click)="saveWarehouse()"
+                      [disabled]="isSaving"
+                      class="rounded-lg border border-green-300 px-3 py-2 text-xs font-medium text-green-600 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-green-500/30 dark:text-green-400 dark:hover:bg-green-500/10"
+                    >
+
+                      @if (isSaving) {
+
+                        Saving...
+
+                      } @else {
+
+                        Save
+
+                      }
+
+                    </button>
+
+
+                    <!-- Cancel -->
+
+                    <button
+                      type="button"
+                      (click)="cancelEdit()"
+                      [disabled]="isSaving"
+                      class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                    >
+                      Cancel
+                    </button>
+
+                  }
+
+                </div>
+
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  }
+
+</div>

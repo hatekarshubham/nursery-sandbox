@@ -21,335 +21,361 @@
   </div>
 
 
+  <!-- Loading -->
+
+  @if (isLoading) {
+
+    <div
+      class="py-10 text-center text-sm text-gray-500 dark:text-gray-400"
+    >
+      Loading products...
+    </div>
+
+  }
+
+
+  <!-- Empty State -->
+
+  @if (!isLoading && tableData.length === 0) {
+
+    <div
+      class="rounded-lg border border-dashed border-gray-300 py-10 text-center dark:border-gray-700"
+    >
+
+      <p
+        class="text-sm text-gray-500 dark:text-gray-400"
+      >
+        No products found.
+      </p>
+
+    </div>
+
+  }
+
+
   <!-- Product Table -->
 
-  <div class="max-w-full overflow-x-auto">
+  @if (!isLoading && tableData.length > 0) {
 
-    <table class="w-full text-left">
+    <div class="max-w-full overflow-x-auto">
 
-      <!-- Table Header -->
+      <table class="w-full text-left">
 
-      <thead
-        class="border-y border-gray-100 dark:border-gray-800"
-      >
+        <!-- Table Header -->
 
-        <tr>
+        <thead
+          class="border-y border-gray-100 dark:border-gray-800"
+        >
 
-          <!-- Image -->
+          <tr>
 
-          <th
-            class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-          >
-            Image
-          </th>
-
-
-          <!-- Product Name -->
-
-          <th
-            class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-          >
-            Product Name
-          </th>
-
-
-          <!-- Category -->
-
-          <th
-            class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-          >
-            Category
-          </th>
-
-
-          <!-- Unit Price -->
-
-          <th
-            class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-          >
-            Unit Price
-          </th>
-
-
-          <!-- Quantity -->
-
-          <th
-            class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-          >
-            Quantity
-          </th>
-
-
-          <!-- Status -->
-
-          <th
-            class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-          >
-            Status
-          </th>
-
-
-          <!-- Action -->
-
-          <th
-            class="px-3 py-3 text-right font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-          >
-            Action
-          </th>
-
-        </tr>
-
-      </thead>
-
-
-      <!-- Table Body -->
-
-      <tbody
-        class="divide-y divide-gray-100 dark:divide-gray-800"
-      >
-
-        @for (product of tableData; track product.id) {
-
-          <tr
-            [class.bg-gray-100]="!product.isAvailable"
-            [class.dark:bg-gray-800]="!product.isAvailable"
-            [class.hover:bg-gray-50]="product.isAvailable"
-            [class.dark:hover:bg-white/[0.02]]="product.isAvailable"
-          >
-
-            <!-- Image -->
-
-            <td class="px-3 py-4">
-
-              <div
-                class="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50"
-              >
-
-                @if (product.image) {
-
-                  @if (product.isAvailable) {
-
-                    <!-- Available Product Image -->
-
-                    <img
-                      [src]="product.image"
-                      [alt]="product.name"
-                      (click)="openProductDetails(product)"
-                      class="h-full w-full cursor-pointer object-cover"
-                    />
-
-                  } @else {
-
-                    <!-- Unavailable Product Image -->
-
-                    <img
-                      [src]="product.image"
-                      [alt]="product.name"
-                      class="h-full w-full object-cover"
-                    />
-
-                  }
-
-                } @else {
-
-                  @if (product.isAvailable) {
-
-                    <!-- Available Product Placeholder -->
-
-                    <span
-                      (click)="openProductDetails(product)"
-                      class="cursor-pointer text-2xl"
-                      title="Product image not available"
-                    >
-                      🪴
-                    </span>
-
-                  } @else {
-
-                    <!-- Unavailable Product Placeholder -->
-
-                    <span
-                      class="text-2xl"
-                      title="Product image not available"
-                    >
-                      🪴
-                    </span>
-
-                  }
-
-                }
-
-              </div>
-
-            </td>
-
-
-            <!-- Product Name -->
-
-            <td
-              class="px-3 py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90"
+            <th
+              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
-              {{ product.name }}
-            </td>
+              Image
+            </th>
 
 
-            <!-- Category -->
-
-            <td
-              class="px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+            <th
+              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
-              {{ product.category }}
-            </td>
+              Product Name
+            </th>
 
 
-            <!-- Unit Price -->
-
-            <td
-              class="whitespace-nowrap px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+            <th
+              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
-              ₹{{ product.unitPrice | number:'1.2-2' }}
-            </td>
+              Category
+            </th>
 
 
-            <!-- Quantity -->
-
-            <td
-              class="px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+            <th
+              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
-              {{ product.quantity }}
-            </td>
+              Supplier
+            </th>
 
 
-            <!-- Status -->
-
-            <td class="px-3 py-4">
-
-              @if (product.isAvailable) {
-
-                <!-- Fully Active -->
-
-                <span
-                  class="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
-                >
-                  Active
-                </span>
-
-              } @else if (
-
-                product.isActive &&
-
-                product.categoryIsActive &&
-
-                product.quantity <= 0
-
-              ) {
-
-                <!-- Out of Stock -->
-
-                <span
-                  class="inline-flex rounded-full bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
-                >
-                  Out of Stock
-                </span>
-
-              } @else if (
-
-                !product.isActive &&
-
-                product.categoryIsActive
-
-              ) {
-
-                <!-- Product Inactive -->
-
-                <span
-                  class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
-                >
-                  Product Inactive
-                </span>
-
-              } @else if (
-
-                product.isActive &&
-
-                !product.categoryIsActive
-
-              ) {
-
-                <!-- Category Inactive -->
-
-                <span
-                  class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
-                >
-                  Category Inactive
-                </span>
-
-              } @else {
-
-                <!-- Both Inactive -->
-
-                <span
-                  class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
-                >
-                  Inactive
-                </span>
-
-              }
-
-            </td>
-
-
-            <!-- Action -->
-
-            <td
-              class="px-3 py-4 text-right"
+            <th
+              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
-
-              <div
-                class="flex items-center justify-end gap-2"
-              >
-
-                <!-- Edit -->
-
-                <button
-                  type="button"
-                  (click)="editProduct(product)"
-                  [disabled]="!product.categoryIsActive"
-                  [title]="
-                    !product.categoryIsActive
-                      ? 'Cannot edit product because its category is inactive'
-                      : 'Edit product'
-                  "
-                  class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 hover:text-gray-900 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:hover:text-white dark:disabled:border-gray-700 dark:disabled:bg-gray-800 dark:disabled:text-gray-500"
-                >
-                  Edit
-                </button>
+              Unit Price
+            </th>
 
 
-                <!-- Delete -->
+            <th
+              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Quantity
+            </th>
 
-                <button
-                  type="button"
-                  (click)="openDeleteModal(product)"
-                  title="Delete product"
-                  class="inline-flex items-center rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-600 shadow-sm transition hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:bg-gray-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
-                >
-                  Delete
-                </button>
 
-              </div>
+            <th
+              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Status
+            </th>
 
-            </td>
+
+            <th
+              class="px-3 py-3 text-right font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Action
+            </th>
 
           </tr>
 
-        }
+        </thead>
 
-      </tbody>
 
-    </table>
+        <!-- Table Body -->
 
-  </div>
+        <tbody
+          class="divide-y divide-gray-100 dark:divide-gray-800"
+        >
+
+          @for (product of tableData; track product.id) {
+
+            <tr
+              [class.bg-gray-100]="!product.isAvailable"
+              [class.dark:bg-gray-800]="!product.isAvailable"
+              [class.hover:bg-gray-50]="product.isAvailable"
+              [class.dark:hover:bg-white/[0.02]]="product.isAvailable"
+            >
+
+              <!-- Image -->
+
+              <td class="px-3 py-4">
+
+                <div
+                  class="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50"
+                >
+
+                  @if (product.image) {
+
+                    @if (product.isAvailable) {
+
+                      <img
+                        [src]="product.image"
+                        [alt]="product.name"
+                        (click)="openProductDetails(product)"
+                        class="h-full w-full cursor-pointer object-cover"
+                      />
+
+                    } @else {
+
+                      <img
+                        [src]="product.image"
+                        [alt]="product.name"
+                        class="h-full w-full object-cover"
+                      />
+
+                    }
+
+                  } @else {
+
+                    @if (product.isAvailable) {
+
+                      <span
+                        (click)="openProductDetails(product)"
+                        class="cursor-pointer text-2xl"
+                        title="Product image not available"
+                      >
+                        🪴
+                      </span>
+
+                    } @else {
+
+                      <span
+                        class="text-2xl"
+                        title="Product image not available"
+                      >
+                        🪴
+                      </span>
+
+                    }
+
+                  }
+
+                </div>
+
+              </td>
+
+
+              <!-- Product Name -->
+
+              <td
+                class="px-3 py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90"
+              >
+                {{ product.name }}
+              </td>
+
+
+              <!-- Category -->
+
+              <td
+                class="px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+              >
+                {{ product.category }}
+              </td>
+
+
+              <!-- Supplier -->
+
+              <td
+                class="px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+              >
+
+                @if (getSupplierName(product) !== 'No supplier') {
+
+                  <span
+                    class="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
+                  >
+                    {{ getSupplierName(product) }}
+                  </span>
+
+                } @else {
+
+                  <span
+                    class="text-xs text-gray-400 dark:text-gray-500"
+                  >
+                    No supplier
+                  </span>
+
+                }
+
+              </td>
+
+
+              <!-- Unit Price -->
+
+              <td
+                class="whitespace-nowrap px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+              >
+                ₹{{ product.unitPrice | number:'1.2-2' }}
+              </td>
+
+
+              <!-- Quantity -->
+
+              <td
+                class="px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+              >
+                {{ product.quantity }}
+              </td>
+
+
+              <!-- Status -->
+
+              <td class="px-3 py-4">
+
+                @if (product.isAvailable) {
+
+                  <span
+                    class="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+                  >
+                    Active
+                  </span>
+
+                } @else if (
+                  product.isActive &&
+                  product.categoryIsActive &&
+                  product.quantity <= 0
+                ) {
+
+                  <span
+                    class="inline-flex rounded-full bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
+                  >
+                    Out of Stock
+                  </span>
+
+                } @else if (
+                  !product.isActive &&
+                  product.categoryIsActive
+                ) {
+
+                  <span
+                    class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                  >
+                    Product Inactive
+                  </span>
+
+                } @else if (
+                  product.isActive &&
+                  !product.categoryIsActive
+                ) {
+
+                  <span
+                    class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                  >
+                    Category Inactive
+                  </span>
+
+                } @else {
+
+                  <span
+                    class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                  >
+                    Inactive
+                  </span>
+
+                }
+
+              </td>
+
+
+              <!-- Actions -->
+
+              <td class="px-3 py-4 text-right">
+
+                <div
+                  class="flex items-center justify-end gap-2"
+                >
+
+                  <!-- Edit -->
+
+                  <button
+                    type="button"
+                    (click)="editProduct(product)"
+                    [disabled]="!product.categoryIsActive"
+                    [title]="
+                      !product.categoryIsActive
+                        ? 'Cannot edit product because its category is inactive'
+                        : 'Edit product'
+                    "
+                    class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 hover:text-gray-900 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:hover:text-white dark:disabled:border-gray-700 dark:disabled:bg-gray-800 dark:disabled:text-gray-500"
+                  >
+                    Edit
+                  </button>
+
+
+                  <!-- Delete -->
+
+                  <button
+                    type="button"
+                    (click)="openDeleteModal(product)"
+                    title="Delete product"
+                    class="inline-flex items-center rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-600 shadow-sm transition hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:bg-gray-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
+                  >
+                    Delete
+                  </button>
+
+                </div>
+
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  }
 
 </div>
 
@@ -360,14 +386,10 @@
 
 @if (selectedProduct) {
 
-  <!-- Background Overlay -->
-
   <div
     class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4"
     (click)="closeProductDetails()"
   >
-
-    <!-- Popup -->
 
     <div
       class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800"
@@ -386,8 +408,6 @@
           Product Details
         </h2>
 
-
-        <!-- Close Button -->
 
         <button
           type="button"
@@ -486,6 +506,27 @@
         </div>
 
 
+        <!-- Supplier -->
+
+        <div
+          class="flex items-center justify-between gap-4 px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            Supplier
+          </span>
+
+          <span
+            class="font-semibold text-gray-800 dark:text-white"
+          >
+            {{ getSupplierName(selectedProduct) }}
+          </span>
+
+        </div>
+
+
         <!-- Status -->
 
         <div
@@ -501,8 +542,6 @@
 
           @if (selectedProduct.isAvailable) {
 
-            <!-- Fully Active -->
-
             <span
               class="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
             >
@@ -510,16 +549,10 @@
             </span>
 
           } @else if (
-
             selectedProduct.isActive &&
-
             selectedProduct.categoryIsActive &&
-
             selectedProduct.quantity <= 0
-
           ) {
-
-            <!-- Out of Stock -->
 
             <span
               class="inline-flex rounded-full bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
@@ -528,14 +561,9 @@
             </span>
 
           } @else if (
-
             !selectedProduct.isActive &&
-
             selectedProduct.categoryIsActive
-
           ) {
-
-            <!-- Product Inactive -->
 
             <span
               class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
@@ -544,14 +572,9 @@
             </span>
 
           } @else if (
-
             selectedProduct.isActive &&
-
             !selectedProduct.categoryIsActive
-
           ) {
-
-            <!-- Category Inactive -->
 
             <span
               class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
@@ -560,8 +583,6 @@
             </span>
 
           } @else {
-
-            <!-- Both Inactive -->
 
             <span
               class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
@@ -618,8 +639,6 @@
       </div>
 
 
-      <!-- Close Button -->
-
       <button
         type="button"
         (click)="closeProductDetails()"
@@ -641,14 +660,10 @@
 
 @if (isEditModalOpen && editingProduct) {
 
-  <!-- Background Overlay -->
-
   <div
     class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4"
     (click)="closeEditModal()"
   >
-
-    <!-- Modal -->
 
     <div
       class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800"
@@ -678,8 +693,6 @@
         </div>
 
 
-        <!-- Close Button -->
-
         <button
           type="button"
           (click)="closeEditModal()"
@@ -694,9 +707,7 @@
 
       <!-- Product Form -->
 
-      <div
-        class="space-y-5"
-      >
+      <div class="space-y-5">
 
         <!-- Product Name -->
 
@@ -736,11 +747,8 @@
             @for (category of categories; track category.id) {
 
               @if (
-
                 category.isActive ||
-
                 category.name === editingProduct.category
-
               ) {
 
                 <option
@@ -759,6 +767,68 @@
             }
 
           </select>
+
+        </div>
+
+
+        <!-- Supplier -->
+
+        <div>
+
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Supplier
+          </label>
+
+
+          @if (isLoadingSuppliers) {
+
+            <div
+              class="rounded-lg border border-gray-300 bg-gray-100 px-3 py-2.5 text-sm text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400"
+            >
+              Loading suppliers...
+            </div>
+
+          } @else {
+
+            <select
+              [(ngModel)]="editingProduct.supplierId"
+              (ngModelChange)="onEditSupplierChange($event)"
+              name="editProductSupplier"
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            >
+
+              <option value="">
+                Select Supplier
+              </option>
+
+
+              @for (supplier of suppliers; track supplier.id) {
+
+                @if (
+                  supplier.isActive ||
+                  supplier.id === editingProduct.supplierId
+                ) {
+
+                  <option
+                    [value]="supplier.id"
+                  >
+                    {{ supplier.name }}
+
+                    @if (!supplier.isActive) {
+                      (Inactive)
+                    }
+
+                  </option>
+
+                }
+
+              }
+
+            </select>
+
+          }
 
         </div>
 
@@ -789,8 +859,6 @@
           class="grid grid-cols-1 gap-4 sm:grid-cols-2"
         >
 
-          <!-- Unit Price -->
-
           <div>
 
             <label
@@ -810,8 +878,6 @@
 
           </div>
 
-
-          <!-- GST -->
 
           <div>
 
@@ -841,8 +907,6 @@
           class="grid grid-cols-1 gap-4 sm:grid-cols-2"
         >
 
-          <!-- Standard Package -->
-
           <div>
 
             <label
@@ -862,8 +926,6 @@
 
           </div>
 
-
-          <!-- Stock Quantity -->
 
           <div>
 
@@ -897,6 +959,7 @@
             Product Image
           </label>
 
+
           @if (editingProduct.image) {
 
             <div
@@ -919,6 +982,7 @@
 
           }
 
+
           <input
             type="text"
             [(ngModel)]="editingProduct.image"
@@ -929,7 +993,7 @@
         </div>
 
 
-        <!-- Product Active Status -->
+        <!-- Product Status -->
 
         <div
           class="flex items-center justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-700"
@@ -977,13 +1041,11 @@
       </div>
 
 
-      <!-- Footer Buttons -->
+      <!-- Footer -->
 
       <div
         class="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"
       >
-
-        <!-- Cancel -->
 
         <button
           type="button"
@@ -994,8 +1056,6 @@
           Cancel
         </button>
 
-
-        <!-- Save -->
 
         <button
           type="button"
@@ -1027,14 +1087,10 @@
 
 @if (isDeleteModalOpen && productToDelete) {
 
-  <!-- Background Overlay -->
-
   <div
     class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4"
     (click)="closeDeleteModal()"
   >
-
-    <!-- Modal -->
 
     <div
       class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800"
@@ -1085,13 +1141,11 @@
       </div>
 
 
-      <!-- Footer Buttons -->
+      <!-- Footer -->
 
       <div
         class="mt-6 flex justify-end gap-3"
       >
-
-        <!-- Cancel -->
 
         <button
           type="button"
@@ -1103,8 +1157,6 @@
         </button>
 
 
-        <!-- Delete -->
-
         <button
           type="button"
           (click)="confirmDeleteProduct()"
@@ -1113,13 +1165,9 @@
         >
 
           @if (isDeletingProduct) {
-
             Deleting...
-
           } @else {
-
             Delete
-
           }
 
         </button>

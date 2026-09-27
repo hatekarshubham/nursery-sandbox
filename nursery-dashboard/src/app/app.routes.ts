@@ -9,6 +9,10 @@ import { CategoryChartComponent } from './shared/components/ecommerce/category-c
 import { AddProductComponent } from './shared/components/ecommerce/products/add-product/add-product.component';
 import { CategoriesComponent } from './shared/components/ecommerce/categories/categories.component';
 import { AddCategoryComponent } from './shared/components/ecommerce/categories/add-category/add-category.component';
+import { SuppliersComponent } from './shared/components/ecommerce/suppliers/suppliers.component';
+import { AddSupplierComponent } from './shared/components/ecommerce/suppliers/add-supplier/add-supplier.component';
+import { WarehousesComponent } from './shared/components/ecommerce/warehouses/warehouses.component';
+import { AddWarehouseComponent } from './shared/components/ecommerce/warehouses/add-warehouse/add-warehouse.component';
 
 export const routes: Routes = [
 
@@ -55,6 +59,25 @@ export const routes: Routes = [
       {
         path: 'category-chart',
         component: CategoryChartComponent,
+      },
+
+      // Suppliers
+      {
+        path: 'suppliers',
+        component: SuppliersComponent,
+      },
+      {
+        path: 'suppliers/add-supplier',
+        component: AddSupplierComponent,
+      },
+      // Warehouses
+      {
+        path: 'warehouses',
+        component: WarehousesComponent,
+      },
+      {
+        path: 'warehouses/add-warehouse',
+        component: AddWarehouseComponent,
       },
 
     ]

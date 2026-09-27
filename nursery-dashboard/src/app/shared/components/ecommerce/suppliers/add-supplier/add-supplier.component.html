@@ -1,0 +1,299 @@
+<div
+  class="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]"
+>
+
+  <!-- ===================================================== -->
+  <!-- PAGE HEADER -->
+  <!-- ===================================================== -->
+
+  <div class="mb-6">
+
+    <h2
+      class="text-xl font-semibold text-gray-800 dark:text-white"
+    >
+      Add Supplier
+    </h2>
+
+    <p
+      class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+    >
+      Add a new nursery supplier or dealer.
+    </p>
+
+  </div>
+
+
+  <!-- ===================================================== -->
+  <!-- FORM -->
+  <!-- ===================================================== -->
+
+  <form
+    (ngSubmit)="saveAndViewAll()"
+    class="space-y-6"
+  >
+
+
+    <!-- =================================================== -->
+    <!-- SUPPLIER NAME -->
+    <!-- =================================================== -->
+
+    <div>
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Supplier Name
+        <span class="text-red-500">*</span>
+      </label>
+
+      <input
+        type="text"
+        name="name"
+        [(ngModel)]="supplier.name"
+        placeholder="Enter supplier name"
+        required
+        [disabled]="isSaving"
+        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+      />
+
+    </div>
+
+
+    <!-- =================================================== -->
+    <!-- MOBILE -->
+    <!-- =================================================== -->
+
+    <div>
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Mobile Number
+        <span class="text-red-500">*</span>
+      </label>
+
+      <input
+        type="tel"
+        name="mobile"
+        [(ngModel)]="supplier.mobile"
+        placeholder="Enter mobile number"
+        required
+        [disabled]="isSaving"
+        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+      />
+
+    </div>
+
+
+    <!-- =================================================== -->
+    <!-- EMAIL -->
+    <!-- =================================================== -->
+
+    <div>
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Email
+      </label>
+
+      <input
+        type="email"
+        name="email"
+        [(ngModel)]="supplier.email"
+        placeholder="Enter email address"
+        [disabled]="isSaving"
+        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+      />
+
+    </div>
+
+
+    <!-- =================================================== -->
+    <!-- GST NUMBER -->
+    <!-- =================================================== -->
+
+    <div>
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        GST Number
+      </label>
+
+      <input
+        type="text"
+        name="gstNumber"
+        [(ngModel)]="supplier.gstNumber"
+        placeholder="Enter GST number"
+        maxlength="15"
+        [disabled]="isSaving"
+        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm uppercase text-gray-800 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+      />
+
+    </div>
+
+
+    <!-- =================================================== -->
+    <!-- ADDRESS -->
+    <!-- =================================================== -->
+
+    <div>
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Address
+      </label>
+
+      <textarea
+        name="address"
+        [(ngModel)]="supplier.address"
+        rows="4"
+        placeholder="Enter supplier address"
+        [disabled]="isSaving"
+        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+      ></textarea>
+
+    </div>
+
+
+    <!-- =================================================== -->
+    <!-- NOTES -->
+    <!-- =================================================== -->
+
+    <div>
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Notes
+      </label>
+
+      <textarea
+        name="notes"
+        [(ngModel)]="supplier.notes"
+        rows="4"
+        placeholder="Add any additional notes"
+        [disabled]="isSaving"
+        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+      ></textarea>
+
+    </div>
+
+
+    <!-- =================================================== -->
+    <!-- STATUS -->
+    <!-- =================================================== -->
+
+    <div>
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Status
+      </label>
+
+
+      <label
+        class="flex cursor-pointer items-center gap-3"
+      >
+
+        <input
+          type="checkbox"
+          name="isActive"
+          [(ngModel)]="supplier.isActive"
+          [disabled]="isSaving"
+          class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        />
+
+
+        <div>
+
+          <p
+            class="text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Active Supplier
+          </p>
+
+          <p
+            class="text-xs text-gray-400 dark:text-gray-500"
+          >
+            Active suppliers can be assigned to products.
+          </p>
+
+        </div>
+
+      </label>
+
+    </div>
+
+
+    <!-- =================================================== -->
+    <!-- ACTIONS -->
+    <!-- =================================================== -->
+
+    <div
+      class="flex flex-wrap gap-3 border-t border-gray-100 pt-6 dark:border-gray-800"
+    >
+
+
+      <!-- SAVE & VIEW ALL -->
+
+      <button
+        type="submit"
+        [disabled]="isSaving"
+        class="rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+
+        @if (isSaving) {
+
+          Saving...
+
+        } @else {
+
+          Save & View All
+
+        }
+
+      </button>
+
+
+      <!-- SAVE & ADD ANOTHER -->
+
+      <button
+        type="button"
+        (click)="saveAndAddAnother()"
+        [disabled]="isSaving"
+        class="rounded-lg bg-green-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+
+        @if (isSaving) {
+
+          Saving...
+
+        } @else {
+
+          Save & Add Another
+
+        }
+
+      </button>
+
+
+      <!-- RESET -->
+
+      <button
+        type="button"
+        (click)="resetForm()"
+        [disabled]="isSaving"
+        class="rounded-lg border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+      >
+        Reset
+      </button>
+
+    </div>
+
+  </form>
+
+</div>

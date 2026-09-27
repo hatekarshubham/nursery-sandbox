@@ -14,12 +14,14 @@ import {
 
 import { Observable } from 'rxjs';
 
+
 @Injectable({
   providedIn: 'root'
 })
 export class ProductService {
 
   private firestore = inject(Firestore);
+
 
   // =========================
   // ADD PRODUCT
@@ -75,6 +77,7 @@ export class ProductService {
         idField: 'id'
       }
     ) as Observable<any[]>;
+
   }
 
 
@@ -103,16 +106,47 @@ export class ProductService {
     await updateDoc(
       productRef,
       {
-        name: product.name,
-        category: product.category,
-        description: product.description,
-        unitPrice: product.unitPrice,
-        gst: product.gst,
-        standardPackage: product.standardPackage,
-        stockQuantity: product.stockQuantity,
-        image: product.image,
-        isActive: product.isActive,
-        updatedAt: new Date()
+
+        name:
+          product.name,
+
+        category:
+          product.category,
+
+        categoryId:
+          product.categoryId ?? '',
+
+        // =========================
+        // SUPPLIER
+        // =========================
+
+        supplierId:
+          product.supplierId ?? '',
+
+        supplier:
+          product.supplier ?? '',
+
+        description:
+          product.description ?? '',
+
+        unitPrice:
+          product.unitPrice,
+
+        gst:
+          product.gst ?? 0,
+
+        standardPackage:
+          product.standardPackage ?? null,
+
+        image:
+          product.image ?? '',
+
+        isActive:
+          product.isActive !== false,
+
+        updatedAt:
+          new Date()
+
       }
     );
 
@@ -120,6 +154,7 @@ export class ProductService {
       'Product updated successfully:',
       productId
     );
+
   }
 
 
@@ -151,6 +186,7 @@ export class ProductService {
       'Product deleted successfully:',
       productId
     );
+
   }
 
 }

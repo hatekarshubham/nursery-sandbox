@@ -1,7 +1,5 @@
 import { CommonModule } from '@angular/common';
-
 import { Component, OnInit } from '@angular/core';
-
 import { FormsModule } from '@angular/forms';
 
 import { ProductService } from '../../../../services/product.service';
@@ -11,29 +9,36 @@ import {
   CategoryService
 } from '../../../../services/category.service';
 
+import {
+  Supplier,
+  SupplierService
+} from '../../../../services/supplier.service';
+
 
 interface Product {
-
   id?: string;
 
   name: string;
-
   category: string;
 
-  categoryIsActive: boolean;
+  // =========================
+  // SUPPLIER - ONE PER PRODUCT
+  // =========================
 
+  supplierId?: string;
+  supplier?: string;
+
+  categoryIsActive: boolean;
   isAvailable: boolean;
 
   description: string;
 
   unitPrice: number;
-
   gst: number;
 
   standardPackage: number | null;
 
   stockQuantity: number;
-
   quantity: number;
 
   image: string;
@@ -41,14 +46,11 @@ interface Product {
   isActive: boolean;
 
   createdAt?: any;
-
   updatedAt?: any;
-
 }
 
 
 @Component({
-
   selector: 'app-products',
 
   imports: [
@@ -57,27 +59,45 @@ interface Product {
   ],
 
   templateUrl: './products.component.html',
-
   styleUrl: './products.component.css'
-
 })
 
 
 export class ProductsComponent implements OnInit {
 
-
   constructor(
-
     private productService: ProductService,
-
-    private categoryService: CategoryService
-
+    private categoryService: CategoryService,
+    private supplierService: SupplierService
   ) {}
 
 
+  // =========================
+  // PRODUCT TABLE
+  // =========================
+
   tableData: Product[] = [];
 
+
+  // =========================
+  // CATEGORIES
+  // =========================
+
   categories: Category[] = [];
+
+
+  // =========================
+  // SUPPLIERS
+  // =========================
+
+  suppliers: Supplier[] = [];
+
+  isLoadingSuppliers = true;
+
+
+  // =========================
+  // LOADING
+  // =========================
 
   isLoading = true;
 
@@ -111,12 +131,18 @@ export class ProductsComponent implements OnInit {
   isDeletingProduct = false;
 
 
+  // =========================
+  // INIT
+  // =========================
+
   ngOnInit() {
 
+    // -------------------------
+    // LOAD CATEGORIES
+    // -------------------------
+
     this.categoryService
-
       .getCategories()
-
       .subscribe({
 
         next: (categories) => {
@@ -140,6 +166,41 @@ export class ProductsComponent implements OnInit {
 
       });
 
+
+    // -------------------------
+    // LOAD SUPPLIERS
+    // -------------------------
+
+    this.supplierService
+      .getSuppliers()
+      .subscribe({
+
+        next: (suppliers) => {
+
+          this.suppliers = suppliers;
+
+          this.isLoadingSuppliers = false;
+
+          console.log(
+            'Suppliers loaded:',
+            this.suppliers
+          );
+
+        },
+
+        error: (error) => {
+
+          console.error(
+            'Error loading suppliers:',
+            error
+          );
+
+          this.isLoadingSuppliers = false;
+
+        }
+
+      });
+
   }
 
 
@@ -150,70 +211,142 @@ export class ProductsComponent implements OnInit {
   loadProducts() {
 
     this.productService
-
       .getProducts()
-
       .subscribe({
 
         next: (products: any[]) => {
 
           this.tableData =
-
             products.map((product) => {
 
+              // -------------------------
+              // FIND CATEGORY
+              // -------------------------
+
               const matchingCategory =
-
                 this.categories.find(
-
                   (category) =>
-
-                    category.name ===
-
-                    product.category
-
+                    category.name === product.category
                 );
 
 
+              // -------------------------
+              // CATEGORY STATUS
+              // -------------------------
+
               const categoryIsActive =
-
                 matchingCategory
-
                   ? matchingCategory.isActive
-
                   : false;
 
 
-              const productIsActive =
+              // -------------------------
+              // PRODUCT STATUS
+              // -------------------------
 
+              const productIsActive =
                 product.isActive !== false;
 
 
-              // Product must have stock
-              // greater than zero.
+              // -------------------------
+              // STOCK STATUS
+              // -------------------------
 
               const hasStock =
-
                 (product.stockQuantity ?? 0) > 0;
 
 
-              // Product is available only when:
-              //
-              // 1. Product is active
-              // 2. Category is active
-              // 3. Stock quantity is greater than 0
+              // -------------------------
+              // AVAILABILITY
+              // -------------------------
 
               const isAvailable =
-
                 productIsActive &&
-
                 categoryIsActive &&
-
                 hasStock;
 
+
+              // -------------------------
+              // SUPPLIER
+              // -------------------------
+
+              let supplierId =
+                product.supplierId ?? '';
+
+              let supplierName =
+                product.supplier ?? '';
+
+
+              // -------------------------
+              // BACKWARD COMPATIBILITY
+              // -------------------------
+              // If a product was temporarily
+              // saved using array fields,
+              // use the first supplier.
+              // -------------------------
+
+              if (
+                !supplierId &&
+                Array.isArray(product.supplierIds) &&
+                product.supplierIds.length > 0
+              ) {
+
+                supplierId =
+                  product.supplierIds[0];
+
+              }
+
+
+              if (
+                !supplierName &&
+                Array.isArray(product.supplierNames) &&
+                product.supplierNames.length > 0
+              ) {
+
+                supplierName =
+                  product.supplierNames[0];
+
+              }
+
+
+              // -------------------------
+              // RESOLVE NAME FROM ID
+              // -------------------------
+              // If Firestore has supplierId
+              // but supplier name is missing,
+              // resolve it from suppliers.
+              // -------------------------
+
+              if (
+                supplierId &&
+                !supplierName
+              ) {
+
+                const matchingSupplier =
+                  this.suppliers.find(
+                    (supplier) =>
+                      supplier.id === supplierId
+                  );
+
+
+                supplierName =
+                  matchingSupplier?.name ?? '';
+
+              }
+
+
+              // -------------------------
+              // RETURN PRODUCT
+              // -------------------------
 
               return {
 
                 ...product,
+
+                supplierId,
+
+                supplier:
+                  supplierName,
 
                 quantity:
                   product.stockQuantity ?? 0,
@@ -231,11 +364,8 @@ export class ProductsComponent implements OnInit {
 
 
           console.log(
-
             'Products loaded:',
-
             this.tableData
-
           );
 
         },
@@ -244,11 +374,8 @@ export class ProductsComponent implements OnInit {
         error: (error: any) => {
 
           console.error(
-
             'Error loading products:',
-
             error
-
           );
 
           this.isLoading = false;
@@ -261,26 +388,125 @@ export class ProductsComponent implements OnInit {
 
 
   // =========================
+  // GET SUPPLIER NAME
+  // =========================
+
+  getSupplierName(
+    product: Product
+  ): string {
+
+    // Stored supplier name
+
+    if (
+      product.supplier &&
+      product.supplier.trim()
+    ) {
+
+      return product.supplier;
+
+    }
+
+
+    // Resolve using supplier ID
+
+    if (product.supplierId) {
+
+      const matchingSupplier =
+        this.suppliers.find(
+          (supplier) =>
+            supplier.id === product.supplierId
+        );
+
+
+      if (matchingSupplier) {
+
+        return matchingSupplier.name;
+
+      }
+
+    }
+
+
+    return 'No supplier';
+
+  }
+
+
+  // =========================
+  // EDIT SUPPLIER CHANGE
+  // =========================
+
+  onEditSupplierChange(
+    supplierId: string
+  ) {
+
+    if (!this.editingProduct) {
+      return;
+    }
+
+
+    // -------------------------
+    // FIND SUPPLIER
+    // -------------------------
+
+    const selectedSupplier =
+      this.suppliers.find(
+        (supplier) =>
+          supplier.id === supplierId
+      );
+
+
+    // -------------------------
+    // SAVE ID
+    // -------------------------
+
+    this.editingProduct.supplierId =
+      supplierId;
+
+
+    // -------------------------
+    // SAVE NAME
+    // -------------------------
+
+    this.editingProduct.supplier =
+      selectedSupplier?.name ?? '';
+
+
+    console.log(
+      'Selected supplier ID:',
+      this.editingProduct.supplierId
+    );
+
+
+    console.log(
+      'Selected supplier name:',
+      this.editingProduct.supplier
+    );
+
+  }
+
+
+  // =========================
   // PRODUCT DETAILS
   // =========================
 
   openProductDetails(
-
     product: Product
-
   ) {
 
     this.selectedProduct =
-
       product;
 
   }
 
 
+  // =========================
+  // CLOSE PRODUCT DETAILS
+  // =========================
+
   closeProductDetails() {
 
     this.selectedProduct =
-
       null;
 
   }
@@ -291,17 +517,13 @@ export class ProductsComponent implements OnInit {
   // =========================
 
   editProduct(
-
     product: Product
-
   ) {
 
     if (!product.id) {
 
       console.error(
-
         'Cannot edit product without an ID.'
-
       );
 
       return;
@@ -309,14 +531,31 @@ export class ProductsComponent implements OnInit {
     }
 
 
+    // -------------------------
+    // COPY PRODUCT
+    // -------------------------
+
     this.editingProduct = {
 
-      ...product
+      ...product,
+
+      supplierId:
+        product.supplierId ?? '',
+
+      supplier:
+        product.supplier ?? ''
 
     };
 
 
-    this.isEditModalOpen = true;
+    console.log(
+      'Editing product:',
+      this.editingProduct
+    );
+
+
+    this.isEditModalOpen =
+      true;
 
   }
 
@@ -328,52 +567,47 @@ export class ProductsComponent implements OnInit {
   closeEditModal() {
 
     if (this.isSavingProduct) {
-
       return;
-
     }
 
 
-    this.isEditModalOpen = false;
+    this.isEditModalOpen =
+      false;
 
-    this.editingProduct = null;
+
+    this.editingProduct =
+      null;
 
   }
 
 
   // =========================
-  // SAVE EDITED PRODUCT
+  // SAVE PRODUCT
   // =========================
 
   async saveProduct() {
 
     if (!this.editingProduct) {
-
       return;
-
     }
 
 
     const product =
-
       this.editingProduct;
+
+
+    const productId =
+      product.id;
 
 
     // -------------------------
     // PRODUCT ID
     // -------------------------
 
-    const productId =
-
-      product.id;
-
-
     if (!productId) {
 
       console.error(
-
         'Cannot update product without an ID.'
-
       );
 
       return;
@@ -382,19 +616,13 @@ export class ProductsComponent implements OnInit {
 
 
     // -------------------------
-    // VALIDATION
+    // PRODUCT NAME
     // -------------------------
 
-    if (
-
-      !product.name.trim()
-
-    ) {
+    if (!product.name.trim()) {
 
       alert(
-
         'Please enter a product name.'
-
       );
 
       return;
@@ -402,16 +630,14 @@ export class ProductsComponent implements OnInit {
     }
 
 
-    if (
+    // -------------------------
+    // CATEGORY
+    // -------------------------
 
-      !product.category
-
-    ) {
+    if (!product.category) {
 
       alert(
-
         'Please select a category.'
-
       );
 
       return;
@@ -419,57 +645,84 @@ export class ProductsComponent implements OnInit {
     }
 
 
-    if (
+    // -------------------------
+    // SUPPLIER
+    // -------------------------
 
+    if (!product.supplierId) {
+
+      alert(
+        'Please select a supplier.'
+      );
+
+      return;
+
+    }
+
+
+    // -------------------------
+    // UNIT PRICE
+    // -------------------------
+
+    if (
       !Number.isFinite(
-
         product.unitPrice
-
       ) ||
-
       product.unitPrice <= 0
-
     ) {
 
       alert(
-
         'Please enter a valid unit price.'
-
       );
 
       return;
 
     }
 
+
+    // -------------------------
+    // STOCK
+    // -------------------------
 
     if (
-
       !Number.isInteger(
-
         product.stockQuantity
-
       ) ||
-
       product.stockQuantity < 0
-
     ) {
 
       alert(
-
         'Please enter a valid stock quantity.'
-
       );
 
       return;
 
     }
+
+
+    // -------------------------
+    // RESOLVE SUPPLIER NAME
+    // -------------------------
+
+    const selectedSupplier =
+      this.suppliers.find(
+        (supplier) =>
+          supplier.id === product.supplierId
+      );
+
+
+    const supplierName =
+      selectedSupplier?.name ??
+      product.supplier ??
+      '';
 
 
     // -------------------------
     // SAVE
     // -------------------------
 
-    this.isSavingProduct = true;
+    this.isSavingProduct =
+      true;
 
 
     try {
@@ -480,35 +733,60 @@ export class ProductsComponent implements OnInit {
 
         {
 
-          ...product,
-
           name:
             product.name.trim(),
 
-          quantity:
-            undefined
+          category:
+            product.category,
+
+          supplierId:
+            product.supplierId,
+
+          supplier:
+            supplierName,
+
+          description:
+            product.description ?? '',
+
+          unitPrice:
+            product.unitPrice,
+
+          gst:
+            product.gst ?? 0,
+
+          standardPackage:
+            product.standardPackage ?? null,
+
+          stockQuantity:
+            product.stockQuantity,
+
+          image:
+            product.image ?? '',
+
+          isActive:
+            product.isActive !== false
 
         }
 
       );
 
 
-      this.isSavingProduct = false;
+      this.isSavingProduct =
+        false;
 
-      this.isEditModalOpen = false;
 
-      this.editingProduct = null;
+      this.isEditModalOpen =
+        false;
+
+
+      this.editingProduct =
+        null;
 
 
       alert(
-
         'Product updated successfully.'
-
       );
 
-
-      // Reload products so that
-      // availability is recalculated.
 
       this.loadProducts();
 
@@ -518,21 +796,17 @@ export class ProductsComponent implements OnInit {
     catch (error) {
 
       console.error(
-
         'Error updating product:',
-
         error
-
       );
 
 
-      this.isSavingProduct = false;
+      this.isSavingProduct =
+        false;
 
 
       alert(
-
         'Failed to update product. Please try again.'
-
       );
 
     }
@@ -545,17 +819,13 @@ export class ProductsComponent implements OnInit {
   // =========================
 
   openDeleteModal(
-
     product: Product
-
   ) {
 
     if (!product.id) {
 
       console.error(
-
         'Cannot delete product without an ID.'
-
       );
 
       return;
@@ -563,18 +833,12 @@ export class ProductsComponent implements OnInit {
     }
 
 
-    // Delete is allowed for:
-    //
-    // - Active products
-    // - Inactive products
-    // - Products with stock
-    // - Products with zero stock
-    // - Products whose category is active
-    // - Products whose category is inactive
+    this.productToDelete =
+      product;
 
-    this.productToDelete = product;
 
-    this.isDeleteModalOpen = true;
+    this.isDeleteModalOpen =
+      true;
 
   }
 
@@ -586,59 +850,58 @@ export class ProductsComponent implements OnInit {
   closeDeleteModal() {
 
     if (this.isDeletingProduct) {
-
       return;
-
     }
 
 
-    this.isDeleteModalOpen = false;
+    this.isDeleteModalOpen =
+      false;
 
-    this.productToDelete = null;
+
+    this.productToDelete =
+      null;
 
   }
 
 
   // =========================
-  // CONFIRM DELETE PRODUCT
+  // CONFIRM DELETE
   // =========================
 
   async confirmDeleteProduct() {
 
     if (!this.productToDelete?.id) {
-
       return;
-
     }
 
 
-    this.isDeletingProduct = true;
+    this.isDeletingProduct =
+      true;
 
 
     try {
 
       await this.productService.deleteProduct(
-
         this.productToDelete.id
-
       );
 
 
-      this.isDeletingProduct = false;
+      this.isDeletingProduct =
+        false;
 
-      this.isDeleteModalOpen = false;
 
-      this.productToDelete = null;
+      this.isDeleteModalOpen =
+        false;
+
+
+      this.productToDelete =
+        null;
 
 
       alert(
-
         'Product deleted successfully.'
-
       );
 
-
-      // Reload products after deletion.
 
       this.loadProducts();
 
@@ -648,21 +911,17 @@ export class ProductsComponent implements OnInit {
     catch (error) {
 
       console.error(
-
         'Error deleting product:',
-
         error
-
       );
 
 
-      this.isDeletingProduct = false;
+      this.isDeletingProduct =
+        false;
 
 
       alert(
-
         'Failed to delete product. Please try again.'
-
       );
 
     }
