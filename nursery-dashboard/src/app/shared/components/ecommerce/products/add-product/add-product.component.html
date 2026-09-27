@@ -1,26 +1,72 @@
-<div class="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+<div
+  class="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]"
+>
 
-  <!-- Page Header -->
+  <!-- ===================================================== -->
+  <!-- PAGE HEADER -->
+  <!-- ===================================================== -->
+
   <div class="mb-6">
-    <h2 class="text-xl font-semibold text-gray-800 dark:text-white">
+
+    <h2
+      class="text-xl font-semibold text-gray-800 dark:text-white"
+    >
       Add Product
     </h2>
 
-    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+    <p
+      class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+    >
       Add a new product to your product list.
     </p>
+
   </div>
 
 
-  <!-- Form -->
-  <form
-    (ngSubmit)="addProduct()"
-    class="space-y-6"
-  >
+  <!-- ===================================================== -->
+  <!-- FORM -->
+  <!-- ===================================================== -->
 
-    <!-- Product Name -->
+  <form class="space-y-6">
+
+
+    <!-- =================================================== -->
+    <!-- PRODUCT ID -->
+    <!-- =================================================== -->
+
     <div>
-      <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Product ID
+      </label>
+
+      <input
+        type="text"
+        value="Auto-generated"
+        readonly
+        class="w-full rounded-lg border border-gray-300 bg-gray-100 px-4 py-3 text-sm text-gray-500 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+      />
+
+      <p
+        class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+      >
+        Product ID will be generated automatically when saved.
+      </p>
+
+    </div>
+
+
+    <!-- =================================================== -->
+    <!-- PRODUCT NAME -->
+    <!-- =================================================== -->
+
+    <div>
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
         Product Name
         <span class="text-red-500">*</span>
       </label>
@@ -30,42 +76,127 @@
         name="name"
         [(ngModel)]="product.name"
         placeholder="Enter product name"
+        required
         class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
       />
+
     </div>
 
 
-    <!-- Category -->
-    <div>
-      <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-        Category
-        <span class="text-red-500">*</span>
-      </label>
+    <!-- =================================================== -->
+    <!-- CATEGORY + SUPPLIER -->
+    <!-- =================================================== -->
 
-      <select
-        name="category"
-        [(ngModel)]="product.category"
-        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-      >
+    <div
+      class="grid grid-cols-1 gap-6 md:grid-cols-2"
+    >
 
-        <option value="">
-          Select Category
-        </option>
 
-        <option
-          *ngFor="let category of categories"
-          [value]="category"
+      <!-- CATEGORY -->
+
+      <div>
+
+        <label
+          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
-          {{ category }}
-        </option>
+          Category
+          <span class="text-red-500">*</span>
+        </label>
 
-      </select>
+        <select
+          name="category"
+          [(ngModel)]="product.category"
+          (ngModelChange)="onCategoryChange()"
+          required
+          [disabled]="isLoadingCategories"
+          class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:disabled:bg-gray-800"
+        >
+
+          <option value="">
+            {{
+              isLoadingCategories
+                ? 'Loading categories...'
+                : 'Select Category'
+            }}
+          </option>
+
+          <option
+            *ngFor="let category of categories"
+            [value]="category.name"
+          >
+            {{ category.name }}
+          </option>
+
+        </select>
+
+        <p
+          *ngIf="!isLoadingCategories && categories.length === 0"
+          class="mt-1 text-xs text-red-500"
+        >
+          No active categories available. Please add a category first.
+        </p>
+
+      </div>
+
+
+      <!-- SUPPLIER -->
+
+      <div>
+
+        <label
+          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Supplier
+          <span class="text-red-500">*</span>
+        </label>
+
+        <select
+          name="supplier"
+          [(ngModel)]="product.supplierId"
+          (ngModelChange)="onSupplierChange()"
+          required
+          [disabled]="isLoadingSuppliers"
+          class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:disabled:bg-gray-800"
+        >
+
+          <option value="">
+            {{
+              isLoadingSuppliers
+                ? 'Loading suppliers...'
+                : 'Select Supplier'
+            }}
+          </option>
+
+          <option
+            *ngFor="let supplier of suppliers"
+            [value]="supplier.id"
+          >
+            {{ supplier.name }}
+          </option>
+
+        </select>
+
+        <p
+          *ngIf="!isLoadingSuppliers && suppliers.length === 0"
+          class="mt-1 text-xs text-red-500"
+        >
+          No active suppliers available. Please add a supplier first.
+        </p>
+
+      </div>
+
     </div>
 
 
-    <!-- Description -->
+    <!-- =================================================== -->
+    <!-- DESCRIPTION -->
+    <!-- =================================================== -->
+
     <div>
-      <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
         Description
       </label>
 
@@ -76,16 +207,27 @@
         placeholder="Enter product description"
         class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
       ></textarea>
+
     </div>
 
 
-    <!-- Price + GST -->
-    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <!-- =================================================== -->
+    <!-- UNIT PRICE + GST -->
+    <!-- =================================================== -->
 
-      <!-- Unit Price -->
+    <div
+      class="grid grid-cols-1 gap-6 md:grid-cols-2"
+    >
+
+
+      <!-- UNIT PRICE -->
+
       <div>
-        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Unit Price
+
+        <label
+          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Unit Price (₹)
           <span class="text-red-500">*</span>
         </label>
 
@@ -94,15 +236,22 @@
           name="unitPrice"
           [(ngModel)]="product.unitPrice"
           placeholder="Enter unit price"
-          min="0"
+          min="0.01"
+          step="0.01"
+          required
           class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
         />
+
       </div>
 
 
       <!-- GST -->
+
       <div>
-        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+
+        <label
+          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
           GST (%)
         </label>
 
@@ -111,16 +260,25 @@
           name="gst"
           [(ngModel)]="product.gst"
           min="0"
+          max="100"
+          step="0.01"
           class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
         />
+
       </div>
 
     </div>
 
 
-    <!-- Standard Package -->
+    <!-- =================================================== -->
+    <!-- STANDARD PACKAGE -->
+    <!-- =================================================== -->
+
     <div>
-      <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
         Standard Package
       </label>
 
@@ -128,16 +286,30 @@
         type="number"
         name="standardPackage"
         [(ngModel)]="product.standardPackage"
-        placeholder="Enter standard package quantity"
-        min="0"
+        placeholder="Enter package quantity"
+        min="1"
+        step="1"
         class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
       />
+
+      <p
+        class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+      >
+        Standard quantity normally supplied or sold as one package.
+      </p>
+
     </div>
 
 
-    <!-- Product Image -->
+    <!-- =================================================== -->
+    <!-- PRODUCT IMAGE -->
+    <!-- =================================================== -->
+
     <div>
-      <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
         Product Image
       </label>
 
@@ -147,16 +319,22 @@
         (change)="onImageSelected($event)"
         class="block w-full rounded-lg border border-gray-300 bg-white text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
       />
+
     </div>
 
 
-    <!-- Image Preview -->
+    <!-- =================================================== -->
+    <!-- IMAGE PREVIEW -->
+    <!-- =================================================== -->
+
     <div
       *ngIf="selectedImage"
       class="mt-4"
     >
 
-      <p class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+      <p
+        class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
         Image Preview
       </p>
 
@@ -169,20 +347,45 @@
     </div>
 
 
-    <!-- Buttons -->
-    <div class="flex gap-3 pt-4">
+    <!-- =================================================== -->
+    <!-- ACTION BUTTONS -->
+    <!-- =================================================== -->
+
+    <div
+      class="flex flex-wrap gap-3 border-t border-gray-100 pt-6 dark:border-gray-800"
+    >
+
+      <!-- SAVE & VIEW ALL -->
 
       <button
-        type="submit"
-        class="rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700"
+        type="button"
+        (click)="saveAndViewAll()"
+        [disabled]="isSaving"
+        class="rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        Add Product
+        {{ isSaving ? 'Saving...' : 'Save & View All' }}
       </button>
+
+
+      <!-- SAVE & ADD ANOTHER -->
+
+      <button
+        type="button"
+        (click)="saveAndAddAnother()"
+        [disabled]="isSaving"
+        class="rounded-lg bg-green-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {{ isSaving ? 'Saving...' : 'Save & Add Another' }}
+      </button>
+
+
+      <!-- RESET -->
 
       <button
         type="button"
         (click)="resetForm()"
-        class="rounded-lg border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+        [disabled]="isSaving"
+        class="rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800"
       >
         Reset
       </button>

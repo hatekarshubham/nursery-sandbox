@@ -1,26 +1,19 @@
 import { Routes } from '@angular/router';
 
 import { EcommerceComponent } from './pages/dashboard/ecommerce/ecommerce.component';
-import { ProfileComponent } from './pages/profile/profile.component';
-import { FormElementsComponent } from './pages/forms/form-elements/form-elements.component';
-import { BasicTablesComponent } from './pages/tables/basic-tables/basic-tables.component';
-import { BlankComponent } from './pages/blank/blank.component';
 import { NotFoundComponent } from './pages/other-page/not-found/not-found.component';
 import { AppLayoutComponent } from './shared/layout/app-layout/app-layout.component';
-import { InvoicesComponent } from './pages/invoices/invoices.component';
-import { LineChartComponent } from './pages/charts/line-chart/line-chart.component';
-import { BarChartComponent } from './pages/charts/bar-chart/bar-chart.component';
-import { AlertsComponent } from './pages/ui-elements/alerts/alerts.component';
-import { AvatarElementComponent } from './pages/ui-elements/avatar-element/avatar-element.component';
-import { BadgesComponent } from './pages/ui-elements/badges/badges.component';
-import { ButtonsComponent } from './pages/ui-elements/buttons/buttons.component';
-import { ImagesComponent } from './pages/ui-elements/images/images.component';
-import { VideosComponent } from './pages/ui-elements/videos/videos.component';
 import { SignInComponent } from './pages/auth-pages/sign-in/sign-in.component';
-import { CalenderComponent } from './pages/calender/calender.component';
 import { ProductsComponent } from './shared/components/ecommerce/products/products.component';
 import { CategoryChartComponent } from './shared/components/ecommerce/category-chart/category-chart.component';
 import { AddProductComponent } from './shared/components/ecommerce/products/add-product/add-product.component';
+import { CategoriesComponent } from './shared/components/ecommerce/categories/categories.component';
+import { AddCategoryComponent } from './shared/components/ecommerce/categories/add-category/add-category.component';
+import { SuppliersComponent } from './shared/components/ecommerce/suppliers/suppliers.component';
+import { AddSupplierComponent } from './shared/components/ecommerce/suppliers/add-supplier/add-supplier.component';
+import { WarehousesComponent } from './shared/components/ecommerce/warehouses/warehouses.component';
+import { AddWarehouseComponent } from './shared/components/ecommerce/warehouses/add-warehouse/add-warehouse.component';
+
 export const routes: Routes = [
 
   // Root URL → Login
@@ -42,12 +35,17 @@ export const routes: Routes = [
         path: 'dashboard',
         component: EcommerceComponent,
       },
-
-      // Ecommerce
+      // Categories
       {
-        path: 'ecommerce',
-        component: EcommerceComponent,
+        path: 'categories',
+        component: CategoriesComponent,
       },
+      {
+        path: 'categories/add-category',
+        component: AddCategoryComponent,
+      },
+
+      // Products
       {
         path: 'products',
          component: ProductsComponent,
@@ -56,93 +54,30 @@ export const routes: Routes = [
         path: 'products/add-product',
         component: AddProductComponent,
       },
+
+      // Category Chart
       {
         path: 'category-chart',
         component: CategoryChartComponent,
       },
 
-      // Calendar
+      // Suppliers
       {
-        path: 'calendar',
-        component: CalenderComponent,
+        path: 'suppliers',
+        component: SuppliersComponent,
       },
-
-      // Profile
       {
-        path: 'profile',
-        component: ProfileComponent,
+        path: 'suppliers/add-supplier',
+        component: AddSupplierComponent,
       },
-
-      // Form Elements
+      // Warehouses
       {
-        path: 'form-elements',
-        component: FormElementsComponent,
+        path: 'warehouses',
+        component: WarehousesComponent,
       },
-
-      // Basic Tables
       {
-        path: 'basic-tables',
-        component: BasicTablesComponent,
-      },
-
-      // Blank
-      {
-        path: 'blank',
-        component: BlankComponent,
-      },
-
-      // Invoice
-      {
-        path: 'invoice',
-        component: InvoicesComponent,
-      },
-
-      // Line Chart
-      {
-        path: 'line-chart',
-        component: LineChartComponent,
-      },
-
-      // Bar Chart
-      {
-        path: 'bar-chart',
-        component: BarChartComponent,
-      },
-
-      // Alerts
-      {
-        path: 'alerts',
-        component: AlertsComponent,
-      },
-
-      // Avatars
-      {
-        path: 'avatars',
-        component: AvatarElementComponent,
-      },
-
-      // Badges
-      {
-        path: 'badge',
-        component: BadgesComponent,
-      },
-
-      // Buttons
-      {
-        path: 'buttons',
-        component: ButtonsComponent,
-      },
-
-      // Images
-      {
-        path: 'images',
-        component: ImagesComponent,
-      },
-
-      // Videos
-      {
-        path: 'videos',
-        component: VideosComponent,
+        path: 'warehouses/add-warehouse',
+        component: AddWarehouseComponent,
       },
 
     ]

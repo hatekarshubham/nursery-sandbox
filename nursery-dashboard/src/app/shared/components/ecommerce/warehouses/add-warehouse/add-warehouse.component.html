@@ -1,0 +1,322 @@
+<div
+  class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6"
+>
+
+  <!-- ===================================================== -->
+  <!-- HEADER -->
+  <!-- ===================================================== -->
+
+  <div class="mb-6">
+
+    <h3
+      class="text-lg font-semibold text-gray-800 dark:text-white/90"
+    >
+      Add Warehouse
+    </h3>
+
+    <p
+      class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+    >
+      Create a warehouse for managing product inventory.
+    </p>
+
+  </div>
+
+
+  <!-- ===================================================== -->
+  <!-- FORM -->
+  <!-- ===================================================== -->
+
+  <form
+    (ngSubmit)="saveAndViewAll()"
+    class="space-y-6"
+  >
+
+    <!-- =================================================== -->
+    <!-- WAREHOUSE NAME -->
+    <!-- =================================================== -->
+
+    <div>
+
+      <label
+        for="warehouseName"
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Warehouse Name
+        <span class="text-red-500">*</span>
+      </label>
+
+
+      <input
+        id="warehouseName"
+        name="warehouseName"
+        type="text"
+
+        [(ngModel)]="warehouseName"
+
+        placeholder="Example: Warehouse 1"
+
+        autocomplete="off"
+
+        [disabled]="isSaving"
+
+        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+      />
+
+
+      <p
+        class="mt-1 text-xs text-gray-400 dark:text-gray-500"
+      >
+        Enter the display name of the warehouse.
+      </p>
+
+    </div>
+
+
+    <!-- =================================================== -->
+    <!-- WAREHOUSE CODE -->
+    <!-- =================================================== -->
+
+    <div>
+
+      <label
+        for="warehouseCode"
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Warehouse Code
+        <span class="text-red-500">*</span>
+      </label>
+
+
+      <input
+        id="warehouseCode"
+        name="warehouseCode"
+        type="text"
+
+        [(ngModel)]="warehouseCode"
+
+        placeholder="Example: WH1"
+
+        autocomplete="off"
+
+        [disabled]="isSaving"
+
+        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm uppercase text-gray-800 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+      />
+
+
+      <p
+        class="mt-1 text-xs text-gray-400 dark:text-gray-500"
+      >
+        Use a short unique code such as WH1 or WH2.
+      </p>
+
+    </div>
+
+
+    <!-- =================================================== -->
+    <!-- STATUS -->
+    <!-- =================================================== -->
+
+    <div>
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Status
+      </label>
+
+
+      <label
+        class="flex cursor-pointer items-center gap-3"
+      >
+
+        <input
+          type="checkbox"
+          name="isActive"
+
+          [(ngModel)]="isActive"
+
+          [disabled]="isSaving"
+
+          class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-700"
+        />
+
+
+        <div>
+
+          <p
+            class="text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Active Warehouse
+          </p>
+
+          <p
+            class="text-xs text-gray-400 dark:text-gray-500"
+          >
+            Active warehouses can be used for inventory operations.
+          </p>
+
+        </div>
+
+      </label>
+
+    </div>
+
+
+    <!-- =================================================== -->
+    <!-- PREVIEW -->
+    <!-- =================================================== -->
+
+    @if (
+      warehouseName.trim() ||
+      warehouseCode.trim()
+    ) {
+
+      <div
+        class="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50"
+      >
+
+        <p
+          class="mb-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+        >
+          Warehouse Preview
+        </p>
+
+
+        <div
+          class="flex items-center justify-between gap-4"
+        >
+
+          <div>
+
+            <p
+              class="font-medium text-gray-800 dark:text-white"
+            >
+              {{
+                warehouseName.trim()
+                  || 'Warehouse'
+              }}
+            </p>
+
+
+            <p
+              class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+            >
+              Code:
+              {{
+                warehouseCode.trim().toUpperCase()
+                  || '—'
+              }}
+            </p>
+
+          </div>
+
+
+          @if (isActive) {
+
+            <span
+              class="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+            >
+              Active
+            </span>
+
+          }
+
+          @else {
+
+            <span
+              class="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-500/10 dark:text-gray-400"
+            >
+              Inactive
+            </span>
+
+          }
+
+        </div>
+
+      </div>
+
+    }
+
+
+    <!-- =================================================== -->
+    <!-- ACTIONS -->
+    <!-- =================================================== -->
+
+    <div
+      class="flex flex-wrap items-center gap-3 border-t border-gray-100 pt-6 dark:border-gray-800"
+    >
+
+
+      <!-- SAVE & VIEW ALL -->
+
+      <button
+        type="submit"
+
+        [disabled]="isSaving"
+
+        class="rounded-lg bg-blue-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+
+        @if (isSaving) {
+
+          Saving...
+
+        }
+
+        @else {
+
+          Save & View All
+
+        }
+
+      </button>
+
+
+      <!-- SAVE & ADD ANOTHER -->
+
+      <button
+        type="button"
+
+        (click)="saveAndAddAnother()"
+
+        [disabled]="isSaving"
+
+        class="rounded-lg bg-green-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+
+        @if (isSaving) {
+
+          Saving...
+
+        }
+
+        @else {
+
+          Save & Add Another
+
+        }
+
+      </button>
+
+
+      <!-- RESET -->
+
+      <button
+        type="button"
+
+        (click)="resetForm()"
+
+        [disabled]="isSaving"
+
+        class="rounded-lg border border-gray-300 px-5 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+      >
+        Reset
+      </button>
+
+    </div>
+
+  </form>
+
+</div>

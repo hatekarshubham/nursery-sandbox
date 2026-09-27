@@ -1,0 +1,190 @@
+<div
+  class="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]"
+>
+
+  <!-- ===================================================== -->
+  <!-- PAGE HEADER -->
+  <!-- ===================================================== -->
+
+  <div class="mb-6">
+
+    <h2
+      class="text-xl font-semibold text-gray-800 dark:text-white"
+    >
+      Add Category
+    </h2>
+
+    <p
+      class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+    >
+      Add a new category to your category list.
+    </p>
+
+  </div>
+
+
+  <!-- ===================================================== -->
+  <!-- FORM -->
+  <!-- ===================================================== -->
+
+  <form
+    (ngSubmit)="saveAndViewAll()"
+    class="space-y-6"
+  >
+
+
+    <!-- =================================================== -->
+    <!-- CATEGORY ID -->
+    <!-- =================================================== -->
+
+    <div>
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Category ID
+      </label>
+
+      <input
+        type="text"
+        value="Auto-generated"
+        readonly
+        class="w-full rounded-lg border border-gray-300 bg-gray-100 px-4 py-3 text-sm text-gray-500 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+      />
+
+      <p
+        class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+      >
+        Category ID will be generated automatically when saved.
+      </p>
+
+    </div>
+
+
+    <!-- =================================================== -->
+    <!-- CATEGORY NAME -->
+    <!-- =================================================== -->
+
+    <div>
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Category Name
+        <span class="text-red-500">*</span>
+      </label>
+
+      <input
+        type="text"
+        name="categoryName"
+        [(ngModel)]="categoryName"
+        placeholder="Enter category name"
+        required
+        [disabled]="isSaving"
+        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+      />
+
+    </div>
+
+
+    <!-- =================================================== -->
+    <!-- CATEGORY CODE -->
+    <!-- =================================================== -->
+
+    <div>
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Category Code
+        <span class="text-red-500">*</span>
+      </label>
+
+      <input
+        type="text"
+        name="categoryCode"
+        [(ngModel)]="categoryCode"
+        placeholder="Enter category code"
+        maxlength="20"
+        required
+        [disabled]="isSaving"
+        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm uppercase text-gray-800 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+      />
+
+      <p
+        class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+      >
+        Use a short unique code such as GB, MUG, PLN, or CNT.
+      </p>
+
+    </div>
+
+
+    <!-- =================================================== -->
+    <!-- ACTION BUTTONS -->
+    <!-- =================================================== -->
+
+    <div
+      class="flex flex-wrap gap-3 border-t border-gray-100 pt-6 dark:border-gray-800"
+    >
+
+
+      <!-- SAVE & VIEW ALL -->
+
+      <button
+        type="submit"
+        [disabled]="isSaving"
+        class="rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+
+        @if (isSaving) {
+
+          Saving...
+
+        } @else {
+
+          Save & View All
+
+        }
+
+      </button>
+
+
+      <!-- SAVE & ADD ANOTHER -->
+
+      <button
+        type="button"
+        (click)="saveAndAddAnother()"
+        [disabled]="isSaving"
+        class="rounded-lg bg-green-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+
+        @if (isSaving) {
+
+          Saving...
+
+        } @else {
+
+          Save & Add Another
+
+        }
+
+      </button>
+
+
+      <!-- RESET -->
+
+      <button
+        type="button"
+        (click)="resetForm()"
+        [disabled]="isSaving"
+        class="rounded-lg border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+      >
+        Reset
+      </button>
+
+    </div>
+
+  </form>
+
+</div>

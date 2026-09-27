@@ -1,124 +1,382 @@
 <div
   class="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6"
 >
-  <!-- Header -->
-  <div
-    class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
-  >
-    <div>
-      <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">
-        All Products
-      </h3>
 
-      <p class="text-sm text-gray-500 dark:text-gray-400">
-        Complete product list
-      </p>
-    </div>
+  <!-- Header -->
+
+  <div class="mb-5">
+
+    <h3
+      class="text-lg font-semibold text-gray-800 dark:text-white/90"
+    >
+      All Products
+    </h3>
+
+    <p
+      class="text-sm text-gray-500 dark:text-gray-400"
+    >
+      Complete product list
+    </p>
+
   </div>
 
-  <!-- Table -->
-  <div class="max-w-full overflow-x-auto">
-    <table class="w-full text-left">
 
-      <!-- Table Header -->
-      <thead class="border-y border-gray-100 dark:border-gray-800">
-        <tr>
+  <!-- Loading -->
 
-          <!-- Image -->
-          <th
-            class="min-w-[100px] py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-          >
-            Image
-          </th>
+  @if (isLoading) {
 
-          <!-- Product Name -->
-          <th
-            class="min-w-[250px] py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-          >
-            Product Name
-          </th>
+    <div
+      class="py-10 text-center text-sm text-gray-500 dark:text-gray-400"
+    >
+      Loading products...
+    </div>
 
-          <!-- Description -->
-          <th
-            class="min-w-[300px] py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-          >
-            Description
-          </th>
+  }
 
-          <!-- Unit Price -->
-          <th
-            class="min-w-[120px] py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-          >
-            Unit Price
-          </th>
 
-          <!-- Quantity -->
-          <th
-            class="min-w-[120px] py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-          >
-            Quantity
-          </th>
+  <!-- Empty State -->
 
-        </tr>
-      </thead>
+  @if (!isLoading && tableData.length === 0) {
 
-      <!-- Table Body -->
-      <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+    <div
+      class="rounded-lg border border-dashed border-gray-300 py-10 text-center dark:border-gray-700"
+    >
 
-        @for (product of tableData; track product.id) {
+      <p
+        class="text-sm text-gray-500 dark:text-gray-400"
+      >
+        No products found.
+      </p>
+
+    </div>
+
+  }
+
+
+  <!-- Product Table -->
+
+  @if (!isLoading && tableData.length > 0) {
+
+    <div class="max-w-full overflow-x-auto">
+
+      <table class="w-full text-left">
+
+        <!-- Table Header -->
+
+        <thead
+          class="border-y border-gray-100 dark:border-gray-800"
+        >
 
           <tr>
 
-            <!-- Product Image -->
-            <td class="py-4">
-              <div
-                class="h-14 w-14 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700"
-              >
-                <img
-                  [src]="product.image"
-                  [alt]="product.name"
-                  (click)="openProductDetails(product)"
-                  class="h-full w-full cursor-pointer object-cover transition-transform duration-200 hover:scale-105"
-                />
-              </div>
-            </td>
-
-            <!-- Product Name -->
-            <td
-              class="py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90"
+            <th
+              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
-              {{ product.name }}
-            </td>
+              Image
+            </th>
 
-            <!-- Description -->
-            <td
-              class="py-4 text-gray-500 text-theme-sm dark:text-gray-400"
-            >
-              {{ product.description || '—' }}
-            </td>
 
-            <!-- Unit Price -->
-            <td
-              class="py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+            <th
+              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
-              ₹{{ product.unitPrice | number:'1.2-2' }}
-            </td>
+              Product Name
+            </th>
 
-            <!-- Quantity -->
-            <td
-              class="py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+
+            <th
+              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
-              {{ product.quantity }}
-            </td>
+              Category
+            </th>
+
+
+            <th
+              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Supplier
+            </th>
+
+
+            <th
+              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Unit Price
+            </th>
+
+
+            <th
+              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Quantity
+            </th>
+
+
+            <th
+              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Status
+            </th>
+
+
+            <th
+              class="px-3 py-3 text-right font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Action
+            </th>
 
           </tr>
 
-        }
+        </thead>
 
-      </tbody>
 
-    </table>
-  </div>
+        <!-- Table Body -->
+
+        <tbody
+          class="divide-y divide-gray-100 dark:divide-gray-800"
+        >
+
+          @for (product of tableData; track product.id) {
+
+            <tr
+              [class.bg-gray-100]="!product.isAvailable"
+              [class.dark:bg-gray-800]="!product.isAvailable"
+              [class.hover:bg-gray-50]="product.isAvailable"
+              [class.dark:hover:bg-white/[0.02]]="product.isAvailable"
+            >
+
+              <!-- Image -->
+
+              <td class="px-3 py-4">
+
+                <div
+                  class="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50"
+                >
+
+                  @if (product.image) {
+
+                    @if (product.isAvailable) {
+
+                      <img
+                        [src]="product.image"
+                        [alt]="product.name"
+                        (click)="openProductDetails(product)"
+                        class="h-full w-full cursor-pointer object-cover"
+                      />
+
+                    } @else {
+
+                      <img
+                        [src]="product.image"
+                        [alt]="product.name"
+                        class="h-full w-full object-cover"
+                      />
+
+                    }
+
+                  } @else {
+
+                    @if (product.isAvailable) {
+
+                      <span
+                        (click)="openProductDetails(product)"
+                        class="cursor-pointer text-2xl"
+                        title="Product image not available"
+                      >
+                        🪴
+                      </span>
+
+                    } @else {
+
+                      <span
+                        class="text-2xl"
+                        title="Product image not available"
+                      >
+                        🪴
+                      </span>
+
+                    }
+
+                  }
+
+                </div>
+
+              </td>
+
+
+              <!-- Product Name -->
+
+              <td
+                class="px-3 py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90"
+              >
+                {{ product.name }}
+              </td>
+
+
+              <!-- Category -->
+
+              <td
+                class="px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+              >
+                {{ product.category }}
+              </td>
+
+
+              <!-- Supplier -->
+
+              <td
+                class="px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+              >
+
+                @if (getSupplierName(product) !== 'No supplier') {
+
+                  <span
+                    class="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
+                  >
+                    {{ getSupplierName(product) }}
+                  </span>
+
+                } @else {
+
+                  <span
+                    class="text-xs text-gray-400 dark:text-gray-500"
+                  >
+                    No supplier
+                  </span>
+
+                }
+
+              </td>
+
+
+              <!-- Unit Price -->
+
+              <td
+                class="whitespace-nowrap px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+              >
+                ₹{{ product.unitPrice | number:'1.2-2' }}
+              </td>
+
+
+              <!-- Quantity -->
+
+              <td
+                class="px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+              >
+                {{ product.quantity }}
+              </td>
+
+
+              <!-- Status -->
+
+              <td class="px-3 py-4">
+
+                @if (product.isAvailable) {
+
+                  <span
+                    class="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+                  >
+                    Active
+                  </span>
+
+                } @else if (
+                  product.isActive &&
+                  product.categoryIsActive &&
+                  product.quantity <= 0
+                ) {
+
+                  <span
+                    class="inline-flex rounded-full bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
+                  >
+                    Out of Stock
+                  </span>
+
+                } @else if (
+                  !product.isActive &&
+                  product.categoryIsActive
+                ) {
+
+                  <span
+                    class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                  >
+                    Product Inactive
+                  </span>
+
+                } @else if (
+                  product.isActive &&
+                  !product.categoryIsActive
+                ) {
+
+                  <span
+                    class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                  >
+                    Category Inactive
+                  </span>
+
+                } @else {
+
+                  <span
+                    class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                  >
+                    Inactive
+                  </span>
+
+                }
+
+              </td>
+
+
+              <!-- Actions -->
+
+              <td class="px-3 py-4 text-right">
+
+                <div
+                  class="flex items-center justify-end gap-2"
+                >
+
+                  <!-- Edit -->
+
+                  <button
+                    type="button"
+                    (click)="editProduct(product)"
+                    [disabled]="!product.categoryIsActive"
+                    [title]="
+                      !product.categoryIsActive
+                        ? 'Cannot edit product because its category is inactive'
+                        : 'Edit product'
+                    "
+                    class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 hover:text-gray-900 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:hover:text-white dark:disabled:border-gray-700 dark:disabled:bg-gray-800 dark:disabled:text-gray-500"
+                  >
+                    Edit
+                  </button>
+
+
+                  <!-- Delete -->
+
+                  <button
+                    type="button"
+                    (click)="openDeleteModal(product)"
+                    title="Delete product"
+                    class="inline-flex items-center rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-600 shadow-sm transition hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:bg-gray-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
+                  >
+                    Delete
+                  </button>
+
+                </div>
+
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  }
+
 </div>
 
 
@@ -128,20 +386,21 @@
 
 @if (selectedProduct) {
 
-  <!-- Background Overlay -->
   <div
     class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4"
     (click)="closeProductDetails()"
   >
 
-    <!-- Popup -->
     <div
       class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800"
       (click)="$event.stopPropagation()"
     >
 
-      <!-- Popup Header -->
-      <div class="mb-4 flex items-center justify-between">
+      <!-- Header -->
+
+      <div
+        class="mb-4 flex items-center justify-between"
+      >
 
         <h2
           class="text-xl font-semibold text-gray-800 dark:text-white"
@@ -149,11 +408,11 @@
           Product Details
         </h2>
 
-        <!-- Close Button -->
+
         <button
           type="button"
           (click)="closeProductDetails()"
-          class="flex h-8 w-8 items-center justify-center rounded-full text-xl text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+          class="flex h-8 w-8 items-center justify-center rounded-full text-xl text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
         >
           ×
         </button>
@@ -162,22 +421,38 @@
 
 
       <!-- Product Image -->
-      <div class="mb-5 flex justify-center">
+
+      <div
+        class="mb-5 flex justify-center"
+      >
 
         <div
-          class="h-48 w-48 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700"
+          class="flex h-48 w-48 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50"
         >
-          <img
-            [src]="selectedProduct.image"
-            [alt]="selectedProduct.name"
-            class="h-full w-full object-cover"
-          />
+
+          @if (selectedProduct.image) {
+
+            <img
+              [src]="selectedProduct.image"
+              [alt]="selectedProduct.name"
+              class="h-full w-full object-cover"
+            />
+
+          } @else {
+
+            <span class="text-6xl">
+              🪴
+            </span>
+
+          }
+
         </div>
 
       </div>
 
 
       <!-- Product Name -->
+
       <h3
         class="text-center text-xl font-semibold text-gray-800 dark:text-white"
       >
@@ -185,23 +460,150 @@
       </h3>
 
 
-      <!-- One Line Description -->
-      <p
-        class="mt-2 text-center text-sm text-gray-500 dark:text-gray-400"
-      >
-        {{ selectedProduct.description || 'No description available' }}
-      </p>
+      <!-- Description -->
+
+      <div class="mt-3">
+
+        <p
+          class="mb-1 text-sm font-medium text-gray-500 dark:text-gray-400"
+        >
+          Description
+        </p>
+
+        <p
+          class="text-sm leading-6 text-gray-600 dark:text-gray-300"
+        >
+          {{ selectedProduct.description || 'No description available' }}
+        </p>
+
+      </div>
 
 
       <!-- Product Information -->
+
       <div
         class="mt-5 divide-y divide-gray-100 rounded-xl border border-gray-200 dark:divide-gray-700 dark:border-gray-700"
       >
 
-        <!-- Unit Price -->
-        <div class="flex items-center justify-between px-4 py-3">
+        <!-- Category -->
 
-          <span class="text-sm text-gray-500 dark:text-gray-400">
+        <div
+          class="flex items-center justify-between px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            Category
+          </span>
+
+          <span
+            class="font-semibold text-gray-800 dark:text-white"
+          >
+            {{ selectedProduct.category }}
+          </span>
+
+        </div>
+
+
+        <!-- Supplier -->
+
+        <div
+          class="flex items-center justify-between gap-4 px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            Supplier
+          </span>
+
+          <span
+            class="font-semibold text-gray-800 dark:text-white"
+          >
+            {{ getSupplierName(selectedProduct) }}
+          </span>
+
+        </div>
+
+
+        <!-- Status -->
+
+        <div
+          class="flex items-center justify-between px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            Status
+          </span>
+
+
+          @if (selectedProduct.isAvailable) {
+
+            <span
+              class="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+            >
+              Active
+            </span>
+
+          } @else if (
+            selectedProduct.isActive &&
+            selectedProduct.categoryIsActive &&
+            selectedProduct.quantity <= 0
+          ) {
+
+            <span
+              class="inline-flex rounded-full bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
+            >
+              Out of Stock
+            </span>
+
+          } @else if (
+            !selectedProduct.isActive &&
+            selectedProduct.categoryIsActive
+          ) {
+
+            <span
+              class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+            >
+              Product Inactive
+            </span>
+
+          } @else if (
+            selectedProduct.isActive &&
+            !selectedProduct.categoryIsActive
+          ) {
+
+            <span
+              class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+            >
+              Category Inactive
+            </span>
+
+          } @else {
+
+            <span
+              class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+            >
+              Inactive
+            </span>
+
+          }
+
+        </div>
+
+
+        <!-- Unit Price -->
+
+        <div
+          class="flex items-center justify-between px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
             Unit Price
           </span>
 
@@ -215,9 +617,14 @@
 
 
         <!-- Quantity -->
-        <div class="flex items-center justify-between px-4 py-3">
 
-          <span class="text-sm text-gray-500 dark:text-gray-400">
+        <div
+          class="flex items-center justify-between px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
             Quantity
           </span>
 
@@ -229,38 +636,543 @@
 
         </div>
 
+      </div>
 
-        <!-- Total -->
-        <div class="flex items-center justify-between px-4 py-3">
 
-          <span
-            class="font-medium text-gray-700 dark:text-gray-300"
+      <button
+        type="button"
+        (click)="closeProductDetails()"
+        class="mt-5 w-full rounded-lg bg-gray-800 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-700 dark:bg-white dark:text-gray-800 dark:hover:bg-gray-200"
+      >
+        Close
+      </button>
+
+    </div>
+
+  </div>
+
+}
+
+
+<!-- ====================================================== -->
+<!-- EDIT PRODUCT MODAL -->
+<!-- ====================================================== -->
+
+@if (isEditModalOpen && editingProduct) {
+
+  <div
+    class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4"
+    (click)="closeEditModal()"
+  >
+
+    <div
+      class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800"
+      (click)="$event.stopPropagation()"
+    >
+
+      <!-- Header -->
+
+      <div
+        class="mb-6 flex items-center justify-between"
+      >
+
+        <div>
+
+          <h2
+            class="text-xl font-semibold text-gray-800 dark:text-white"
           >
-            Total Value
-          </span>
+            Edit Product
+          </h2>
 
-          <span
-            class="text-lg font-bold text-gray-800 dark:text-white"
+          <p
+            class="mt-1 text-sm text-gray-500 dark:text-gray-400"
           >
-            ₹{{
-              (selectedProduct.unitPrice * selectedProduct.quantity)
-                | number:'1.2-2'
-            }}
-          </span>
+            Update product information
+          </p>
+
+        </div>
+
+
+        <button
+          type="button"
+          (click)="closeEditModal()"
+          [disabled]="isSavingProduct"
+          class="flex h-8 w-8 items-center justify-center rounded-full text-xl text-gray-500 hover:bg-gray-100 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700 dark:hover:text-white"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <!-- Product Form -->
+
+      <div class="space-y-5">
+
+        <!-- Product Name -->
+
+        <div>
+
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Product Name
+          </label>
+
+          <input
+            type="text"
+            [(ngModel)]="editingProduct.name"
+            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            placeholder="Enter product name"
+          />
+
+        </div>
+
+
+        <!-- Category -->
+
+        <div>
+
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Category
+          </label>
+
+          <select
+            [(ngModel)]="editingProduct.category"
+            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+          >
+
+            @for (category of categories; track category.id) {
+
+              @if (
+                category.isActive ||
+                category.name === editingProduct.category
+              ) {
+
+                <option
+                  [value]="category.name"
+                >
+                  {{ category.name }}
+
+                  @if (!category.isActive) {
+                    (Inactive)
+                  }
+
+                </option>
+
+              }
+
+            }
+
+          </select>
+
+        </div>
+
+
+        <!-- Supplier -->
+
+        <div>
+
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Supplier
+          </label>
+
+
+          @if (isLoadingSuppliers) {
+
+            <div
+              class="rounded-lg border border-gray-300 bg-gray-100 px-3 py-2.5 text-sm text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400"
+            >
+              Loading suppliers...
+            </div>
+
+          } @else {
+
+            <select
+              [(ngModel)]="editingProduct.supplierId"
+              (ngModelChange)="onEditSupplierChange($event)"
+              name="editProductSupplier"
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            >
+
+              <option value="">
+                Select Supplier
+              </option>
+
+
+              @for (supplier of suppliers; track supplier.id) {
+
+                @if (
+                  supplier.isActive ||
+                  supplier.id === editingProduct.supplierId
+                ) {
+
+                  <option
+                    [value]="supplier.id"
+                  >
+                    {{ supplier.name }}
+
+                    @if (!supplier.isActive) {
+                      (Inactive)
+                    }
+
+                  </option>
+
+                }
+
+              }
+
+            </select>
+
+          }
+
+        </div>
+
+
+        <!-- Description -->
+
+        <div>
+
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Description
+          </label>
+
+          <textarea
+            [(ngModel)]="editingProduct.description"
+            rows="3"
+            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            placeholder="Enter product description"
+          ></textarea>
+
+        </div>
+
+
+        <!-- Price / GST -->
+
+        <div
+          class="grid grid-cols-1 gap-4 sm:grid-cols-2"
+        >
+
+          <div>
+
+            <label
+              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Unit Price
+            </label>
+
+            <input
+              type="number"
+              [(ngModel)]="editingProduct.unitPrice"
+              min="0"
+              step="0.01"
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              placeholder="Enter unit price"
+            />
+
+          </div>
+
+
+          <div>
+
+            <label
+              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              GST (%)
+            </label>
+
+            <input
+              type="number"
+              [(ngModel)]="editingProduct.gst"
+              min="0"
+              step="0.01"
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              placeholder="Enter GST"
+            />
+
+          </div>
+
+        </div>
+
+
+        <!-- Standard Package / Stock Quantity -->
+
+        <div
+          class="grid grid-cols-1 gap-4 sm:grid-cols-2"
+        >
+
+          <div>
+
+            <label
+              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Standard Package
+            </label>
+
+            <input
+              type="number"
+              [(ngModel)]="editingProduct.standardPackage"
+              min="0"
+              step="1"
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              placeholder="Enter standard package"
+            />
+
+          </div>
+
+
+          <div>
+
+            <label
+              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Stock Quantity
+            </label>
+
+            <input
+              type="number"
+              [(ngModel)]="editingProduct.stockQuantity"
+              min="0"
+              step="1"
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              placeholder="Enter stock quantity"
+            />
+
+          </div>
+
+        </div>
+
+
+        <!-- Image -->
+
+        <div>
+
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Product Image
+          </label>
+
+
+          @if (editingProduct.image) {
+
+            <div
+              class="mb-3 flex justify-center"
+            >
+
+              <div
+                class="h-32 w-32 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-600"
+              >
+
+                <img
+                  [src]="editingProduct.image"
+                  [alt]="editingProduct.name"
+                  class="h-full w-full object-cover"
+                />
+
+              </div>
+
+            </div>
+
+          }
+
+
+          <input
+            type="text"
+            [(ngModel)]="editingProduct.image"
+            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            placeholder="Enter image URL or data"
+          />
+
+        </div>
+
+
+        <!-- Product Status -->
+
+        <div
+          class="flex items-center justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+        >
+
+          <div>
+
+            <p
+              class="text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Product Status
+            </p>
+
+            <p
+              class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+            >
+              Enable or disable this product
+            </p>
+
+          </div>
+
+
+          <label
+            class="relative inline-flex cursor-pointer items-center"
+          >
+
+            <input
+              type="checkbox"
+              [(ngModel)]="editingProduct.isActive"
+              class="peer sr-only"
+            />
+
+            <div
+              class="h-6 w-11 rounded-full bg-gray-300 peer-checked:bg-brand-500 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-300 dark:bg-gray-600"
+            ></div>
+
+            <div
+              class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5"
+            ></div>
+
+          </label>
 
         </div>
 
       </div>
 
 
-      <!-- Close Button -->
-      <button
-        type="button"
-        (click)="closeProductDetails()"
-        class="mt-5 w-full rounded-lg bg-gray-800 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-700 dark:bg-white dark:text-gray-800 dark:hover:bg-gray-200"
+      <!-- Footer -->
+
+      <div
+        class="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"
       >
-        Close
-      </button>
+
+        <button
+          type="button"
+          (click)="closeEditModal()"
+          [disabled]="isSavingProduct"
+          class="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+        >
+          Cancel
+        </button>
+
+
+        <button
+          type="button"
+          (click)="saveProduct()"
+          [disabled]="isSavingProduct"
+          class="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+
+          @if (isSavingProduct) {
+            Saving...
+          } @else {
+            Save Changes
+          }
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+}
+
+
+<!-- ====================================================== -->
+<!-- DELETE PRODUCT MODAL -->
+<!-- ====================================================== -->
+
+@if (isDeleteModalOpen && productToDelete) {
+
+  <div
+    class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4"
+    (click)="closeDeleteModal()"
+  >
+
+    <div
+      class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800"
+      (click)="$event.stopPropagation()"
+    >
+
+      <!-- Header -->
+
+      <div class="mb-5">
+
+        <h2
+          class="text-xl font-semibold text-gray-800 dark:text-white"
+        >
+          Delete Product
+        </h2>
+
+        <p
+          class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+        >
+          This action cannot be undone.
+        </p>
+
+      </div>
+
+
+      <!-- Warning -->
+
+      <div
+        class="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/40 dark:bg-red-900/20"
+      >
+
+        <p
+          class="text-sm leading-6 text-gray-700 dark:text-gray-300"
+        >
+
+          Are you sure you want to delete
+
+          <strong
+            class="font-semibold text-gray-900 dark:text-white"
+          >
+            {{ productToDelete.name }}
+          </strong>
+
+          ?
+
+        </p>
+
+      </div>
+
+
+      <!-- Footer -->
+
+      <div
+        class="mt-6 flex justify-end gap-3"
+      >
+
+        <button
+          type="button"
+          (click)="closeDeleteModal()"
+          [disabled]="isDeletingProduct"
+          class="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+        >
+          Cancel
+        </button>
+
+
+        <button
+          type="button"
+          (click)="confirmDeleteProduct()"
+          [disabled]="isDeletingProduct"
+          class="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+
+          @if (isDeletingProduct) {
+            Deleting...
+          } @else {
+            Delete
+          }
+
+        </button>
+
+      </div>
 
     </div>
 
