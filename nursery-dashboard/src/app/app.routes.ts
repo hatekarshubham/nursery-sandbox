@@ -21,6 +21,12 @@ import { CalenderComponent } from './pages/calender/calender.component';
 import { ProductsComponent } from './shared/components/ecommerce/products/products.component';
 import { CategoryChartComponent } from './shared/components/ecommerce/category-chart/category-chart.component';
 import { AddProductComponent } from './shared/components/ecommerce/products/add-product/add-product.component';
+import { PurchaseComponent } from './shared/components/purchase/purchase.component';
+import { AddPurchaseComponent } from './shared/components/purchase/add-purchase/add-purchase.component';
+import { StockTransferComponent } from './shared/components/stock-transfer/stock-transfer.component';
+import { AddStockTransferComponent } from './shared/components/stock-transfer/add-stock-transfer/add-stock-transfer.component';
+import { StockAdjustmentComponent } from './shared/components/stock-adjustment/stock-adjustment.component';
+import { AddStockAdjustmentComponent } from './shared/components/stock-adjustment/add-stock-adjustment/add-stock-adjustment.component';
 export const routes: Routes = [
 
   // Root URL → Login
@@ -48,14 +54,51 @@ export const routes: Routes = [
         path: 'ecommerce',
         component: EcommerceComponent,
       },
+
+      // Products
       {
         path: 'products',
-         component: ProductsComponent,
+        component: ProductsComponent,
       },
+
+      // Add Product
       {
         path: 'products/add-product',
         component: AddProductComponent,
       },
+
+      // Purchase List
+      {
+        path: 'purchase',
+        component: PurchaseComponent,
+      },
+
+      // Add Purchase
+      {
+        path: 'purchase/add-purchase',
+        component: AddPurchaseComponent,
+      },
+      //stock transfer
+      {
+         path: 'stock-transfer',
+         component: StockTransferComponent,
+      },
+      //add stock transfer
+      {
+        path:'stock-transfer/add-stock-transfer',
+        component:AddStockTransferComponent,
+      },
+      //stock adjustment
+      {
+         path: 'stock-adjustment',
+         component: StockAdjustmentComponent,
+      },
+      //add stock adjustment
+      {
+         path: 'stock-adjustment/add-stock-adjustment',
+         component: AddStockAdjustmentComponent,
+      },
+      // Category Chart
       {
         path: 'category-chart',
         component: CategoryChartComponent,

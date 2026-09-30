@@ -1,0 +1,161 @@
+<div class="p-6">
+
+  <!-- Page Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-semibold text-gray-800 dark:text-white">
+        All Stock Transfer
+      </h1>
+
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        View and manage all stock transfers
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+    >
+      Add Stock Transfer
+    </button>
+  </div>
+
+
+  <!-- Table -->
+  <div
+    class="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]"
+  >
+
+    <div class="overflow-x-auto">
+
+      <table class="w-full text-sm text-left">
+
+        <!-- Table Header -->
+        <thead class="bg-gray-50 dark:bg-gray-800">
+
+          <tr>
+
+            <th class="px-6 py-4 font-medium text-gray-600 dark:text-gray-300">
+              Date
+            </th>
+
+            <th class="px-6 py-4 font-medium text-gray-600 dark:text-gray-300">
+              Product
+            </th>
+
+            <th class="px-6 py-4 font-medium text-gray-600 dark:text-gray-300">
+              From Warehouse
+            </th>
+
+            <th class="px-6 py-4 font-medium text-gray-600 dark:text-gray-300">
+              To Warehouse
+            </th>
+
+            <th class="px-6 py-4 font-medium text-gray-600 dark:text-gray-300">
+              Qty
+            </th>
+
+            <th class="px-6 py-4 font-medium text-gray-600 dark:text-gray-300">
+              Status
+            </th>
+
+            <th class="px-6 py-4 font-medium text-gray-600 dark:text-gray-300">
+              Action
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <!-- Table Body -->
+        <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+
+          <tr
+            *ngFor="let transfer of stockTransfers"
+            class="hover:bg-gray-50 dark:hover:bg-gray-800/50"
+          >
+
+            <!-- Date -->
+            <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
+              {{ transfer.date }}
+            </td>
+
+
+            <!-- Product -->
+            <td class="px-6 py-4 font-medium text-gray-800 dark:text-white">
+              {{ transfer.product }}
+            </td>
+
+
+            <!-- From Warehouse -->
+            <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
+              {{ transfer.fromWarehouse }}
+            </td>
+
+
+            <!-- To Warehouse -->
+            <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
+              {{ transfer.toWarehouse }}
+            </td>
+
+
+            <!-- Quantity -->
+            <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
+              {{ transfer.qty }}
+            </td>
+
+
+            <!-- Status Dropdown -->
+            <td class="px-6 py-4">
+
+              <select
+                [(ngModel)]="transfer.status"
+                class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+              >
+
+                <option
+                  *ngFor="let status of statusOptions"
+                  [value]="status"
+                >
+                  {{ status }}
+                </option>
+
+              </select>
+
+            </td>
+
+
+            <!-- Action -->
+            <td class="px-6 py-4">
+
+              <button
+                type="button"
+                (click)="viewStockTransfer(transfer)"
+                class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                View
+              </button>
+
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+
+      <!-- Empty State -->
+      <div
+        *ngIf="stockTransfers.length === 0"
+        class="py-10 text-center text-gray-500"
+      >
+        No stock transfers found.
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

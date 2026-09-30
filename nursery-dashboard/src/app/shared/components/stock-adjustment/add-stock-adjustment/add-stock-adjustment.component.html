@@ -1,0 +1,186 @@
+<div class="p-6">
+
+  <!-- Page Header -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold text-gray-800 dark:text-white">
+      Add Stock Adjustment
+    </h1>
+
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+      Create a new stock adjustment
+    </p>
+  </div>
+
+  <!-- Form Card -->
+  <div
+    class="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900"
+  >
+
+    <form (ngSubmit)="saveStockAdjustment()">
+
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+
+        <!-- Warehouse -->
+        <div>
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Warehouse
+          </label>
+
+          <select
+            [(ngModel)]="warehouse"
+            name="warehouse"
+            class="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+          >
+            <option value="">Select Warehouse</option>
+
+            @for (item of warehouses; track $index) {
+              <option [value]="item">
+                {{ item }}
+              </option>
+            }
+          </select>
+        </div>
+
+        <!-- Product -->
+        <div>
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Product
+          </label>
+
+          <select
+            [(ngModel)]="product"
+            name="product"
+            class="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+          >
+            <option value="">Select Product</option>
+
+            @for (item of products; track $index) {
+              <option [value]="item">
+                {{ item }}
+              </option>
+            }
+          </select>
+        </div>
+
+        <!-- Adjustment Type -->
+        <div>
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Adjustment Type
+          </label>
+
+          <select
+            [(ngModel)]="adjustmentType"
+            name="adjustmentType"
+            class="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+          >
+            <option value="">Select Adjustment Type</option>
+
+            @for (type of adjustmentTypes; track $index) {
+              <option [value]="type">
+                {{ type }}
+              </option>
+            }
+          </select>
+        </div>
+
+        <!-- Quantity -->
+        <div>
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Qty
+          </label>
+
+          <input
+            type="number"
+            [(ngModel)]="quantity"
+            name="quantity"
+            placeholder="Enter quantity"
+            min="1"
+            class="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-700 outline-none placeholder:text-gray-400 focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+          />
+        </div>
+
+        <!-- Reason -->
+        <div>
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Reason
+          </label>
+
+          <input
+            type="text"
+            [(ngModel)]="reason"
+            name="reason"
+            placeholder="Enter reason"
+            class="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-700 outline-none placeholder:text-gray-400 focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+          />
+        </div>
+
+        <!-- Adjustment Date -->
+        <div>
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Adjustment Date
+          </label>
+
+          <input
+            type="date"
+            [(ngModel)]="adjustmentDate"
+            name="adjustmentDate"
+            class="h-11 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-700 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+          />
+        </div>
+
+        <!-- Notes -->
+        <div class="md:col-span-2">
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Notes
+          </label>
+
+          <textarea
+            [(ngModel)]="notes"
+            name="notes"
+            rows="4"
+            placeholder="Enter notes"
+            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-700 outline-none placeholder:text-gray-400 focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+          ></textarea>
+        </div>
+
+      </div>
+
+      <!-- Buttons -->
+      <div class="mt-6 flex justify-end gap-3">
+
+        <button
+          type="button"
+          (click)="cancel()"
+          class="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          class="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-600"
+        >
+          Save Adjustment
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>

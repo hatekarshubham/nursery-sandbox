@@ -1,0 +1,368 @@
+<div class="min-h-screen bg-gray-50 px-4 py-6 sm:px-6 lg:px-8">
+
+  <!-- Breadcrumb -->
+  <div class="mx-auto mb-4 max-w-3xl">
+
+    <div class="flex items-center gap-2 text-sm">
+
+      <span class="text-gray-500">
+        Purchases
+      </span>
+
+      <span class="text-gray-400">
+        /
+      </span>
+
+      <span class="font-medium text-gray-800">
+        Add Purchase
+      </span>
+
+    </div>
+
+  </div>
+
+
+  <!-- Main Card -->
+  <div class="mx-auto max-w-3xl rounded-xl border border-gray-200 bg-white shadow-sm">
+
+    <!-- Header -->
+    <div class="px-6 pt-6">
+
+      <h1 class="text-2xl font-semibold text-gray-900">
+        Add Purchase
+      </h1>
+
+      <p class="mt-1 text-sm text-gray-500">
+        Record products purchased from a supplier and add them to inventory.
+      </p>
+
+      <div class="mt-4 border-b border-gray-100"></div>
+
+    </div>
+
+
+    <!-- Purchase Details -->
+    <div class="px-6 py-5">
+
+      <h2 class="mb-6 text-xs font-semibold uppercase tracking-wide text-gray-400">
+        Purchase Details
+      </h2>
+
+
+      <!-- Supplier -->
+      <div class="mb-5">
+
+        <label class="mb-2 block text-sm font-medium text-gray-700">
+          Supplier
+          <span class="text-red-500">*</span>
+        </label>
+
+        <select
+          [(ngModel)]="supplier"
+          class="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-800 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+        >
+
+          <option
+            *ngFor="let item of suppliers"
+            [value]="item"
+          >
+            {{ item }}
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <!-- Warehouse -->
+      <div class="mb-5">
+
+        <label class="mb-2 block text-sm font-medium text-gray-700">
+          Warehouse
+          <span class="text-red-500">*</span>
+        </label>
+
+        <select
+          [(ngModel)]="warehouse"
+          class="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-800 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+        >
+
+          <option
+            *ngFor="let item of warehouses"
+            [value]="item"
+          >
+            {{ item }}
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <!-- Invoice + Date -->
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+        <!-- Invoice -->
+        <div>
+
+          <label class="mb-2 block text-sm font-medium text-gray-700">
+            Invoice Number
+          </label>
+
+          <input
+            type="text"
+            [(ngModel)]="invoiceNumber"
+            placeholder="Enter invoice number"
+            class="w-full rounded-lg border border-gray-300 px-3 py-3 text-sm text-gray-800 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+          />
+
+        </div>
+
+
+        <!-- Date -->
+        <div>
+
+          <label class="mb-2 block text-sm font-medium text-gray-700">
+            Purchase Date
+            <span class="text-red-500">*</span>
+          </label>
+
+          <input
+            type="date"
+            [(ngModel)]="purchaseDate"
+            class="w-full rounded-lg border border-gray-300 px-3 py-3 text-sm text-gray-800 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+          />
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- Divider -->
+    <div class="mx-6 border-t border-gray-100"></div>
+
+
+    <!-- Purchase Items -->
+    <div class="px-6 py-5">
+
+      <!-- Header -->
+      <div class="mb-4 flex items-center justify-between">
+
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400">
+          Purchase Items
+        </h2>
+
+        <button
+          type="button"
+          (click)="addProduct()"
+          class="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-600 hover:bg-emerald-100"
+        >
+          + Add Product
+        </button>
+
+      </div>
+
+
+      <!-- Products -->
+      <div
+        *ngFor="let item of purchaseItems; let i = index"
+        class="mb-3 rounded-lg border border-gray-200 bg-gray-50 p-3"
+      >
+
+        <!-- Product -->
+        <div class="mb-4">
+
+          <div class="mb-1 text-xs font-semibold uppercase text-gray-400">
+            Product {{ i + 1 }}
+          </div>
+
+
+          <div class="flex items-center gap-2">
+
+            <select
+              [(ngModel)]="item.product"
+              class="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-800 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+            >
+
+              <option
+                *ngFor="let product of products"
+                [value]="product"
+              >
+                {{ product }}
+              </option>
+
+            </select>
+
+
+            <!-- Delete -->
+            <button
+              type="button"
+              (click)="removeProduct(i)"
+              class="flex h-10 w-10 items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500"
+              title="Remove product"
+            >
+              🗑
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- Product Details -->
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+
+          <!-- Quantity -->
+          <div>
+
+            <label class="mb-1 block text-center text-xs font-medium text-gray-500">
+              Qty
+            </label>
+
+            <input
+              type="number"
+              min="1"
+              [(ngModel)]="item.quantity"
+              class="w-full rounded-md border border-gray-300 bg-white px-2 py-2 text-center text-sm text-gray-800 outline-none focus:border-green-500"
+            />
+
+          </div>
+
+
+          <!-- Unit Price -->
+          <div>
+
+            <label class="mb-1 block text-center text-xs font-medium text-gray-500">
+              Unit (₹)
+            </label>
+
+            <input
+              type="number"
+              min="0"
+              [(ngModel)]="item.unitPrice"
+              class="w-full rounded-md border border-gray-300 bg-white px-2 py-2 text-center text-sm text-gray-800 outline-none focus:border-green-500"
+            />
+
+          </div>
+
+
+          <!-- GST -->
+          <div>
+
+            <label class="mb-1 block text-center text-xs font-medium text-gray-500">
+              GST
+            </label>
+
+            <select
+              [(ngModel)]="item.gst"
+              class="w-full rounded-md border border-gray-300 bg-white px-2 py-2 text-center text-sm text-gray-800 outline-none focus:border-green-500"
+            >
+
+              <option
+                *ngFor="let gst of gstOptions"
+                [ngValue]="gst"
+              >
+                {{ gst }}%
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <!-- Amount -->
+          <div>
+
+            <label class="mb-1 block text-center text-xs font-medium text-gray-500">
+              Amount
+            </label>
+
+            <div class="flex h-[38px] items-center justify-center rounded-md border border-gray-200 bg-white px-2 text-sm font-semibold text-gray-800">
+
+              ₹{{ getItemAmount(item) | number:'1.0-0' }}
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- Summary -->
+    <div class="mx-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+
+      <div class="flex justify-between py-1 text-sm text-gray-600">
+
+        <span>
+          Subtotal
+        </span>
+
+        <span>
+          ₹{{ getSubtotal() | number:'1.0-0' }}
+        </span>
+
+      </div>
+
+
+      <div class="flex justify-between py-1 text-sm text-gray-600">
+
+        <span>
+          GST
+        </span>
+
+        <span>
+          ₹{{ getTotalGst() | number:'1.0-0' }}
+        </span>
+
+      </div>
+
+
+      <div class="my-2 border-t border-gray-200"></div>
+
+
+      <div class="flex justify-between text-base font-semibold text-gray-900">
+
+        <span>
+          Grand Total
+        </span>
+
+        <span>
+          ₹{{ getGrandTotal() | number:'1.0-0' }}
+        </span>
+
+      </div>
+
+    </div>
+
+
+    <!-- Buttons -->
+    <div class="flex justify-end gap-3 px-6 py-6">
+
+      <button
+        type="button"
+        (click)="cancelPurchase()"
+        class="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+      >
+        Cancel
+      </button>
+
+
+      <button
+        type="button"
+        (click)="savePurchase()"
+        class="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700"
+      >
+        Save Purchase
+      </button>
+
+    </div>
+
+  </div>
+
+</div>

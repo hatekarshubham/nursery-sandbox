@@ -1,0 +1,192 @@
+<div class="p-6">
+
+  <!-- Page Header -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold text-gray-800 dark:text-white">
+      Add Stock Transfer
+    </h1>
+
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+      Create a new stock transfer
+    </p>
+  </div>
+
+
+  <!-- Form -->
+  <div
+    class="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]"
+  >
+
+    <form (ngSubmit)="saveStockTransfer()">
+
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+
+        <!-- From Warehouse -->
+        <div>
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            From Warehouse
+          </label>
+
+          <select
+            name="fromWarehouse"
+            [(ngModel)]="fromWarehouse"
+            required
+            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+          >
+            <option value="" disabled>
+              Select From Warehouse
+            </option>
+
+            <option
+              *ngFor="let warehouse of warehouses"
+              [value]="warehouse"
+            >
+              {{ warehouse }}
+            </option>
+          </select>
+        </div>
+
+
+        <!-- To Warehouse -->
+        <div>
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            To Warehouse
+          </label>
+
+          <select
+            name="toWarehouse"
+            [(ngModel)]="toWarehouse"
+            required
+            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+          >
+            <option value="" disabled>
+              Select To Warehouse
+            </option>
+
+            <option
+              *ngFor="let warehouse of warehouses"
+              [value]="warehouse"
+            >
+              {{ warehouse }}
+            </option>
+          </select>
+        </div>
+
+
+        <!-- Product -->
+        <div>
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Product
+          </label>
+
+          <select
+            name="product"
+            [(ngModel)]="product"
+            required
+            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+          >
+            <option value="" disabled>
+              Select Product
+            </option>
+
+            <option
+              *ngFor="let item of products"
+              [value]="item"
+            >
+              {{ item }}
+            </option>
+          </select>
+        </div>
+
+
+        <!-- Quantity -->
+        <div>
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Quantity
+          </label>
+
+          <input
+            type="number"
+            name="quantity"
+            [(ngModel)]="quantity"
+            min="1"
+            required
+            placeholder="Enter quantity"
+            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+          />
+        </div>
+
+
+        <!-- Transfer Date -->
+        <div>
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Transfer Date
+          </label>
+
+          <input
+            type="date"
+            name="transferDate"
+            [(ngModel)]="transferDate"
+            required
+            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+          />
+        </div>
+
+
+        <!-- Notes -->
+        <div class="md:col-span-2">
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Notes
+          </label>
+
+          <textarea
+            name="notes"
+            [(ngModel)]="notes"
+            rows="4"
+            placeholder="Enter notes"
+            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+          ></textarea>
+        </div>
+
+      </div>
+
+
+      <!-- Buttons -->
+      <div
+        class="mt-6 flex justify-end gap-3 border-t border-gray-200 pt-6 dark:border-gray-800"
+      >
+
+        <button
+          type="button"
+          (click)="cancel()"
+          class="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+        >
+          Save Stock Transfer
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>

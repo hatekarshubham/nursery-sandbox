@@ -1,0 +1,213 @@
+<div class="space-y-6">
+
+  <!-- Page Header -->
+  <div>
+    <h1 class="text-2xl font-semibold text-gray-800 dark:text-white">
+      Purchase
+    </h1>
+
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+      Manage your product purchases and purchase records.
+    </p>
+  </div>
+
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+    <!-- Total Purchases -->
+    <div
+      class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
+
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        Total Purchases
+      </p>
+
+      <h2 class="mt-2 text-2xl font-semibold text-gray-800 dark:text-white">
+        {{ purchases.length }}
+      </h2>
+
+    </div>
+
+
+    <!-- Total Quantity -->
+    <div
+      class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
+
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        Total Quantity
+      </p>
+
+      <h2 class="mt-2 text-2xl font-semibold text-gray-800 dark:text-white">
+        {{ getTotalQuantity() }}
+      </h2>
+
+    </div>
+
+
+    <!-- Total Amount -->
+    <div
+      class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
+
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        Total Purchase Amount
+      </p>
+
+      <h2 class="mt-2 text-2xl font-semibold text-gray-800 dark:text-white">
+        ₹{{ getTotalPurchaseAmount() }}
+      </h2>
+
+    </div>
+
+  </div>
+
+
+  <!-- Purchase Table -->
+  <div
+    class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+
+    <!-- Table Header -->
+    <div
+      class="flex flex-col gap-3 border-b border-gray-200 px-6 py-5 sm:flex-row sm:items-center sm:justify-between dark:border-gray-800">
+
+      <div>
+        <h2 class="text-lg font-semibold text-gray-800 dark:text-white">
+          Purchase List
+        </h2>
+
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          List of recently purchased products.
+        </p>
+      </div>
+
+      <button
+        class="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700">
+        Add Purchase
+      </button>
+
+    </div>
+
+
+    <!-- Table -->
+    <div class="max-w-full overflow-x-auto">
+
+      <table class="w-full min-w-[1000px] text-left">
+
+        <thead class="border-b border-gray-100 dark:border-gray-800">
+
+          <tr>
+
+            <th class="px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+              #
+            </th>
+
+            <th class="px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+              Product Name
+            </th>
+
+            <th class="px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+              Category
+            </th>
+
+            <th class="px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+              Supplier
+            </th>
+
+            <th class="px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+              Quantity
+            </th>
+
+            <th class="px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+              Unit Price
+            </th>
+
+            <th class="px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+              Total Amount
+            </th>
+
+            <th class="px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+              Purchase Date
+            </th>
+
+            <th class="px-6 py-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+              Status
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+
+          @for (purchase of purchases; track purchase.id) {
+
+            <tr class="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
+
+              <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                {{ purchase.id }}
+              </td>
+
+              <td class="px-6 py-4">
+                <p class="font-medium text-gray-800 dark:text-white">
+                  {{ purchase.productName }}
+                </p>
+              </td>
+
+              <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                {{ purchase.category }}
+              </td>
+
+              <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                {{ purchase.supplier }}
+              </td>
+
+              <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                {{ purchase.quantity }}
+              </td>
+
+              <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                ₹{{ purchase.unitPrice }}
+              </td>
+
+              <td class="px-6 py-4 text-sm font-medium text-gray-800 dark:text-white">
+                ₹{{ purchase.totalAmount }}
+              </td>
+
+              <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                {{ purchase.purchaseDate }}
+              </td>
+
+              <td class="px-6 py-4">
+
+                @if (purchase.status === 'Completed') {
+
+                  <span
+                    class="inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400">
+                    Completed
+                  </span>
+
+                } @else {
+
+                  <span
+                    class="inline-flex rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400">
+                    Pending
+                  </span>
+
+                }
+
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</div>
