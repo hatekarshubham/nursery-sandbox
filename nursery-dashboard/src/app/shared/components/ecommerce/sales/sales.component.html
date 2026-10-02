@@ -1,0 +1,375 @@
+<div class="space-y-6">
+
+    <!-- ===================================================== -->
+    <!-- PAGE HEADER -->
+    <!-- ===================================================== -->
+  
+    <div
+      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+    >
+  
+      <div>
+  
+        <h2
+          class="text-2xl font-semibold text-gray-800 dark:text-white"
+        >
+          Sales History
+        </h2>
+  
+        <p
+          class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+        >
+          View completed sales and invoice details.
+        </p>
+  
+      </div>
+  
+    </div>
+  
+  
+    <!-- ===================================================== -->
+    <!-- LOADING -->
+    <!-- ===================================================== -->
+  
+    @if (isLoading) {
+  
+      <div
+        class="rounded-2xl border border-gray-200 bg-white p-10 text-center dark:border-gray-800 dark:bg-white/[0.03]"
+      >
+  
+        <p
+          class="text-sm text-gray-500 dark:text-gray-400"
+        >
+          Loading sales history...
+        </p>
+  
+      </div>
+  
+    }
+  
+  
+    <!-- ===================================================== -->
+    <!-- ERROR -->
+    <!-- ===================================================== -->
+  
+    @if (!isLoading && errorMessage) {
+  
+      <div
+        class="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/40 dark:bg-red-900/20"
+      >
+  
+        <p
+          class="text-sm text-red-700 dark:text-red-400"
+        >
+          {{ errorMessage }}
+        </p>
+  
+      </div>
+  
+    }
+  
+  
+    <!-- ===================================================== -->
+    <!-- SALES -->
+    <!-- ===================================================== -->
+  
+    @if (!isLoading && !errorMessage) {
+  
+      <div
+        class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]"
+      >
+  
+        <!-- =============================================== -->
+        <!-- EMPTY -->
+        <!-- =============================================== -->
+  
+        @if (sales.length === 0) {
+  
+          <div
+            class="px-6 py-16 text-center"
+          >
+  
+            <div
+              class="mb-3 text-5xl"
+            >
+              🧾
+            </div>
+  
+            <p
+              class="font-medium text-gray-700 dark:text-gray-300"
+            >
+              No sales found
+            </p>
+  
+            <p
+              class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+            >
+              Completed sales will appear here.
+            </p>
+  
+          </div>
+  
+        } @else {
+  
+  
+          <!-- ============================================= -->
+          <!-- TABLE -->
+          <!-- ============================================= -->
+  
+          <div
+            class="overflow-x-auto"
+          >
+  
+            <table
+              class="w-full text-left"
+            >
+  
+              <thead
+                class="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50"
+              >
+  
+                <tr>
+  
+                  <th
+                    class="whitespace-nowrap px-5 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                  >
+                    Invoice
+                  </th>
+  
+                  <th
+                    class="whitespace-nowrap px-5 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                  >
+                    Date
+                  </th>
+  
+                  <th
+                    class="whitespace-nowrap px-5 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                  >
+                    Warehouse
+                  </th>
+  
+                  <th
+                    class="px-5 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                  >
+                    Products
+                  </th>
+  
+                  <th
+                    class="whitespace-nowrap px-5 py-4 text-center text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                  >
+                    Qty
+                  </th>
+  
+                  <th
+                    class="whitespace-nowrap px-5 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                  >
+                    Payment
+                  </th>
+  
+                  <th
+                    class="whitespace-nowrap px-5 py-4 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                  >
+                    GST
+                  </th>
+  
+                  <th
+                    class="whitespace-nowrap px-5 py-4 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                  >
+                    Discount
+                  </th>
+  
+                  <th
+                    class="whitespace-nowrap px-5 py-4 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                  >
+                    Total
+                  </th>
+  
+                </tr>
+  
+              </thead>
+  
+  
+              <tbody
+                class="divide-y divide-gray-100 dark:divide-gray-800"
+              >
+  
+                @for (
+                  sale of sales;
+                  track sale.id
+                ) {
+  
+                  <tr
+                    class="transition hover:bg-gray-50 dark:hover:bg-white/[0.02]"
+                  >
+  
+                    <!-- INVOICE -->
+  
+                    <td
+                      class="whitespace-nowrap px-5 py-4"
+                    >
+  
+                      <span
+                        class="font-mono text-sm font-medium text-brand-500"
+                      >
+                        {{ sale.invoiceNumber }}
+                      </span>
+  
+                    </td>
+  
+  
+                    <!-- DATE -->
+  
+                    <td
+                      class="whitespace-nowrap px-5 py-4 text-sm text-gray-600 dark:text-gray-300"
+                    >
+                      {{ formatDate(sale.createdAt) }}
+                    </td>
+  
+  
+                    <!-- WAREHOUSE -->
+  
+                    <td
+                      class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300"
+                    >
+                      {{ sale.warehouseName || '-' }}
+                    </td>
+  
+  
+                    <!-- PRODUCTS -->
+
+                    <td
+                    class="min-w-[220px] px-5 py-4"
+                    >
+                    <div class="space-y-2">
+                    
+                      @for (
+                        item of sale.items;
+                        track item.productId
+                      ) {
+                    
+                        <div
+                          class="flex min-h-[24px] items-center"
+                        >
+                          <span
+                            class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                          >
+                            {{ item.productName }}
+                          </span>
+                        </div>
+                    
+                      }
+                  
+                    </div>
+                    </td>
+                    
+                    
+                    <!-- QUANTITY -->
+                    
+                    <td
+                    class="whitespace-nowrap px-5 py-4 text-center"
+                    >
+                    <div class="space-y-2">
+                    
+                      @for (
+                        item of sale.items;
+                        track item.productId
+                      ) {
+                    
+                        <div
+                          class="flex min-h-[24px] items-center justify-center"
+                        >
+                          <span
+                            class="text-sm font-semibold text-gray-700 dark:text-gray-300"
+                          >
+                            {{ item.quantity }}
+                          </span>
+                        </div>
+                    
+                      }
+                  
+                    </div>
+                    </td>
+  
+  
+                    <!-- PAYMENT -->
+  
+                    <td
+                      class="whitespace-nowrap px-5 py-4"
+                    >
+  
+                      <span
+                        class="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                      >
+                        {{ sale.paymentMode }}
+                      </span>
+  
+                    </td>
+  
+  
+                    <!-- GST -->
+  
+                    <td
+                      class="whitespace-nowrap px-5 py-4 text-right text-sm text-gray-600 dark:text-gray-300"
+                    >
+                      ₹{{ sale.gstAmount | number:'1.2-2' }}
+                    </td>
+  
+  
+                    <!-- DISCOUNT -->
+  
+                    <td
+                      class="whitespace-nowrap px-5 py-4 text-right text-sm"
+                    >
+  
+                      @if (sale.discount > 0) {
+  
+                        <span
+                          class="text-red-500"
+                        >
+                          - ₹{{ sale.discount | number:'1.2-2' }}
+                        </span>
+  
+                      } @else {
+  
+                        <span
+                          class="text-gray-400"
+                        >
+                          ₹0.00
+                        </span>
+  
+                      }
+  
+                    </td>
+  
+  
+                    <!-- TOTAL -->
+  
+                    <td
+                      class="whitespace-nowrap px-5 py-4 text-right"
+                    >
+  
+                      <span
+                        class="text-sm font-semibold text-gray-900 dark:text-white"
+                      >
+                        ₹{{ sale.grandTotal | number:'1.2-2' }}
+                      </span>
+  
+                    </td>
+  
+                  </tr>
+  
+                }
+  
+              </tbody>
+  
+            </table>
+  
+          </div>
+  
+        }
+  
+      </div>
+  
+    }
+  
+  </div>

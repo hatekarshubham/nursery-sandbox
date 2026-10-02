@@ -1,0 +1,579 @@
+<div
+  class="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-4 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6"
+>
+
+  <!-- =================================================== -->
+  <!-- HEADER -->
+  <!-- =================================================== -->
+
+  <div class="mb-5">
+
+    <h3
+      class="text-lg font-semibold text-gray-800 dark:text-white/90"
+    >
+      Stock Transfers
+    </h3>
+
+    <p
+      class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+    >
+      Warehouse-to-warehouse stock transfer history
+    </p>
+
+  </div>
+
+
+  <!-- =================================================== -->
+  <!-- LOADING -->
+  <!-- =================================================== -->
+
+  @if (isLoading) {
+
+    <div
+      class="py-12 text-center text-sm text-gray-500 dark:text-gray-400"
+    >
+      Loading stock transfers...
+    </div>
+
+  }
+
+
+  <!-- =================================================== -->
+  <!-- ERROR -->
+  <!-- =================================================== -->
+
+  @if (
+    !isLoading &&
+    errorMessage
+  ) {
+
+    <div
+      class="rounded-xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/10 dark:text-red-400"
+    >
+      {{ errorMessage }}
+    </div>
+
+  }
+
+
+  <!-- =================================================== -->
+  <!-- EMPTY STATE -->
+  <!-- =================================================== -->
+
+  @if (
+    !isLoading &&
+    !errorMessage &&
+    stockTransfers.length === 0
+  ) {
+
+    <div
+      class="rounded-xl border border-dashed border-gray-300 py-12 text-center dark:border-gray-700"
+    >
+
+      <p
+        class="text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        No stock transfers found.
+      </p>
+
+      <p
+        class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+      >
+        Stock transfer history will appear here after
+        inventory is transferred between warehouses.
+      </p>
+
+    </div>
+
+  }
+
+
+  <!-- =================================================== -->
+  <!-- TRANSFER TABLE -->
+  <!-- =================================================== -->
+
+  @if (
+    !isLoading &&
+    !errorMessage &&
+    stockTransfers.length > 0
+  ) {
+
+    <div class="max-w-full overflow-x-auto">
+
+      <table class="w-full text-left">
+
+        <!-- =============================================== -->
+        <!-- TABLE HEADER -->
+        <!-- =============================================== -->
+
+        <thead
+          class="border-y border-gray-100 dark:border-gray-800"
+        >
+
+          <tr>
+
+            <th
+              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Date
+            </th>
+
+
+            <th
+              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Product
+            </th>
+
+
+            <th
+              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              From Warehouse
+            </th>
+
+
+            <th
+              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              To Warehouse
+            </th>
+
+
+            <th
+              class="whitespace-nowrap px-3 py-3 text-center font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Quantity
+            </th>
+
+
+            <th
+              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Status
+            </th>
+
+
+            <th
+              class="whitespace-nowrap px-3 py-3 text-right font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Action
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <!-- =============================================== -->
+        <!-- TABLE BODY -->
+        <!-- =============================================== -->
+
+        <tbody
+          class="divide-y divide-gray-100 dark:divide-gray-800"
+        >
+
+          @for (
+            transfer of stockTransfers;
+            track transfer.id
+          ) {
+
+            <tr
+              class="transition hover:bg-gray-50 dark:hover:bg-white/[0.02]"
+            >
+
+              <!-- DATE -->
+
+              <td
+                class="whitespace-nowrap px-3 py-4 text-sm text-gray-600 dark:text-gray-400"
+              >
+                {{
+                  formatTransferDate(
+                    transfer.transferDate
+                  )
+                }}
+              </td>
+
+
+              <!-- PRODUCT -->
+
+              <td class="px-3 py-4">
+
+                <div
+                  class="font-medium text-gray-800 text-theme-sm dark:text-white/90"
+                >
+                  {{ transfer.productName }}
+                </div>
+
+              </td>
+
+
+              <!-- FROM WAREHOUSE -->
+
+              <td class="px-3 py-4">
+
+                <div class="flex flex-col gap-1">
+
+                  <span
+                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    {{ transfer.fromWarehouseName }}
+                  </span>
+
+                  <span
+                    class="w-fit rounded bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600 dark:bg-red-500/10 dark:text-red-400"
+                  >
+                    {{ transfer.fromWarehouseCode }}
+                  </span>
+
+                </div>
+
+              </td>
+
+
+              <!-- TO WAREHOUSE -->
+
+              <td class="px-3 py-4">
+
+                <div class="flex flex-col gap-1">
+
+                  <span
+                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    {{ transfer.toWarehouseName }}
+                  </span>
+
+                  <span
+                    class="w-fit rounded bg-green-50 px-2 py-0.5 text-xs font-medium text-green-600 dark:bg-green-500/10 dark:text-green-400"
+                  >
+                    {{ transfer.toWarehouseCode }}
+                  </span>
+
+                </div>
+
+              </td>
+
+
+              <!-- QUANTITY -->
+
+              <td
+                class="px-3 py-4 text-center"
+              >
+
+                <span
+                  class="inline-flex min-w-[45px] justify-center rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-semibold text-gray-800 dark:bg-gray-700 dark:text-white"
+                >
+                  {{ transfer.quantity }}
+                </span>
+
+              </td>
+
+
+              <!-- STATUS -->
+
+              <td class="px-3 py-4">
+
+                <span
+                  class="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+                >
+                  {{ transfer.status }}
+                </span>
+
+              </td>
+
+
+              <!-- ACTION -->
+
+              <td
+                class="px-3 py-4 text-right"
+              >
+
+                <button
+                  type="button"
+                  (click)="openTransferDetails(transfer)"
+                  class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                >
+                  View
+                </button>
+
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  }
+
+</div>
+
+
+<!-- ====================================================== -->
+<!-- TRANSFER DETAILS MODAL -->
+<!-- ====================================================== -->
+
+@if (selectedTransfer) {
+
+  <div
+    class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4"
+    (click)="closeTransferDetails()"
+  >
+
+    <div
+      class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800"
+      (click)="$event.stopPropagation()"
+    >
+
+      <!-- ================================================= -->
+      <!-- HEADER -->
+      <!-- ================================================= -->
+
+      <div
+        class="mb-5 flex items-start justify-between"
+      >
+
+        <div>
+
+          <h2
+            class="text-xl font-semibold text-gray-800 dark:text-white"
+          >
+            Stock Transfer Details
+          </h2>
+
+          <p
+            class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+          >
+            Warehouse transfer information
+          </p>
+
+        </div>
+
+
+        <button
+          type="button"
+          (click)="closeTransferDetails()"
+          class="flex h-8 w-8 items-center justify-center rounded-full text-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <!-- ================================================= -->
+      <!-- PRODUCT -->
+      <!-- ================================================= -->
+
+      <div
+        class="mb-5 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-700/30"
+      >
+
+        <p
+          class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+        >
+          Product
+        </p>
+
+
+        <p
+          class="mt-1 text-lg font-semibold text-gray-800 dark:text-white"
+        >
+          {{ selectedTransfer.productName }}
+        </p>
+
+      </div>
+
+
+      <!-- ================================================= -->
+      <!-- DETAILS -->
+      <!-- ================================================= -->
+
+      <div
+        class="divide-y divide-gray-100 rounded-xl border border-gray-200 dark:divide-gray-700 dark:border-gray-700"
+      >
+
+        <!-- DATE -->
+
+        <div
+          class="flex items-center justify-between gap-4 px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            Transfer Date
+          </span>
+
+          <span
+            class="text-sm font-semibold text-gray-800 dark:text-white"
+          >
+            {{
+              formatTransferDate(
+                selectedTransfer.transferDate
+              )
+            }}
+          </span>
+
+        </div>
+
+
+        <!-- FROM -->
+
+        <div
+          class="flex items-center justify-between gap-4 px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            From Warehouse
+          </span>
+
+          <div class="text-right">
+
+            <p
+              class="text-sm font-semibold text-gray-800 dark:text-white"
+            >
+              {{
+                selectedTransfer.fromWarehouseName
+              }}
+            </p>
+
+            <p
+              class="mt-0.5 text-xs text-red-500"
+            >
+              {{
+                selectedTransfer.fromWarehouseCode
+              }}
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- TO -->
+
+        <div
+          class="flex items-center justify-between gap-4 px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            To Warehouse
+          </span>
+
+          <div class="text-right">
+
+            <p
+              class="text-sm font-semibold text-gray-800 dark:text-white"
+            >
+              {{
+                selectedTransfer.toWarehouseName
+              }}
+            </p>
+
+            <p
+              class="mt-0.5 text-xs text-green-500"
+            >
+              {{
+                selectedTransfer.toWarehouseCode
+              }}
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- QUANTITY -->
+
+        <div
+          class="flex items-center justify-between gap-4 px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            Quantity Transferred
+          </span>
+
+          <span
+            class="text-lg font-semibold text-gray-800 dark:text-white"
+          >
+            {{ selectedTransfer.quantity }}
+          </span>
+
+        </div>
+
+
+        <!-- STATUS -->
+
+        <div
+          class="flex items-center justify-between gap-4 px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            Status
+          </span>
+
+          <span
+            class="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+          >
+            {{ selectedTransfer.status }}
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- ================================================= -->
+      <!-- NOTES -->
+      <!-- ================================================= -->
+
+      <div class="mt-5">
+
+        <p
+          class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Notes
+        </p>
+
+        <div
+          class="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm leading-6 text-gray-600 dark:border-gray-700 dark:bg-gray-700/30 dark:text-gray-300"
+        >
+          {{
+            selectedTransfer.notes ||
+            'No notes added.'
+          }}
+        </div>
+
+      </div>
+
+
+      <!-- ================================================= -->
+      <!-- CLOSE -->
+      <!-- ================================================= -->
+
+      <button
+        type="button"
+        (click)="closeTransferDetails()"
+        class="mt-6 w-full rounded-lg bg-gray-800 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-700 dark:bg-white dark:text-gray-800"
+      >
+        Close
+      </button>
+
+    </div>
+
+  </div>
+
+}

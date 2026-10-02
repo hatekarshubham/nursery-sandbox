@@ -1,0 +1,648 @@
+<div
+  class="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-4 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6"
+>
+
+  <!-- =================================================== -->
+  <!-- HEADER -->
+  <!-- =================================================== -->
+
+  <div class="mb-5">
+
+    <h3
+      class="text-lg font-semibold text-gray-800 dark:text-white/90"
+    >
+      Stock Adjustments
+    </h3>
+
+    <p
+      class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+    >
+      Inventory correction and adjustment history
+    </p>
+
+  </div>
+
+
+  <!-- =================================================== -->
+  <!-- LOADING -->
+  <!-- =================================================== -->
+
+  @if (isLoading) {
+
+    <div
+      class="py-12 text-center text-sm text-gray-500 dark:text-gray-400"
+    >
+      Loading stock adjustments...
+    </div>
+
+  }
+
+
+  <!-- =================================================== -->
+  <!-- ERROR -->
+  <!-- =================================================== -->
+
+  @if (
+    !isLoading &&
+    errorMessage
+  ) {
+
+    <div
+      class="rounded-xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/10 dark:text-red-400"
+    >
+      {{ errorMessage }}
+    </div>
+
+  }
+
+
+  <!-- =================================================== -->
+  <!-- EMPTY -->
+  <!-- =================================================== -->
+
+  @if (
+    !isLoading &&
+    !errorMessage &&
+    stockAdjustments.length === 0
+  ) {
+
+    <div
+      class="rounded-xl border border-dashed border-gray-300 py-12 text-center dark:border-gray-700"
+    >
+
+      <p
+        class="text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        No stock adjustments found.
+      </p>
+
+      <p
+        class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+      >
+        Stock correction history will appear here.
+      </p>
+
+    </div>
+
+  }
+
+
+  <!-- =================================================== -->
+  <!-- TABLE -->
+  <!-- =================================================== -->
+
+  @if (
+    !isLoading &&
+    !errorMessage &&
+    stockAdjustments.length > 0
+  ) {
+
+    <div class="max-w-full overflow-x-auto">
+
+      <table class="w-full text-left">
+
+        <thead
+          class="border-y border-gray-100 dark:border-gray-800"
+        >
+
+          <tr>
+
+            <th
+              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Date
+            </th>
+
+            <th
+              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Product
+            </th>
+
+            <th
+              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Warehouse
+            </th>
+
+            <th
+              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Type
+            </th>
+
+            <th
+              class="whitespace-nowrap px-3 py-3 text-center font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Quantity
+            </th>
+
+            <th
+              class="whitespace-nowrap px-3 py-3 text-center font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Before
+            </th>
+
+            <th
+              class="whitespace-nowrap px-3 py-3 text-center font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              After
+            </th>
+
+            <th
+              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Reason
+            </th>
+
+            <th
+              class="whitespace-nowrap px-3 py-3 text-left font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Action
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody
+          class="divide-y divide-gray-100 dark:divide-gray-800"
+        >
+
+          @for (
+            adjustment of stockAdjustments;
+            track adjustment.id
+          ) {
+
+            <tr
+              class="transition hover:bg-gray-50 dark:hover:bg-white/[0.02]"
+            >
+
+              <!-- DATE -->
+
+              <td
+                class="whitespace-nowrap px-3 py-4 text-sm text-gray-600 dark:text-gray-400"
+              >
+                {{
+                  formatAdjustmentDate(
+                    adjustment.adjustmentDate
+                  )
+                }}
+              </td>
+
+
+              <!-- PRODUCT -->
+
+              <td class="px-3 py-4">
+
+                <span
+                  class="font-medium text-gray-800 text-theme-sm dark:text-white/90"
+                >
+                  {{ adjustment.productName }}
+                </span>
+
+              </td>
+
+
+              <!-- WAREHOUSE -->
+
+              <td class="px-3 py-4">
+
+                <div class="flex flex-col gap-1">
+
+                  <span
+                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    {{ adjustment.warehouseName }}
+                  </span>
+
+                  <span
+                    class="w-fit rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                  >
+                    {{ adjustment.warehouseCode }}
+                  </span>
+
+                </div>
+
+              </td>
+
+
+              <!-- TYPE -->
+
+              <td class="px-3 py-4">
+
+                @if (
+                  adjustment.adjustmentType ===
+                  'INCREASE'
+                ) {
+
+                  <span
+                    class="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+                  >
+                    Increase
+                  </span>
+
+                } @else {
+
+                  <span
+                    class="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
+                  >
+                    Decrease
+                  </span>
+
+                }
+
+              </td>
+
+
+              <!-- QUANTITY -->
+
+              <td
+                class="px-3 py-4 text-center"
+              >
+
+                <span
+                  class="font-semibold text-gray-800 dark:text-white"
+                >
+                  {{ adjustment.quantity }}
+                </span>
+
+              </td>
+
+
+              <!-- BEFORE -->
+
+              <td
+                class="px-3 py-4 text-center text-sm text-gray-600 dark:text-gray-400"
+              >
+                {{ adjustment.quantityBefore }}
+              </td>
+
+
+              <!-- AFTER -->
+
+              <td
+                class="px-3 py-4 text-center"
+              >
+
+                <span
+                  class="font-semibold text-gray-800 dark:text-white"
+                >
+                  {{ adjustment.quantityAfter }}
+                </span>
+
+              </td>
+
+
+              <!-- REASON -->
+
+              <td
+                class="px-3 py-4 text-sm text-gray-600 dark:text-gray-400"
+              >
+                {{ adjustment.reason }}
+              </td>
+
+
+              <!-- ACTION -->
+
+              <td class="px-3 py-4 text-left">
+
+                <button
+                  type="button"
+                  (click)="openAdjustmentDetails(adjustment)"
+                  class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                >
+                  View
+                </button>
+
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  }
+
+</div>
+
+
+<!-- ====================================================== -->
+<!-- DETAILS MODAL -->
+<!-- ====================================================== -->
+
+@if (selectedAdjustment) {
+
+  <div
+    class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4"
+    (click)="closeAdjustmentDetails()"
+  >
+
+    <div
+      class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800"
+      (click)="$event.stopPropagation()"
+    >
+
+      <!-- HEADER -->
+
+      <div
+        class="mb-5 flex items-start justify-between"
+      >
+
+        <div>
+
+          <h2
+            class="text-xl font-semibold text-gray-800 dark:text-white"
+          >
+            Stock Adjustment Details
+          </h2>
+
+          <p
+            class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+          >
+            Inventory correction information
+          </p>
+
+        </div>
+
+
+        <button
+          type="button"
+          (click)="closeAdjustmentDetails()"
+          class="flex h-8 w-8 items-center justify-center rounded-full text-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <!-- PRODUCT -->
+
+      <div
+        class="mb-5 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-700/30"
+      >
+
+        <p
+          class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+        >
+          Product
+        </p>
+
+        <p
+          class="mt-1 text-lg font-semibold text-gray-800 dark:text-white"
+        >
+          {{ selectedAdjustment.productName }}
+        </p>
+
+      </div>
+
+
+      <!-- DETAILS -->
+
+      <div
+        class="divide-y divide-gray-100 rounded-xl border border-gray-200 dark:divide-gray-700 dark:border-gray-700"
+      >
+
+        <!-- DATE -->
+
+        <div
+          class="flex items-center justify-between gap-4 px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            Adjustment Date
+          </span>
+
+          <span
+            class="text-sm font-semibold text-gray-800 dark:text-white"
+          >
+            {{
+              formatAdjustmentDate(
+                selectedAdjustment.adjustmentDate
+              )
+            }}
+          </span>
+
+        </div>
+
+
+        <!-- WAREHOUSE -->
+
+        <div
+          class="flex items-center justify-between gap-4 px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            Warehouse
+          </span>
+
+          <div class="text-right">
+
+            <p
+              class="text-sm font-semibold text-gray-800 dark:text-white"
+            >
+              {{ selectedAdjustment.warehouseName }}
+            </p>
+
+            <p
+              class="mt-0.5 text-xs text-gray-500 dark:text-gray-400"
+            >
+              {{ selectedAdjustment.warehouseCode }}
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- TYPE -->
+
+        <div
+          class="flex items-center justify-between gap-4 px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            Adjustment Type
+          </span>
+
+          @if (
+            selectedAdjustment.adjustmentType ===
+            'INCREASE'
+          ) {
+
+            <span
+              class="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+            >
+              Increase
+            </span>
+
+          } @else {
+
+            <span
+              class="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
+            >
+              Decrease
+            </span>
+
+          }
+
+        </div>
+
+
+        <!-- ADJUSTMENT QUANTITY -->
+
+        <div
+          class="flex items-center justify-between gap-4 px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            Adjustment Quantity
+          </span>
+
+          <span
+            class="text-lg font-semibold text-gray-800 dark:text-white"
+          >
+            {{ selectedAdjustment.quantity }}
+          </span>
+
+        </div>
+
+
+        <!-- BEFORE -->
+
+        <div
+          class="flex items-center justify-between gap-4 px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            Quantity Before
+          </span>
+
+          <span
+            class="text-sm font-semibold text-gray-800 dark:text-white"
+          >
+            {{ selectedAdjustment.quantityBefore }}
+          </span>
+
+        </div>
+
+
+        <!-- AFTER -->
+
+        <div
+          class="flex items-center justify-between gap-4 px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            Quantity After
+          </span>
+
+          <span
+            class="text-sm font-semibold text-gray-800 dark:text-white"
+          >
+            {{ selectedAdjustment.quantityAfter }}
+          </span>
+
+        </div>
+
+
+        <!-- REASON -->
+
+        <div
+          class="flex items-center justify-between gap-4 px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            Reason
+          </span>
+
+          <span
+            class="text-right text-sm font-semibold text-gray-800 dark:text-white"
+          >
+            {{ selectedAdjustment.reason }}
+          </span>
+
+        </div>
+
+
+        <!-- STATUS -->
+
+        <div
+          class="flex items-center justify-between gap-4 px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            Status
+          </span>
+
+          <span
+            class="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+          >
+            {{ selectedAdjustment.status }}
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- NOTES -->
+
+      <div class="mt-5">
+
+        <p
+          class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Notes
+        </p>
+
+        <div
+          class="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm leading-6 text-gray-600 dark:border-gray-700 dark:bg-gray-700/30 dark:text-gray-300"
+        >
+          {{
+            selectedAdjustment.notes ||
+            'No notes added.'
+          }}
+        </div>
+
+      </div>
+
+
+      <!-- CLOSE -->
+
+      <button
+        type="button"
+        (click)="closeAdjustmentDetails()"
+        class="mt-6 w-full rounded-lg bg-gray-800 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-700 dark:bg-white dark:text-gray-800"
+      >
+        Close
+      </button>
+
+    </div>
+
+  </div>
+
+}

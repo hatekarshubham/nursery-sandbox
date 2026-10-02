@@ -355,18 +355,6 @@
       class="flex flex-wrap gap-3 border-t border-gray-100 pt-6 dark:border-gray-800"
     >
 
-      <!-- SAVE & VIEW ALL -->
-
-      <button
-        type="button"
-        (click)="saveAndViewAll()"
-        [disabled]="isSaving"
-        class="rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {{ isSaving ? 'Saving...' : 'Save & View All' }}
-      </button>
-
-
       <!-- SAVE & ADD ANOTHER -->
 
       <button
@@ -375,7 +363,18 @@
         [disabled]="isSaving"
         class="rounded-lg bg-green-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {{ isSaving ? 'Saving...' : 'Save & Add Another' }}
+        {{ isSaving ? 'Saving...' : 'Save Product' }}
+      </button>
+
+      <!-- SAVE & VIEW ALL -->
+
+      <button
+        type="button"
+        (click)="saveAndViewAll()"
+        [disabled]="isSaving"
+        class="rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {{ isSaving ? 'Saving...' : 'Save & View Products' }}
       </button>
 
 

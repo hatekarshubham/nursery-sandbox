@@ -1,0 +1,546 @@
+/* =========================================================
+   CREATE SALE
+   ========================================================= */
+
+
+/* =========================================================
+   NUMBER INPUT
+   Remove browser arrows from quantity / discount fields
+   ========================================================= */
+
+   input[type='number']::-webkit-inner-spin-button,
+   input[type='number']::-webkit-outer-spin-button {
+     -webkit-appearance: none;
+     margin: 0;
+   }
+   
+   input[type='number'] {
+     -moz-appearance: textfield;
+   }
+   
+   
+   /* =========================================================
+      INVOICE PREVIEW
+      ========================================================= */
+   
+   #invoice-print-area {
+     width: 100%;
+     max-width: 820px;
+     min-height: 500px;
+     margin: 0 auto;
+     box-sizing: border-box;
+   }
+   
+   
+   /* =========================================================
+      INVOICE TABLE
+      ========================================================= */
+   
+   #invoice-print-area table {
+     width: 100%;
+     border-collapse: collapse;
+   }
+   
+   #invoice-print-area th,
+   #invoice-print-area td {
+     vertical-align: top;
+   }
+   
+   
+   /* =========================================================
+      PRINT SETTINGS
+      ========================================================= */
+   
+   @media print {
+   
+     /* -------------------------------------------------------
+        PAGE
+        ------------------------------------------------------- */
+   
+     @page {
+       size: A4 portrait;
+       margin: 10mm;
+     }
+   
+   
+     /* -------------------------------------------------------
+        REMOVE DEFAULT BACKGROUND
+        ------------------------------------------------------- */
+   
+     html,
+     body {
+       margin: 0 !important;
+       padding: 0 !important;
+       width: 100% !important;
+       min-height: auto !important;
+       background: #ffffff !important;
+     }
+   
+   
+     /* -------------------------------------------------------
+        HIDE EVERYTHING
+        ------------------------------------------------------- */
+   
+     body * {
+       visibility: hidden !important;
+     }
+   
+   
+     /* -------------------------------------------------------
+        SHOW ONLY INVOICE
+        ------------------------------------------------------- */
+   
+     #invoice-print-area,
+     #invoice-print-area * {
+       visibility: visible !important;
+     }
+   
+   
+     /* -------------------------------------------------------
+        MOVE INVOICE TO TOP LEFT OF PRINT PAGE
+        ------------------------------------------------------- */
+   
+     #invoice-print-area {
+       position: absolute !important;
+   
+       left: 0 !important;
+       top: 0 !important;
+   
+       width: 100% !important;
+       max-width: none !important;
+   
+       min-height: auto !important;
+   
+       margin: 0 !important;
+       padding: 0 !important;
+   
+       background: #ffffff !important;
+   
+       color: #000000 !important;
+   
+       box-shadow: none !important;
+   
+       border: none !important;
+   
+       overflow: visible !important;
+     }
+   
+   
+     /* -------------------------------------------------------
+        REMOVE MODAL BACKDROP / POSITIONING
+        ------------------------------------------------------- */
+   
+     .invoice-modal-overlay {
+       position: static !important;
+   
+       display: block !important;
+   
+       width: 100% !important;
+       height: auto !important;
+   
+       margin: 0 !important;
+       padding: 0 !important;
+   
+       background: transparent !important;
+   
+       overflow: visible !important;
+     }
+   
+   
+     .invoice-modal {
+       position: static !important;
+   
+       display: block !important;
+   
+       width: 100% !important;
+       max-width: none !important;
+   
+       height: auto !important;
+       max-height: none !important;
+   
+       margin: 0 !important;
+       padding: 0 !important;
+   
+       overflow: visible !important;
+   
+       background: #ffffff !important;
+   
+       border: none !important;
+   
+       border-radius: 0 !important;
+   
+       box-shadow: none !important;
+     }
+   
+   
+     .invoice-scroll {
+       position: static !important;
+   
+       display: block !important;
+   
+       width: 100% !important;
+   
+       height: auto !important;
+       max-height: none !important;
+   
+       margin: 0 !important;
+       padding: 0 !important;
+   
+       overflow: visible !important;
+   
+       background: #ffffff !important;
+     }
+   
+   
+     /* -------------------------------------------------------
+        DO NOT PRINT PREVIEW CONTROLS
+        ------------------------------------------------------- */
+   
+     .invoice-preview-header,
+     .invoice-actions {
+       display: none !important;
+     }
+   
+   
+     /* -------------------------------------------------------
+        BUSINESS HEADER
+        ------------------------------------------------------- */
+   
+     .invoice-business-header {
+       margin: 0 !important;
+   
+       padding: 0 0 14px 0 !important;
+   
+       text-align: center !important;
+   
+       page-break-inside: avoid !important;
+     }
+   
+   
+     .invoice-business-header h1 {
+       margin: 0 !important;
+   
+       font-size: 24px !important;
+   
+       line-height: 1.2 !important;
+   
+       font-weight: 700 !important;
+   
+       color: #000000 !important;
+     }
+   
+   
+     .invoice-business-header p {
+       margin-top: 5px !important;
+   
+       font-size: 9px !important;
+   
+       color: #555555 !important;
+   
+       letter-spacing: 2px !important;
+     }
+   
+   
+     /* -------------------------------------------------------
+        INVOICE INFORMATION
+        ------------------------------------------------------- */
+   
+     .invoice-information {
+       display: flex !important;
+   
+       justify-content: space-between !important;
+   
+       align-items: flex-start !important;
+   
+       gap: 30px !important;
+   
+       margin-top: 0 !important;
+   
+       padding: 12px 0 !important;
+   
+       border-top: 1px solid #cccccc !important;
+       border-bottom: 1px solid #cccccc !important;
+   
+       page-break-inside: avoid !important;
+     }
+   
+   
+     .invoice-information p {
+       margin: 0 !important;
+   
+       font-size: 10px !important;
+   
+       line-height: 1.6 !important;
+   
+       color: #333333 !important;
+     }
+   
+   
+     .invoice-information p + p {
+       margin-top: 3px !important;
+     }
+   
+   
+     .invoice-information strong {
+       color: #000000 !important;
+   
+       font-weight: 600 !important;
+     }
+   
+   
+     .invoice-warehouse {
+       text-align: right !important;
+     }
+   
+   
+     /* -------------------------------------------------------
+        CUSTOMER
+        ------------------------------------------------------- */
+   
+     .invoice-customer {
+       padding: 12px 0 !important;
+   
+       border-bottom: 1px solid #dddddd !important;
+   
+       page-break-inside: avoid !important;
+     }
+   
+   
+     .invoice-section-title {
+       margin: 0 0 8px 0 !important;
+   
+       font-size: 9px !important;
+   
+       color: #666666 !important;
+   
+       letter-spacing: 1px !important;
+   
+       font-weight: 600 !important;
+     }
+   
+   
+     .invoice-customer-grid {
+       display: grid !important;
+   
+       grid-template-columns: 1fr 1fr !important;
+   
+       gap: 30px !important;
+     }
+   
+   
+     .invoice-customer-grid p {
+       margin: 0 !important;
+   
+       font-size: 10px !important;
+   
+       line-height: 1.5 !important;
+     }
+   
+   
+     .invoice-customer-grid p:first-child {
+       font-size: 9px !important;
+   
+       color: #777777 !important;
+     }
+   
+   
+     .invoice-customer-grid p:last-child {
+       margin-top: 2px !important;
+   
+       color: #000000 !important;
+   
+       font-weight: 600 !important;
+     }
+   
+   
+     /* -------------------------------------------------------
+        PRODUCT TABLE
+        ------------------------------------------------------- */
+   
+     .invoice-products {
+       margin-top: 15px !important;
+   
+       overflow: visible !important;
+     }
+   
+   
+     #invoice-print-area table {
+       width: 100% !important;
+   
+       border-collapse: collapse !important;
+   
+       table-layout: auto !important;
+   
+       font-size: 10px !important;
+     }
+   
+   
+     #invoice-print-area thead {
+       display: table-header-group !important;
+     }
+   
+   
+     #invoice-print-area thead tr {
+       border-top: 1.5px solid #555555 !important;
+   
+       border-bottom: 1.5px solid #555555 !important;
+     }
+   
+   
+     #invoice-print-area th {
+       padding: 7px 5px !important;
+   
+       font-size: 8.5px !important;
+   
+       font-weight: 700 !important;
+   
+       color: #333333 !important;
+   
+       background: transparent !important;
+   
+       text-transform: uppercase !important;
+     }
+   
+   
+     #invoice-print-area td {
+       padding: 8px 5px !important;
+   
+       font-size: 10px !important;
+   
+       color: #111111 !important;
+   
+       border-bottom: 1px solid #dddddd !important;
+     }
+   
+   
+     #invoice-print-area tbody tr {
+       page-break-inside: avoid !important;
+   
+       break-inside: avoid !important;
+     }
+   
+   
+     #invoice-print-area td p {
+       margin: 0 !important;
+     }
+   
+   
+     #invoice-print-area td p + p {
+       margin-top: 2px !important;
+     }
+   
+   
+     /* -------------------------------------------------------
+        PAYMENT + TOTALS
+        ------------------------------------------------------- */
+   
+     .invoice-summary {
+       display: grid !important;
+   
+       grid-template-columns: 1fr 1fr !important;
+   
+       gap: 45px !important;
+   
+       margin-top: 18px !important;
+   
+       page-break-inside: avoid !important;
+   
+       break-inside: avoid !important;
+     }
+   
+   
+     .invoice-summary p {
+       margin: 0 !important;
+     }
+   
+   
+     .invoice-totals {
+       width: 100% !important;
+     }
+   
+   
+     .invoice-totals > div {
+       min-height: 22px !important;
+     }
+   
+   
+     /* -------------------------------------------------------
+        GRAND TOTAL
+        ------------------------------------------------------- */
+   
+     .invoice-grand-total {
+       margin-top: 7px !important;
+   
+       padding-top: 8px !important;
+   
+       border-top: 1.5px solid #444444 !important;
+     }
+   
+   
+     .invoice-grand-total span {
+       font-size: 12px !important;
+   
+       color: #000000 !important;
+     }
+   
+   
+     .invoice-grand-total strong {
+       font-size: 18px !important;
+   
+       color: #000000 !important;
+     }
+   
+   
+     /* -------------------------------------------------------
+        FOOTER
+        ------------------------------------------------------- */
+   
+     .invoice-footer {
+       margin-top: 25px !important;
+   
+       padding-top: 12px !important;
+   
+       border-top: 1px solid #dddddd !important;
+   
+       text-align: center !important;
+   
+       page-break-inside: avoid !important;
+     }
+   
+   
+     .invoice-footer p {
+       margin: 0 !important;
+   
+       color: #333333 !important;
+     }
+   
+   
+     .invoice-footer p + p {
+       margin-top: 3px !important;
+   
+       font-size: 8px !important;
+   
+       color: #777777 !important;
+     }
+   
+   
+     /* -------------------------------------------------------
+        PREVENT URL / LINK PRINTING
+        ------------------------------------------------------- */
+   
+     a[href]::after {
+       content: none !important;
+     }
+   
+   
+     /* -------------------------------------------------------
+        KEEP PRINT CLEAN
+        ------------------------------------------------------- */
+   
+     button,
+     input,
+     select {
+       box-shadow: none !important;
+     }
+   
+   }
