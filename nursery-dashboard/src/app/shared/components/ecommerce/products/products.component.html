@@ -2,7 +2,9 @@
   class="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6"
 >
 
-  <!-- Header -->
+  <!-- ===================================================== -->
+  <!-- HEADER -->
+  <!-- ===================================================== -->
 
   <div class="mb-5">
 
@@ -15,13 +17,207 @@
     <p
       class="text-sm text-gray-500 dark:text-gray-400"
     >
-      Complete product list
+      Complete product list with warehouse-wise inventory
     </p>
 
   </div>
 
 
-  <!-- Loading -->
+  <!-- ===================================================== -->
+  <!-- SEARCH AND FILTERS -->
+  <!-- ===================================================== -->
+
+  <div
+    class="mb-5 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/40"
+  >
+
+    <div
+      class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4"
+    >
+
+      <!-- SEARCH -->
+
+      <div>
+
+        <label
+          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Search Products
+        </label>
+
+        <input
+          type="text"
+          [(ngModel)]="searchText"
+          placeholder="Product, category, supplier, barcode..."
+          class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400"
+        />
+
+      </div>
+
+
+      <!-- CATEGORY -->
+
+      <div>
+
+        <label
+          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Category
+        </label>
+
+        <select
+          [(ngModel)]="selectedCategory"
+          class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+        >
+
+          <option value="">
+            All Categories
+          </option>
+
+          @for (
+            category of categories;
+            track category.id
+          ) {
+
+            <option
+              [value]="category.name"
+            >
+              {{ category.name }}
+            </option>
+
+          }
+
+        </select>
+
+      </div>
+
+
+      <!-- SUPPLIER -->
+
+      <div>
+
+        <label
+          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Supplier
+        </label>
+
+        <select
+          [(ngModel)]="selectedSupplier"
+          class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+        >
+
+          <option value="">
+            All Suppliers
+          </option>
+
+          @for (
+            supplier of suppliers;
+            track supplier.id
+          ) {
+
+            <option
+              [value]="supplier.id"
+            >
+              {{ supplier.name }}
+            </option>
+
+          }
+
+        </select>
+
+      </div>
+
+
+      <!-- STATUS -->
+
+      <div>
+
+        <label
+          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Status
+        </label>
+
+        <select
+          [(ngModel)]="selectedStatus"
+          class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+        >
+
+          <option value="">
+            All Statuses
+          </option>
+
+          <option value="active">
+            Active
+          </option>
+
+          <option value="outOfStock">
+            Out of Stock
+          </option>
+
+          <option value="inactive">
+            Inactive
+          </option>
+
+        </select>
+
+      </div>
+
+    </div>
+
+
+    <!-- FILTER SUMMARY -->
+
+    <div
+      class="mt-4 flex flex-col gap-3 border-t border-gray-200 pt-4 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between"
+    >
+
+      <p
+        class="text-sm text-gray-500 dark:text-gray-400"
+      >
+
+        Showing
+
+        <span
+          class="font-semibold text-gray-800 dark:text-white"
+        >
+          {{ filteredProducts.length }}
+        </span>
+
+        of
+
+        <span
+          class="font-semibold text-gray-800 dark:text-white"
+        >
+          {{ tableData.length }}
+        </span>
+
+        products
+
+      </p>
+
+
+      @if (hasActiveFilters) {
+
+        <button
+          type="button"
+          (click)="clearFilters()"
+          class="self-start rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 sm:self-auto"
+        >
+          Clear Filters
+        </button>
+
+      }
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================== -->
+  <!-- LOADING -->
+  <!-- ===================================================== -->
 
   @if (isLoading) {
 
@@ -34,7 +230,9 @@
   }
 
 
-  <!-- Empty State -->
+  <!-- ===================================================== -->
+  <!-- EMPTY DATABASE -->
+  <!-- ===================================================== -->
 
   @if (!isLoading && tableData.length === 0) {
 
@@ -53,15 +251,57 @@
   }
 
 
-  <!-- Product Table -->
+  <!-- ===================================================== -->
+  <!-- NO FILTER RESULTS -->
+  <!-- ===================================================== -->
 
-  @if (!isLoading && tableData.length > 0) {
+  @if (
+    !isLoading &&
+    tableData.length > 0 &&
+    filteredProducts.length === 0
+  ) {
+
+    <div
+      class="mb-5 rounded-xl border border-dashed border-gray-300 py-10 text-center dark:border-gray-700"
+    >
+
+      <p
+        class="font-medium text-gray-700 dark:text-gray-300"
+      >
+        No matching products found
+      </p>
+
+      <p
+        class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+      >
+        Try changing your search or filters.
+      </p>
+
+      <button
+        type="button"
+        (click)="clearFilters()"
+        class="mt-4 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+      >
+        Clear Filters
+      </button>
+
+    </div>
+
+  }
+
+
+  <!-- ===================================================== -->
+  <!-- PRODUCT TABLE -->
+  <!-- ===================================================== -->
+
+  @if (
+    !isLoading &&
+    filteredProducts.length > 0
+  ) {
 
     <div class="max-w-full overflow-x-auto">
 
       <table class="w-full text-left">
-
-        <!-- Table Header -->
 
         <thead
           class="border-y border-gray-100 dark:border-gray-800"
@@ -75,51 +315,67 @@
               Image
             </th>
 
-
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Product Name
             </th>
 
-
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Category
             </th>
 
-
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Supplier
             </th>
 
-
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Unit Price
             </th>
 
 
+            <!-- DYNAMIC WAREHOUSE COLUMNS -->
+
+            @for (
+              warehouse of warehouses;
+              track warehouse.id
+            ) {
+
+              <th
+                class="whitespace-nowrap px-3 py-3 text-center font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              >
+                {{ getWarehouseCode(warehouse) }} - Qty
+              </th>
+
+            }
+
+
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="whitespace-nowrap px-3 py-3 text-center font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
-              Quantity
+              Total Qty
             </th>
 
+            <th
+              class="whitespace-nowrap px-3 py-3 text-center font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+            >
+              Stock Level
+            </th>
 
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Status
             </th>
 
-
             <th
-              class="px-3 py-3 text-right font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="whitespace-nowrap px-3 py-3 text-right font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Action
             </th>
@@ -129,13 +385,14 @@
         </thead>
 
 
-        <!-- Table Body -->
-
         <tbody
           class="divide-y divide-gray-100 dark:divide-gray-800"
         >
 
-          @for (product of tableData; track product.id) {
+          @for (
+            product of filteredProducts;
+            track product.id
+          ) {
 
             <tr
               [class.bg-gray-100]="!product.isAvailable"
@@ -144,7 +401,7 @@
               [class.dark:hover:bg-white/[0.02]]="product.isAvailable"
             >
 
-              <!-- Image -->
+              <!-- IMAGE -->
 
               <td class="px-3 py-4">
 
@@ -154,47 +411,22 @@
 
                   @if (product.image) {
 
-                    @if (product.isAvailable) {
-
-                      <img
-                        [src]="product.image"
-                        [alt]="product.name"
-                        (click)="openProductDetails(product)"
-                        class="h-full w-full cursor-pointer object-cover"
-                      />
-
-                    } @else {
-
-                      <img
-                        [src]="product.image"
-                        [alt]="product.name"
-                        class="h-full w-full object-cover"
-                      />
-
-                    }
+                    <img
+                      [src]="product.image"
+                      [alt]="product.name"
+                      (click)="openProductDetails(product)"
+                      class="h-full w-full cursor-pointer object-cover"
+                    />
 
                   } @else {
 
-                    @if (product.isAvailable) {
-
-                      <span
-                        (click)="openProductDetails(product)"
-                        class="cursor-pointer text-2xl"
-                        title="Product image not available"
-                      >
-                        🪴
-                      </span>
-
-                    } @else {
-
-                      <span
-                        class="text-2xl"
-                        title="Product image not available"
-                      >
-                        🪴
-                      </span>
-
-                    }
+                    <span
+                      (click)="openProductDetails(product)"
+                      class="cursor-pointer text-2xl"
+                      title="Product image not available"
+                    >
+                      🪴
+                    </span>
 
                   }
 
@@ -203,31 +435,34 @@
               </td>
 
 
-              <!-- Product Name -->
+              <!-- PRODUCT NAME -->
 
               <td
-                class="px-3 py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90"
+                class="whitespace-nowrap px-3 py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90"
               >
                 {{ product.name }}
               </td>
 
 
-              <!-- Category -->
+              <!-- CATEGORY -->
 
               <td
-                class="px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+                class="whitespace-nowrap px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
               >
                 {{ product.category }}
               </td>
 
 
-              <!-- Supplier -->
+              <!-- SUPPLIER -->
 
               <td
-                class="px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+                class="whitespace-nowrap px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
               >
 
-                @if (getSupplierName(product) !== 'No supplier') {
+                @if (
+                  getSupplierName(product) !==
+                  'No supplier'
+                ) {
 
                   <span
                     class="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
@@ -248,7 +483,7 @@
               </td>
 
 
-              <!-- Unit Price -->
+              <!-- UNIT PRICE -->
 
               <td
                 class="whitespace-nowrap px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
@@ -257,18 +492,151 @@
               </td>
 
 
-              <!-- Quantity -->
+              <!-- WAREHOUSE QUANTITIES -->
+
+              @for (
+                warehouse of warehouses;
+                track warehouse.id
+              ) {
+
+                <td
+                  class="whitespace-nowrap px-3 py-4 text-center text-theme-sm"
+                >
+
+                  @if (
+                    getWarehouseQuantity(
+                      product.id,
+                      warehouse.id
+                    ) > 0
+                  ) {
+
+                    <span
+                      class="font-semibold text-gray-800 dark:text-white"
+                    >
+                      {{
+                        getWarehouseQuantity(
+                          product.id,
+                          warehouse.id
+                        )
+                      }}
+                    </span>
+
+                  } @else {
+
+                    <span
+                      class="text-gray-400 dark:text-gray-500"
+                    >
+                      0
+                    </span>
+
+                  }
+
+                </td>
+
+              }
+
+
+              <!-- ================================================= -->
+              <!-- TOTAL QUANTITY -->
+              <!-- ================================================= -->
+              <!--
+                0-10  = RED
+                11-50 = YELLOW
+                51+   = GREEN
+              -->
 
               <td
-                class="px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+                class="whitespace-nowrap px-3 py-4 text-center"
               >
-                {{ product.quantity }}
+
+                @if (
+                  getStockLevel(product) === 'outOfStock' ||
+                  getStockLevel(product) === 'low'
+                ) {
+
+                  <span
+                    class="inline-flex min-w-[46px] justify-center rounded-lg bg-red-50 px-2.5 py-1 font-semibold text-red-700 text-theme-sm dark:bg-red-500/10 dark:text-red-400"
+                  >
+                    {{ product.quantity }}
+                  </span>
+
+                } @else if (
+                  getStockLevel(product) === 'medium'
+                ) {
+
+                  <span
+                    class="inline-flex min-w-[46px] justify-center rounded-lg bg-yellow-50 px-2.5 py-1 font-semibold text-yellow-700 text-theme-sm dark:bg-yellow-500/10 dark:text-yellow-400"
+                  >
+                    {{ product.quantity }}
+                  </span>
+
+                } @else {
+
+                  <span
+                    class="inline-flex min-w-[46px] justify-center rounded-lg bg-green-50 px-2.5 py-1 font-semibold text-green-700 text-theme-sm dark:bg-green-500/10 dark:text-green-400"
+                  >
+                    {{ product.quantity }}
+                  </span>
+
+                }
+
               </td>
 
 
-              <!-- Status -->
+              <!-- ================================================= -->
+              <!-- STOCK LEVEL -->
+              <!-- ================================================= -->
 
-              <td class="px-3 py-4">
+              <td
+                class="whitespace-nowrap px-3 py-4 text-center"
+              >
+
+                @if (
+                  getStockLevel(product) === 'outOfStock'
+                ) {
+
+                  <span
+                    class="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
+                  >
+                    Out of Stock
+                  </span>
+
+                } @else if (
+                  getStockLevel(product) === 'low'
+                ) {
+
+                  <span
+                    class="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
+                  >
+                    Low Stock
+                  </span>
+
+                } @else if (
+                  getStockLevel(product) === 'medium'
+                ) {
+
+                  <span
+                    class="inline-flex rounded-full bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
+                  >
+                    Medium Stock
+                  </span>
+
+                } @else {
+
+                  <span
+                    class="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+                  >
+                    Healthy Stock
+                  </span>
+
+                }
+
+              </td>
+
+
+              <!-- STATUS -->
+
+              <td class="whitespace-nowrap px-3 py-4">
 
                 @if (product.isAvailable) {
 
@@ -325,15 +693,15 @@
               </td>
 
 
-              <!-- Actions -->
+              <!-- ACTIONS -->
 
-              <td class="px-3 py-4 text-right">
+              <td
+                class="whitespace-nowrap px-3 py-4 text-right"
+              >
 
                 <div
                   class="flex items-center justify-end gap-2"
                 >
-
-                  <!-- Edit -->
 
                   <button
                     type="button"
@@ -344,19 +712,16 @@
                         ? 'Cannot edit product because its category is inactive'
                         : 'Edit product'
                     "
-                    class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 hover:text-gray-900 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:hover:text-white dark:disabled:border-gray-700 dark:disabled:bg-gray-800 dark:disabled:text-gray-500"
+                    class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                   >
                     Edit
                   </button>
 
 
-                  <!-- Delete -->
-
                   <button
                     type="button"
                     (click)="openDeleteModal(product)"
-                    title="Delete product"
-                    class="inline-flex items-center rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-600 shadow-sm transition hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:bg-gray-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
+                    class="inline-flex items-center rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-600 shadow-sm transition hover:bg-red-50 dark:border-red-800 dark:bg-gray-700 dark:text-red-400"
                   >
                     Delete
                   </button>
@@ -381,7 +746,7 @@
 
 
 <!-- ====================================================== -->
-<!-- PRODUCT DETAILS POPUP -->
+<!-- PRODUCT DETAILS MODAL -->
 <!-- ====================================================== -->
 
 @if (selectedProduct) {
@@ -392,11 +757,11 @@
   >
 
     <div
-      class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800"
+      class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800"
       (click)="$event.stopPropagation()"
     >
 
-      <!-- Header -->
+      <!-- HEADER -->
 
       <div
         class="mb-4 flex items-center justify-between"
@@ -408,11 +773,10 @@
           Product Details
         </h2>
 
-
         <button
           type="button"
           (click)="closeProductDetails()"
-          class="flex h-8 w-8 items-center justify-center rounded-full text-xl text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+          class="flex h-8 w-8 items-center justify-center rounded-full text-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           ×
         </button>
@@ -420,7 +784,7 @@
       </div>
 
 
-      <!-- Product Image -->
+      <!-- IMAGE -->
 
       <div
         class="mb-5 flex justify-center"
@@ -451,7 +815,7 @@
       </div>
 
 
-      <!-- Product Name -->
+      <!-- NAME -->
 
       <h3
         class="text-center text-xl font-semibold text-gray-800 dark:text-white"
@@ -460,7 +824,7 @@
       </h3>
 
 
-      <!-- Description -->
+      <!-- DESCRIPTION -->
 
       <div class="mt-3">
 
@@ -473,19 +837,22 @@
         <p
           class="text-sm leading-6 text-gray-600 dark:text-gray-300"
         >
-          {{ selectedProduct.description || 'No description available' }}
+          {{
+            selectedProduct.description ||
+            'No description available'
+          }}
         </p>
 
       </div>
 
 
-      <!-- Product Information -->
+      <!-- DETAILS -->
 
       <div
         class="mt-5 divide-y divide-gray-100 rounded-xl border border-gray-200 dark:divide-gray-700 dark:border-gray-700"
       >
 
-        <!-- Category -->
+        <!-- CATEGORY -->
 
         <div
           class="flex items-center justify-between px-4 py-3"
@@ -506,7 +873,7 @@
         </div>
 
 
-        <!-- Supplier -->
+        <!-- SUPPLIER -->
 
         <div
           class="flex items-center justify-between gap-4 px-4 py-3"
@@ -527,7 +894,199 @@
         </div>
 
 
-        <!-- Status -->
+        <!-- BARCODE -->
+
+        <div
+          class="flex items-center justify-between gap-4 px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            Barcode
+          </span>
+
+          @if (selectedProduct.barcode) {
+
+            <span
+              class="rounded-lg bg-purple-50 px-3 py-1.5 font-mono text-sm font-semibold text-purple-700 dark:bg-purple-500/10 dark:text-purple-400"
+            >
+              {{ selectedProduct.barcode }}
+            </span>
+
+          } @else {
+
+            <span
+              class="text-sm font-medium text-yellow-600 dark:text-yellow-400"
+            >
+              Not Generated
+            </span>
+
+          }
+
+        </div>
+
+
+        <!-- UNIT PRICE -->
+
+        <div
+          class="flex items-center justify-between px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            Unit Price
+          </span>
+
+          <span
+            class="font-semibold text-gray-800 dark:text-white"
+          >
+            ₹{{ selectedProduct.unitPrice | number:'1.2-2' }}
+          </span>
+
+        </div>
+
+
+        <!-- WAREHOUSE INVENTORY -->
+
+        @for (
+          warehouse of warehouses;
+          track warehouse.id
+        ) {
+
+          <div
+            class="flex items-center justify-between px-4 py-3"
+          >
+
+            <span
+              class="text-sm text-gray-500 dark:text-gray-400"
+            >
+              {{ getWarehouseCode(warehouse) }} - Qty
+            </span>
+
+            <span
+              class="font-semibold text-gray-800 dark:text-white"
+            >
+              {{
+                getWarehouseQuantity(
+                  selectedProduct.id,
+                  warehouse.id
+                )
+              }}
+            </span>
+
+          </div>
+
+        }
+
+
+        <!-- ================================================= -->
+        <!-- TOTAL INVENTORY WITH STOCK COLOR -->
+        <!-- ================================================= -->
+
+        <div
+          class="flex items-center justify-between bg-gray-50 px-4 py-3 dark:bg-gray-700/30"
+        >
+
+          <span
+            class="text-sm font-semibold text-gray-700 dark:text-gray-300"
+          >
+            Total Inventory
+          </span>
+
+
+          @if (
+            getStockLevel(selectedProduct) === 'outOfStock' ||
+            getStockLevel(selectedProduct) === 'low'
+          ) {
+
+            <span
+              class="inline-flex min-w-[48px] justify-center rounded-lg bg-red-50 px-3 py-1.5 text-lg font-semibold text-red-700 dark:bg-red-500/10 dark:text-red-400"
+            >
+              {{ selectedProduct.quantity }}
+            </span>
+
+          } @else if (
+            getStockLevel(selectedProduct) === 'medium'
+          ) {
+
+            <span
+              class="inline-flex min-w-[48px] justify-center rounded-lg bg-yellow-50 px-3 py-1.5 text-lg font-semibold text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
+            >
+              {{ selectedProduct.quantity }}
+            </span>
+
+          } @else {
+
+            <span
+              class="inline-flex min-w-[48px] justify-center rounded-lg bg-green-50 px-3 py-1.5 text-lg font-semibold text-green-700 dark:bg-green-500/10 dark:text-green-400"
+            >
+              {{ selectedProduct.quantity }}
+            </span>
+
+          }
+
+        </div>
+
+
+        <!-- STOCK LEVEL -->
+
+        <div
+          class="flex items-center justify-between px-4 py-3"
+        >
+
+          <span
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            Stock Level
+          </span>
+
+
+          @if (
+            getStockLevel(selectedProduct) === 'outOfStock'
+          ) {
+
+            <span
+              class="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
+            >
+              Out of Stock
+            </span>
+
+          } @else if (
+            getStockLevel(selectedProduct) === 'low'
+          ) {
+
+            <span
+              class="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
+            >
+              Low Stock
+            </span>
+
+          } @else if (
+            getStockLevel(selectedProduct) === 'medium'
+          ) {
+
+            <span
+              class="inline-flex rounded-full bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
+            >
+              Medium Stock
+            </span>
+
+          } @else {
+
+            <span
+              class="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+            >
+              Healthy Stock
+            </span>
+
+          }
+
+        </div>
+
+
+        <!-- STATUS -->
 
         <div
           class="flex items-center justify-between px-4 py-3"
@@ -538,7 +1097,6 @@
           >
             Status
           </span>
-
 
           @if (selectedProduct.isAvailable) {
 
@@ -594,55 +1152,13 @@
 
         </div>
 
-
-        <!-- Unit Price -->
-
-        <div
-          class="flex items-center justify-between px-4 py-3"
-        >
-
-          <span
-            class="text-sm text-gray-500 dark:text-gray-400"
-          >
-            Unit Price
-          </span>
-
-          <span
-            class="font-semibold text-gray-800 dark:text-white"
-          >
-            ₹{{ selectedProduct.unitPrice | number:'1.2-2' }}
-          </span>
-
-        </div>
-
-
-        <!-- Quantity -->
-
-        <div
-          class="flex items-center justify-between px-4 py-3"
-        >
-
-          <span
-            class="text-sm text-gray-500 dark:text-gray-400"
-          >
-            Quantity
-          </span>
-
-          <span
-            class="font-semibold text-gray-800 dark:text-white"
-          >
-            {{ selectedProduct.quantity }}
-          </span>
-
-        </div>
-
       </div>
 
 
       <button
         type="button"
         (click)="closeProductDetails()"
-        class="mt-5 w-full rounded-lg bg-gray-800 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-700 dark:bg-white dark:text-gray-800 dark:hover:bg-gray-200"
+        class="mt-5 w-full rounded-lg bg-gray-800 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-700 dark:bg-white dark:text-gray-800"
       >
         Close
       </button>
@@ -670,7 +1186,7 @@
       (click)="$event.stopPropagation()"
     >
 
-      <!-- Header -->
+      <!-- HEADER -->
 
       <div
         class="mb-6 flex items-center justify-between"
@@ -697,7 +1213,7 @@
           type="button"
           (click)="closeEditModal()"
           [disabled]="isSavingProduct"
-          class="flex h-8 w-8 items-center justify-center rounded-full text-xl text-gray-500 hover:bg-gray-100 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700 dark:hover:text-white"
+          class="flex h-8 w-8 items-center justify-center rounded-full text-xl text-gray-500 hover:bg-gray-100 disabled:opacity-50 dark:hover:bg-gray-700"
         >
           ×
         </button>
@@ -705,11 +1221,9 @@
       </div>
 
 
-      <!-- Product Form -->
-
       <div class="space-y-5">
 
-        <!-- Product Name -->
+        <!-- PRODUCT NAME -->
 
         <div>
 
@@ -722,14 +1236,13 @@
           <input
             type="text"
             [(ngModel)]="editingProduct.name"
-            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            placeholder="Enter product name"
+            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           />
 
         </div>
 
 
-        <!-- Category -->
+        <!-- CATEGORY -->
 
         <div>
 
@@ -741,14 +1254,18 @@
 
           <select
             [(ngModel)]="editingProduct.category"
-            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           >
 
-            @for (category of categories; track category.id) {
+            @for (
+              category of categories;
+              track category.id
+            ) {
 
               @if (
                 category.isActive ||
-                category.name === editingProduct.category
+                category.name ===
+                  editingProduct.category
               ) {
 
                 <option
@@ -771,7 +1288,7 @@
         </div>
 
 
-        <!-- Supplier -->
+        <!-- SUPPLIER -->
 
         <div>
 
@@ -785,7 +1302,7 @@
           @if (isLoadingSuppliers) {
 
             <div
-              class="rounded-lg border border-gray-300 bg-gray-100 px-3 py-2.5 text-sm text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400"
+              class="rounded-lg border border-gray-300 bg-gray-100 px-3 py-2.5 text-sm text-gray-500 dark:border-gray-600 dark:bg-gray-700"
             >
               Loading suppliers...
             </div>
@@ -795,20 +1312,22 @@
             <select
               [(ngModel)]="editingProduct.supplierId"
               (ngModelChange)="onEditSupplierChange($event)"
-              name="editProductSupplier"
-              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             >
 
               <option value="">
                 Select Supplier
               </option>
 
-
-              @for (supplier of suppliers; track supplier.id) {
+              @for (
+                supplier of suppliers;
+                track supplier.id
+              ) {
 
                 @if (
                   supplier.isActive ||
-                  supplier.id === editingProduct.supplierId
+                  supplier.id ===
+                    editingProduct.supplierId
                 ) {
 
                   <option
@@ -833,7 +1352,7 @@
         </div>
 
 
-        <!-- Description -->
+        <!-- DESCRIPTION -->
 
         <div>
 
@@ -846,14 +1365,13 @@
           <textarea
             [(ngModel)]="editingProduct.description"
             rows="3"
-            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            placeholder="Enter product description"
+            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           ></textarea>
 
         </div>
 
 
-        <!-- Price / GST -->
+        <!-- PRICE + GST -->
 
         <div
           class="grid grid-cols-1 gap-4 sm:grid-cols-2"
@@ -872,8 +1390,7 @@
               [(ngModel)]="editingProduct.unitPrice"
               min="0"
               step="0.01"
-              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              placeholder="Enter unit price"
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             />
 
           </div>
@@ -892,8 +1409,7 @@
               [(ngModel)]="editingProduct.gst"
               min="0"
               step="0.01"
-              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              placeholder="Enter GST"
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             />
 
           </div>
@@ -901,55 +1417,106 @@
         </div>
 
 
-        <!-- Standard Package / Stock Quantity -->
+        <!-- STANDARD PACKAGE -->
+
+        <div>
+
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Standard Package
+          </label>
+
+          <input
+            type="number"
+            [(ngModel)]="editingProduct.standardPackage"
+            min="0"
+            step="1"
+            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+          />
+
+        </div>
+
+
+        <!-- INVENTORY INFORMATION -->
 
         <div
-          class="grid grid-cols-1 gap-4 sm:grid-cols-2"
+          class="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/40 dark:bg-blue-900/10"
         >
 
-          <div>
+          <p
+            class="text-sm font-medium text-gray-800 dark:text-white"
+          >
+            Current Inventory
+          </p>
 
-            <label
-              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          <p
+            class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+          >
+            Stock cannot be changed from Edit Product.
+            Inventory is updated through purchases and stock transactions.
+          </p>
+
+
+          <div
+            class="mt-4 divide-y divide-blue-100 rounded-lg border border-blue-200 bg-white dark:divide-gray-700 dark:border-gray-700 dark:bg-gray-800"
+          >
+
+            @for (
+              warehouse of warehouses;
+              track warehouse.id
+            ) {
+
+              <div
+                class="flex items-center justify-between px-3 py-2"
+              >
+
+                <span
+                  class="text-sm text-gray-600 dark:text-gray-400"
+                >
+                  {{ getWarehouseCode(warehouse) }}
+                </span>
+
+                <span
+                  class="font-semibold text-gray-800 dark:text-white"
+                >
+                  {{
+                    getWarehouseQuantity(
+                      editingProduct.id,
+                      warehouse.id
+                    )
+                  }}
+                </span>
+
+              </div>
+
+            }
+
+
+            <div
+              class="flex items-center justify-between bg-gray-50 px-3 py-3 dark:bg-gray-700/30"
             >
-              Standard Package
-            </label>
 
-            <input
-              type="number"
-              [(ngModel)]="editingProduct.standardPackage"
-              min="0"
-              step="1"
-              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              placeholder="Enter standard package"
-            />
+              <span
+                class="text-sm font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Total
+              </span>
 
-          </div>
+              <span
+                class="text-lg font-semibold text-gray-900 dark:text-white"
+              >
+                {{ editingProduct.quantity }}
+              </span>
 
-
-          <div>
-
-            <label
-              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Stock Quantity
-            </label>
-
-            <input
-              type="number"
-              [(ngModel)]="editingProduct.stockQuantity"
-              min="0"
-              step="1"
-              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              placeholder="Enter stock quantity"
-            />
+            </div>
 
           </div>
 
         </div>
 
 
-        <!-- Image -->
+        <!-- IMAGE -->
 
         <div>
 
@@ -986,14 +1553,14 @@
           <input
             type="text"
             [(ngModel)]="editingProduct.image"
-            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             placeholder="Enter image URL or data"
           />
 
         </div>
 
 
-        <!-- Product Status -->
+        <!-- PRODUCT STATUS -->
 
         <div
           class="flex items-center justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-700"
@@ -1027,7 +1594,7 @@
             />
 
             <div
-              class="h-6 w-11 rounded-full bg-gray-300 peer-checked:bg-brand-500 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-300 dark:bg-gray-600"
+              class="h-6 w-11 rounded-full bg-gray-300 peer-checked:bg-brand-500 dark:bg-gray-600"
             ></div>
 
             <div
@@ -1041,7 +1608,7 @@
       </div>
 
 
-      <!-- Footer -->
+      <!-- FOOTER -->
 
       <div
         class="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"
@@ -1051,7 +1618,7 @@
           type="button"
           (click)="closeEditModal()"
           [disabled]="isSavingProduct"
-          class="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+          class="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300"
         >
           Cancel
         </button>
@@ -1061,7 +1628,7 @@
           type="button"
           (click)="saveProduct()"
           [disabled]="isSavingProduct"
-          class="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+          class="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
         >
 
           @if (isSavingProduct) {
@@ -1097,8 +1664,6 @@
       (click)="$event.stopPropagation()"
     >
 
-      <!-- Header -->
-
       <div class="mb-5">
 
         <h2
@@ -1115,8 +1680,6 @@
 
       </div>
 
-
-      <!-- Warning -->
 
       <div
         class="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/40 dark:bg-red-900/20"
@@ -1141,8 +1704,6 @@
       </div>
 
 
-      <!-- Footer -->
-
       <div
         class="mt-6 flex justify-end gap-3"
       >
@@ -1151,7 +1712,7 @@
           type="button"
           (click)="closeDeleteModal()"
           [disabled]="isDeletingProduct"
-          class="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+          class="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
         >
           Cancel
         </button>
@@ -1161,7 +1722,7 @@
           type="button"
           (click)="confirmDeleteProduct()"
           [disabled]="isDeletingProduct"
-          class="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+          class="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
         >
 
           @if (isDeletingProduct) {

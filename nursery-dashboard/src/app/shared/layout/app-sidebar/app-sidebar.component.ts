@@ -182,6 +182,11 @@ export class AppSidebarComponent {
         {
           name: 'Add Product',
           path: '/products/add-product'
+        },
+
+        {
+          name: 'Print Barcodes',
+          path: '/products/print-barcodes'
         }
 
       ]
@@ -301,6 +306,305 @@ export class AppSidebarComponent {
 
 
     // =========================================================
+    // PURCHASES
+    // =========================================================
+
+    {
+      icon: `
+        <svg
+          width="1em"
+          height="1em"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M6 3H18V21H6V3Z"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linejoin="round"
+          />
+
+          <path
+            d="M9 7H15"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+
+          <path
+            d="M9 11H15"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+
+          <path
+            d="M9 15H13"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+        </svg>
+      `,
+
+      name: 'Purchases',
+
+      subItems: [
+
+        {
+          name: 'All Purchases',
+          path: '/purchases'
+        },
+
+        {
+          name: 'Add Purchase',
+          path: '/purchases/add-purchase'
+        }
+
+      ]
+    },
+
+
+    // =========================================================
+    // STOCK TRANSFERS
+    // =========================================================
+
+    {
+      icon: `
+        <svg
+          width="1em"
+          height="1em"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M4 7H17"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+
+          <path
+            d="M14 4L17 7L14 10"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+
+          <path
+            d="M20 17H7"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+
+          <path
+            d="M10 14L7 17L10 20"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+
+          <rect
+            x="3"
+            y="11"
+            width="5"
+            height="5"
+            rx="1"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+
+          <rect
+            x="16"
+            y="8"
+            width="5"
+            height="5"
+            rx="1"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+        </svg>
+      `,
+
+      name: 'Stock Transfers',
+
+      subItems: [
+
+        {
+          name: 'All Stock Transfers',
+          path: '/stock-transfers'
+        },
+
+        {
+          name: 'Add Stock Transfer',
+          path: '/stock-transfers/add-stock-transfer'
+        }
+
+      ]
+    },
+
+
+    // =========================================================
+    // STOCK ADJUSTMENTS
+    // =========================================================
+
+    {
+      icon: `
+        <svg
+          width="1em"
+          height="1em"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M4 6H14"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+
+          <path
+            d="M18 6H20"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+
+          <circle
+            cx="16"
+            cy="6"
+            r="2"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+
+          <path
+            d="M4 12H7"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+
+          <path
+            d="M11 12H20"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+
+          <circle
+            cx="9"
+            cy="12"
+            r="2"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+
+          <path
+            d="M4 18H12"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+
+          <path
+            d="M16 18H20"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+
+          <circle
+            cx="14"
+            cy="18"
+            r="2"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+        </svg>
+      `,
+
+      name: 'Stock Adjustments',
+
+      subItems: [
+
+        {
+          name: 'All Stock Adjustments',
+          path: '/stock-adjustments'
+        },
+
+        {
+          name: 'Add Stock Adjustment',
+          path: '/stock-adjustments/add-stock-adjustment'
+        }
+
+      ]
+    },
+
+    // =========================================================
+    // SALES
+    // =========================================================
+      
+    {
+      icon: `
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M4 4H6L8.5 15H18.5L21 7H7"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+    
+          <circle
+            cx="10"
+            cy="19"
+            r="1.5"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+    
+          <circle
+            cx="18"
+            cy="19"
+            r="1.5"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+        </svg>
+      `,
+    
+      name: 'Sales',
+    
+      subItems: [
+      
+        {
+          name: 'Sales History',
+          path: '/sales'
+        },
+      
+        {
+          name: 'Create Sale',
+          path: '/sales/create-sale'
+        }
+      
+      ]
+    },
+
+
+    // =========================================================
     // CATEGORY CHART
     // =========================================================
 
@@ -354,9 +658,6 @@ export class AppSidebarComponent {
   // =========================================================
   // OTHER NAV ITEMS
   // =========================================================
-
-  // Inventory, Purchases, Billing, Orders, etc.
-  // will be added here later.
 
   othersItems: NavItem[] = [];
 
@@ -423,10 +724,6 @@ export class AppSidebarComponent {
 
   ngOnInit() {
 
-    // ---------------------------------------------------------
-    // ROUTER EVENTS
-    // ---------------------------------------------------------
-
     this.subscription.add(
 
       this.router.events.subscribe(
@@ -447,10 +744,6 @@ export class AppSidebarComponent {
 
     );
 
-
-    // ---------------------------------------------------------
-    // SIDEBAR STATE
-    // ---------------------------------------------------------
 
     this.subscription.add(
 
@@ -486,10 +779,6 @@ export class AppSidebarComponent {
 
     );
 
-
-    // ---------------------------------------------------------
-    // INITIAL ROUTE
-    // ---------------------------------------------------------
 
     this.setActiveMenuFromRoute(
       this.router.url

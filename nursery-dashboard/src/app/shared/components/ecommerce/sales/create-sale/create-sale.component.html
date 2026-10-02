@@ -1,0 +1,1610 @@
+<div class="space-y-6">
+
+    <!-- ===================================================== -->
+    <!-- PAGE HEADER -->
+    <!-- ===================================================== -->
+  
+    <div
+      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+    >
+  
+      <div>
+  
+        <h2
+          class="text-2xl font-semibold text-gray-800 dark:text-white"
+        >
+          Create Sale
+        </h2>
+  
+        <p
+          class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+        >
+          Scan a barcode or manually select products to create a sale.
+        </p>
+  
+      </div>
+  
+    </div>
+  
+  
+    <!-- ===================================================== -->
+    <!-- LOADING -->
+    <!-- ===================================================== -->
+  
+    @if (isLoading) {
+  
+      <div
+        class="rounded-2xl border border-gray-200 bg-white p-10 text-center dark:border-gray-800 dark:bg-white/[0.03]"
+      >
+  
+        <p
+          class="text-sm text-gray-500 dark:text-gray-400"
+        >
+          Loading sales data...
+        </p>
+  
+      </div>
+  
+    }
+  
+  
+    <!-- ===================================================== -->
+    <!-- ERROR -->
+    <!-- ===================================================== -->
+  
+    @if (!isLoading && errorMessage) {
+  
+      <div
+        class="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/40 dark:bg-red-900/20"
+      >
+  
+        <p
+          class="text-sm text-red-700 dark:text-red-400"
+        >
+          {{ errorMessage }}
+        </p>
+  
+      </div>
+  
+    }
+  
+  
+    <!-- ===================================================== -->
+    <!-- MAIN CONTENT -->
+    <!-- ===================================================== -->
+  
+    @if (!isLoading) {
+  
+  
+      <!-- =================================================== -->
+      <!-- SALE INFORMATION -->
+      <!-- =================================================== -->
+  
+      <div
+        class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6"
+      >
+  
+        <div class="mb-5">
+  
+          <h3
+            class="text-lg font-semibold text-gray-800 dark:text-white"
+          >
+            Sale Information
+          </h3>
+  
+          <p
+            class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+          >
+            Select the warehouse and optionally enter customer details.
+          </p>
+  
+        </div>
+  
+  
+        <div
+          class="grid grid-cols-1 gap-5 md:grid-cols-3"
+        >
+  
+  
+          <!-- ================================================= -->
+          <!-- WAREHOUSE -->
+          <!-- ================================================= -->
+  
+          <div>
+  
+            <label
+              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Warehouse
+              <span class="text-red-500">*</span>
+            </label>
+  
+            <select
+              [(ngModel)]="selectedWarehouseId"
+              (ngModelChange)="onWarehouseChange()"
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            >
+  
+              <option value="">
+                Select Warehouse
+              </option>
+  
+              @for (
+                warehouse of warehouses;
+                track warehouse.id
+              ) {
+  
+                <option
+                  [value]="warehouse.id"
+                >
+                  {{ warehouse.name }}
+                </option>
+  
+              }
+  
+            </select>
+  
+          </div>
+  
+  
+          <!-- ================================================= -->
+          <!-- CUSTOMER NAME -->
+          <!-- ================================================= -->
+  
+          <div>
+  
+            <label
+              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Customer Name
+            </label>
+  
+            <input
+              type="text"
+              [(ngModel)]="customerName"
+              placeholder="Optional"
+              autocomplete="off"
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            />
+  
+          </div>
+  
+  
+          <!-- ================================================= -->
+          <!-- CUSTOMER MOBILE -->
+          <!-- ================================================= -->
+  
+          <div>
+  
+            <label
+              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Mobile Number
+            </label>
+  
+            <input
+              type="tel"
+              [(ngModel)]="customerMobile"
+              placeholder="Optional"
+              maxlength="10"
+              autocomplete="off"
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            />
+  
+          </div>
+  
+        </div>
+  
+      </div>
+  
+  
+      <!-- =================================================== -->
+      <!-- BARCODE -->
+      <!-- =================================================== -->
+  
+      <div
+        class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6"
+      >
+  
+        <div class="mb-4">
+  
+          <h3
+            class="text-lg font-semibold text-gray-800 dark:text-white"
+          >
+            Scan Barcode
+          </h3>
+  
+          <p
+            class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+          >
+            Scan a product barcode or enter the barcode manually.
+          </p>
+  
+        </div>
+  
+  
+        <div
+          class="flex flex-col gap-3 sm:flex-row"
+        >
+  
+          <div class="relative flex-1">
+  
+            <span
+              class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-gray-400"
+            >
+              ▥
+            </span>
+  
+            <input
+              #barcodeInput
+              type="text"
+              [(ngModel)]="barcodeText"
+              (keyup.enter)="scanBarcode()"
+              [disabled]="!selectedWarehouseId"
+              placeholder="Scan barcode here..."
+              autocomplete="off"
+              class="w-full rounded-lg border border-gray-300 bg-white py-3 pl-11 pr-4 font-mono text-sm text-gray-800 outline-none transition focus:border-brand-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:disabled:bg-gray-800"
+            />
+  
+          </div>
+  
+  
+          <button
+            type="button"
+            (click)="scanBarcode()"
+            [disabled]="!selectedWarehouseId || !barcodeText.trim()"
+            class="rounded-lg bg-brand-500 px-6 py-3 text-sm font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Add Barcode
+          </button>
+  
+        </div>
+  
+  
+        @if (!selectedWarehouseId) {
+  
+          <p
+            class="mt-2 text-xs text-yellow-600 dark:text-yellow-400"
+          >
+            Select a warehouse before scanning products.
+          </p>
+  
+        }
+  
+      </div>
+  
+  
+      <!-- =================================================== -->
+      <!-- PRODUCTS + CART -->
+      <!-- =================================================== -->
+  
+      <div
+        class="grid grid-cols-1 gap-6 xl:grid-cols-5"
+      >
+  
+  
+        <!-- ================================================= -->
+        <!-- PRODUCTS -->
+        <!-- ================================================= -->
+  
+        <div
+          class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6 xl:col-span-2"
+        >
+  
+          <div class="mb-5">
+  
+            <h3
+              class="text-lg font-semibold text-gray-800 dark:text-white"
+            >
+              Products
+            </h3>
+  
+            <p
+              class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+            >
+              Search and manually add products.
+            </p>
+  
+          </div>
+  
+  
+          <!-- SEARCH -->
+  
+          <div class="mb-5">
+  
+            <input
+              type="text"
+              [(ngModel)]="searchText"
+              placeholder="Search product, category or barcode..."
+              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            />
+  
+          </div>
+  
+  
+          @if (!selectedWarehouseId) {
+  
+            <div
+              class="rounded-xl border border-dashed border-gray-300 px-4 py-10 text-center dark:border-gray-700"
+            >
+  
+              <p
+                class="text-sm text-gray-500 dark:text-gray-400"
+              >
+                Select a warehouse to view available stock.
+              </p>
+  
+            </div>
+  
+          } @else {
+  
+            <div
+              class="max-h-[520px] space-y-3 overflow-y-auto pr-1"
+            >
+  
+              @for (
+                product of filteredProducts;
+                track product.id
+              ) {
+  
+                <div
+                  class="rounded-xl border border-gray-200 p-3 transition hover:border-brand-300 dark:border-gray-700"
+                >
+  
+                  <div
+                    class="flex items-center gap-3"
+                  >
+  
+                    <!-- PRODUCT IMAGE -->
+  
+                    <div
+                      class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700"
+                    >
+  
+                      @if (product.image) {
+  
+                        <img
+                          [src]="product.image"
+                          [alt]="product.name"
+                          class="h-full w-full object-cover"
+                        />
+  
+                      } @else {
+  
+                        <span class="text-2xl">
+                          🪴
+                        </span>
+  
+                      }
+  
+                    </div>
+  
+  
+                    <!-- PRODUCT DETAILS -->
+  
+                    <div
+                      class="min-w-0 flex-1"
+                    >
+  
+                      <p
+                        class="truncate text-sm font-semibold text-gray-800 dark:text-white"
+                      >
+                        {{ product.name }}
+                      </p>
+  
+                      <p
+                        class="mt-0.5 text-xs text-gray-500 dark:text-gray-400"
+                      >
+                        {{ product.category || 'No category' }}
+                      </p>
+  
+                      @if (product.barcode) {
+  
+                        <p
+                          class="mt-1 truncate font-mono text-[11px] text-gray-400"
+                        >
+                          {{ product.barcode }}
+                        </p>
+  
+                      }
+  
+                    </div>
+  
+  
+                    <!-- PRICE + STOCK -->
+  
+                    <div
+                      class="shrink-0 text-right"
+                    >
+  
+                      <p
+                        class="text-sm font-semibold text-gray-800 dark:text-white"
+                      >
+                        ₹{{ product.unitPrice | number:'1.2-2' }}
+                      </p>
+  
+                      @if (
+                        product.availableQuantity > 0
+                      ) {
+  
+                        <p
+                          class="mt-1 text-xs font-medium text-green-600 dark:text-green-400"
+                        >
+                          Stock:
+                          {{ product.availableQuantity }}
+                        </p>
+  
+                      } @else {
+  
+                        <p
+                          class="mt-1 text-xs font-medium text-red-500"
+                        >
+                          Out of stock
+                        </p>
+  
+                      }
+  
+                    </div>
+  
+                  </div>
+  
+  
+                  <button
+                    type="button"
+                    (click)="addToCart(product)"
+                    [disabled]="product.availableQuantity <= 0"
+                    class="mt-3 w-full rounded-lg border border-brand-300 bg-brand-50 px-3 py-2 text-xs font-medium text-brand-600 transition hover:bg-brand-100 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-400 dark:disabled:border-gray-700 dark:disabled:bg-gray-800 dark:disabled:text-gray-500"
+                  >
+  
+                    @if (
+                      product.availableQuantity > 0
+                    ) {
+  
+                      Add to Cart
+  
+                    } @else {
+  
+                      Out of Stock
+  
+                    }
+  
+                  </button>
+  
+                </div>
+  
+              }
+  
+  
+              @if (
+                filteredProducts.length === 0
+              ) {
+  
+                <div
+                  class="rounded-xl border border-dashed border-gray-300 py-10 text-center dark:border-gray-700"
+                >
+  
+                  <p
+                    class="text-sm text-gray-500 dark:text-gray-400"
+                  >
+                    No products match your search.
+                  </p>
+  
+                </div>
+  
+              }
+  
+            </div>
+  
+          }
+  
+        </div>
+  
+  
+        <!-- ================================================= -->
+        <!-- CART -->
+        <!-- ================================================= -->
+  
+        <div
+          class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] xl:col-span-3"
+        >
+  
+  
+          <!-- CART HEADER -->
+  
+          <div
+            class="flex items-center justify-between border-b border-gray-200 p-5 dark:border-gray-800 sm:p-6"
+          >
+  
+            <div>
+  
+              <h3
+                class="text-lg font-semibold text-gray-800 dark:text-white"
+              >
+                Current Sale
+              </h3>
+  
+              <p
+                class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+              >
+                {{ totalItems }} item(s)
+              </p>
+  
+            </div>
+  
+  
+            @if (
+              cartItems.length > 0
+            ) {
+  
+              <button
+                type="button"
+                (click)="clearCart()"
+                class="text-sm font-medium text-red-500 transition hover:text-red-600"
+              >
+                Clear Cart
+              </button>
+  
+            }
+  
+          </div>
+  
+  
+          <!-- ================================================= -->
+          <!-- EMPTY CART -->
+          <!-- ================================================= -->
+  
+          @if (
+            cartItems.length === 0
+          ) {
+  
+            <div
+              class="flex min-h-[300px] flex-col items-center justify-center px-5 py-12 text-center"
+            >
+  
+              <div
+                class="mb-3 text-5xl"
+              >
+                🛒
+              </div>
+  
+              <p
+                class="font-medium text-gray-700 dark:text-gray-300"
+              >
+                Cart is empty
+              </p>
+  
+              <p
+                class="mt-1 max-w-sm text-sm text-gray-500 dark:text-gray-400"
+              >
+                Scan a barcode or select a product from the product list.
+              </p>
+  
+            </div>
+  
+          } @else {
+  
+  
+            <!-- ================================================= -->
+            <!-- CART TABLE -->
+            <!-- ================================================= -->
+  
+            <div
+              class="overflow-x-auto"
+            >
+  
+              <table
+                class="w-full text-left"
+              >
+  
+                <thead
+                  class="border-b border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50"
+                >
+  
+                  <tr>
+  
+                    <th
+                      class="whitespace-nowrap px-4 py-3 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                    >
+                      Product
+                    </th>
+  
+                    <th
+                      class="whitespace-nowrap px-3 py-3 text-center text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                    >
+                      Qty
+                    </th>
+  
+                    <th
+                      class="whitespace-nowrap px-3 py-3 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                    >
+                      Price
+                    </th>
+  
+                    <th
+                      class="whitespace-nowrap px-3 py-3 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                    >
+                      GST
+                    </th>
+  
+                    <th
+                      class="whitespace-nowrap px-3 py-3 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                    >
+                      Total
+                    </th>
+  
+                    <th
+                      class="w-12 px-3 py-3"
+                    ></th>
+  
+                  </tr>
+  
+                </thead>
+  
+  
+                <tbody
+                  class="divide-y divide-gray-100 dark:divide-gray-800"
+                >
+  
+                  @for (
+                    item of cartItems;
+                    track item.productId
+                  ) {
+  
+                    <tr>
+  
+                      <!-- PRODUCT -->
+  
+                      <td
+                        class="px-4 py-4"
+                      >
+  
+                        <p
+                          class="whitespace-nowrap text-sm font-medium text-gray-800 dark:text-white"
+                        >
+                          {{ item.productName }}
+                        </p>
+  
+                        @if (item.barcode) {
+  
+                          <p
+                            class="mt-1 whitespace-nowrap font-mono text-[11px] text-gray-400"
+                          >
+                            {{ item.barcode }}
+                          </p>
+  
+                        }
+  
+                        <p
+                          class="mt-1 text-xs text-gray-400"
+                        >
+                          Available:
+                          {{
+                            getAvailableQuantity(
+                              item.productId
+                            )
+                          }}
+                        </p>
+  
+                      </td>
+  
+  
+                      <!-- QUANTITY -->
+  
+                      <td
+                        class="px-3 py-4"
+                      >
+  
+                        <div
+                          class="flex min-w-[130px] items-center justify-center gap-2"
+                        >
+  
+                          <button
+                            type="button"
+                            (click)="decreaseQuantity(item)"
+                            [disabled]="item.quantity <= 1"
+                            class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 bg-white text-lg text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                          >
+                            −
+                          </button>
+  
+  
+                          <input
+                            type="number"
+                            [(ngModel)]="item.quantity"
+                            (blur)="onQuantityChange(item)"
+                            min="1"
+                            [max]="getAvailableQuantity(item.productId)"
+                            class="h-8 w-14 rounded-lg border border-gray-300 bg-white px-1 text-center text-sm font-medium text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          />
+  
+  
+                          <button
+                            type="button"
+                            (click)="increaseQuantity(item)"
+                            [disabled]="
+                              item.quantity >=
+                              getAvailableQuantity(
+                                item.productId
+                              )
+                            "
+                            class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 bg-white text-lg text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                          >
+                            +
+                          </button>
+  
+                        </div>
+  
+                      </td>
+  
+  
+                      <!-- PRICE -->
+  
+                      <td
+                        class="whitespace-nowrap px-3 py-4 text-right text-sm text-gray-600 dark:text-gray-300"
+                      >
+                        ₹{{ item.unitPrice | number:'1.2-2' }}
+                      </td>
+  
+  
+                      <!-- GST -->
+  
+                      <td
+                        class="whitespace-nowrap px-3 py-4 text-right"
+                      >
+  
+                        <p
+                          class="text-sm text-gray-600 dark:text-gray-300"
+                        >
+                          ₹{{
+                            getItemGstAmount(item)
+                              | number:'1.2-2'
+                          }}
+                        </p>
+  
+                        <p
+                          class="text-[11px] text-gray-400"
+                        >
+                          {{ item.gst }}%
+                        </p>
+  
+                      </td>
+  
+  
+                      <!-- TOTAL -->
+  
+                      <td
+                        class="whitespace-nowrap px-3 py-4 text-right text-sm font-semibold text-gray-800 dark:text-white"
+                      >
+                        ₹{{
+                          getItemTotal(item)
+                            | number:'1.2-2'
+                        }}
+                      </td>
+  
+  
+                      <!-- REMOVE -->
+  
+                      <td
+                        class="px-3 py-4 text-center"
+                      >
+  
+                        <button
+                          type="button"
+                          (click)="removeFromCart(item)"
+                          title="Remove product"
+                          class="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-red-500 transition hover:bg-red-50 dark:hover:bg-red-500/10"
+                        >
+                          ×
+                        </button>
+  
+                      </td>
+  
+                    </tr>
+  
+                  }
+  
+                </tbody>
+  
+              </table>
+  
+            </div>
+  
+  
+            <!-- ================================================= -->
+            <!-- BILLING -->
+            <!-- ================================================= -->
+  
+            <div
+              class="border-t border-gray-200 p-5 dark:border-gray-800 sm:p-6"
+            >
+  
+              <div
+                class="grid grid-cols-1 gap-6 lg:grid-cols-2"
+              >
+  
+  
+                <!-- ============================================= -->
+                <!-- PAYMENT -->
+                <!-- ============================================= -->
+  
+                <div
+                  class="space-y-4"
+                >
+  
+                  <div>
+  
+                    <label
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      Payment Mode
+                    </label>
+  
+                    <select
+                      [(ngModel)]="paymentMode"
+                      class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    >
+  
+                      <option value="Cash">
+                        Cash
+                      </option>
+  
+                      <option value="UPI">
+                        UPI
+                      </option>
+  
+                      <option value="Card">
+                        Card
+                      </option>
+  
+                    </select>
+  
+                  </div>
+  
+  
+                  <!-- DISCOUNT -->
+  
+                  <div>
+  
+                    <label
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      Discount (₹)
+                    </label>
+  
+                    <input
+                      type="number"
+                      [(ngModel)]="discount"
+                      min="0"
+                      [max]="totalBeforeDiscount"
+                      step="0.01"
+                      class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    />
+  
+                  </div>
+  
+                </div>
+  
+  
+                <!-- ============================================= -->
+                <!-- TOTALS -->
+                <!-- ============================================= -->
+  
+                <div
+                  class="rounded-xl bg-gray-50 p-5 dark:bg-gray-800/60"
+                >
+  
+                  <div
+                    class="space-y-3"
+                  >
+  
+                    <div
+                      class="flex items-center justify-between"
+                    >
+  
+                      <span
+                        class="text-sm text-gray-500 dark:text-gray-400"
+                      >
+                        Subtotal
+                      </span>
+  
+                      <span
+                        class="text-sm font-medium text-gray-800 dark:text-white"
+                      >
+                        ₹{{ subtotal | number:'1.2-2' }}
+                      </span>
+  
+                    </div>
+  
+  
+                    <div
+                      class="flex items-center justify-between"
+                    >
+  
+                      <span
+                        class="text-sm text-gray-500 dark:text-gray-400"
+                      >
+                        GST
+                      </span>
+  
+                      <span
+                        class="text-sm font-medium text-gray-800 dark:text-white"
+                      >
+                        ₹{{ gstAmount | number:'1.2-2' }}
+                      </span>
+  
+                    </div>
+  
+  
+                    <div
+                      class="flex items-center justify-between"
+                    >
+  
+                      <span
+                        class="text-sm text-gray-500 dark:text-gray-400"
+                      >
+                        Discount
+                      </span>
+  
+                      <span
+                        class="text-sm font-medium text-red-500"
+                      >
+                        - ₹{{ (discount || 0) | number:'1.2-2' }}
+                      </span>
+  
+                    </div>
+  
+  
+                    <div
+                      class="border-t border-gray-200 pt-4 dark:border-gray-700"
+                    >
+  
+                      <div
+                        class="flex items-end justify-between gap-4"
+                      >
+  
+                        <span
+                          class="font-semibold text-gray-700 dark:text-gray-300"
+                        >
+                          Grand Total
+                        </span>
+  
+                        <span
+                          class="text-2xl font-bold text-gray-900 dark:text-white"
+                        >
+                          ₹{{ grandTotal | number:'1.2-2' }}
+                        </span>
+  
+                      </div>
+  
+                    </div>
+  
+                  </div>
+  
+                </div>
+  
+              </div>
+  
+  
+              <!-- ================================================= -->
+              <!-- COMPLETE SALE -->
+              <!-- ================================================= -->
+  
+              <button
+                type="button"
+                (click)="completeSale()"
+                [disabled]="
+                  isCompletingSale ||
+                  cartItems.length === 0 ||
+                  !selectedWarehouseId
+                "
+                class="mt-6 w-full rounded-xl bg-brand-500 px-5 py-3.5 text-base font-semibold text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+  
+                @if (isCompletingSale) {
+  
+                  Completing Sale...
+  
+                } @else {
+  
+                  Complete Sale ·
+                  ₹{{ grandTotal | number:'1.2-2' }}
+  
+                }
+  
+              </button>
+  
+            </div>
+  
+          }
+  
+        </div>
+  
+      </div>
+  
+    }
+  
+  </div>
+  
+  
+  <!-- ========================================================= -->
+  <!-- INVOICE PREVIEW MODAL -->
+  <!-- ========================================================= -->
+  
+  @if (
+    showInvoiceModal &&
+    completedInvoice
+  ) {
+  
+    <div
+      class="invoice-modal-overlay fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4"
+    >
+  
+      <div
+        class="invoice-modal flex max-h-[95vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+      >
+  
+  
+        <!-- =================================================== -->
+        <!-- PREVIEW HEADER - NOT PART OF INVOICE -->
+        <!-- =================================================== -->
+  
+        <div
+          class="invoice-preview-header flex items-center justify-between border-b border-gray-200 px-6 py-4"
+        >
+  
+          <div>
+  
+            <h3
+              class="text-lg font-semibold text-gray-900"
+            >
+              Invoice Preview
+            </h3>
+  
+            <p
+              class="mt-1 text-sm text-gray-500"
+            >
+              Sale completed successfully.
+            </p>
+  
+          </div>
+  
+  
+          <button
+            type="button"
+            (click)="closeInvoice()"
+            class="flex h-9 w-9 items-center justify-center rounded-lg text-xl text-gray-500 transition hover:bg-gray-100 hover:text-gray-800"
+          >
+            ×
+          </button>
+  
+        </div>
+  
+  
+        <!-- =================================================== -->
+        <!-- PREVIEW SCROLL AREA -->
+        <!-- =================================================== -->
+  
+        <div
+          class="invoice-scroll overflow-y-auto bg-gray-100 p-6"
+        >
+  
+  
+          <!-- ================================================= -->
+          <!-- PRINTABLE INVOICE -->
+          <!-- ================================================= -->
+  
+          <div
+            id="invoice-print-area"
+            class="mx-auto bg-white p-8 text-gray-900"
+          >
+  
+  
+            <!-- ================================================= -->
+            <!-- GAYATRI NURSERY -->
+            <!-- ================================================= -->
+  
+            <div
+              class="invoice-business-header text-center"
+            >
+  
+              <h1
+                class="text-3xl font-bold text-green-800"
+              >
+                Gayatri Nursery
+              </h1>
+  
+              <p
+                class="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-gray-500"
+              >
+                Sales Invoice
+              </p>
+  
+            </div>
+  
+  
+            <!-- ================================================= -->
+            <!-- INVOICE META -->
+            <!-- ================================================= -->
+  
+            <div
+              class="invoice-information mt-6 flex justify-between gap-8 border-y border-gray-200 py-4"
+            >
+  
+              <div>
+  
+                <p
+                  class="text-sm text-gray-500"
+                >
+                  Invoice:
+                  <strong
+                    class="ml-1 text-gray-900"
+                  >
+                    {{ completedInvoice.invoiceNumber }}
+                  </strong>
+                </p>
+  
+  
+                <p
+                  class="mt-2 text-sm text-gray-500"
+                >
+                  Date:
+                  <strong
+                    class="ml-1 text-gray-900"
+                  >
+                    {{
+                      formatInvoiceDate(
+                        completedInvoice.createdAt
+                      )
+                    }}
+                  </strong>
+                </p>
+  
+              </div>
+  
+  
+              <div
+                class="invoice-warehouse text-right"
+              >
+  
+                <p
+                  class="text-xs font-semibold uppercase tracking-wide text-gray-500"
+                >
+                  Warehouse
+                </p>
+  
+                <p
+                  class="mt-1 text-sm font-semibold text-gray-900"
+                >
+                  {{
+                    completedInvoice.warehouseName ||
+                    '-'
+                  }}
+                </p>
+  
+              </div>
+  
+            </div>
+  
+  
+            <!-- ================================================= -->
+            <!-- CUSTOMER -->
+            <!-- ================================================= -->
+  
+            <div
+              class="invoice-customer border-b border-gray-200 py-5"
+            >
+  
+              <p
+                class="invoice-section-title mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500"
+              >
+                Customer
+              </p>
+  
+  
+              <div
+                class="invoice-customer-grid grid grid-cols-2 gap-8"
+              >
+  
+                <div>
+  
+                  <p
+                    class="text-xs text-gray-500"
+                  >
+                    Name
+                  </p>
+  
+                  <p
+                    class="mt-1 text-sm font-semibold text-gray-900"
+                  >
+                    {{
+                      completedInvoice.customerName ||
+                      'Walk-in Customer'
+                    }}
+                  </p>
+  
+                </div>
+  
+  
+                <div>
+  
+                  <p
+                    class="text-xs text-gray-500"
+                  >
+                    Mobile
+                  </p>
+  
+                  <p
+                    class="mt-1 text-sm font-semibold text-gray-900"
+                  >
+                    {{
+                      completedInvoice.customerMobile ||
+                      '-'
+                    }}
+                  </p>
+  
+                </div>
+  
+              </div>
+  
+            </div>
+  
+  
+            <!-- ================================================= -->
+            <!-- PRODUCT TABLE -->
+            <!-- ================================================= -->
+  
+            <div
+              class="invoice-products mt-6 overflow-x-auto"
+            >
+  
+              <table
+                class="w-full border-collapse"
+              >
+  
+                <thead>
+  
+                  <tr
+                    class="border-y-2 border-gray-300"
+                  >
+  
+                    <th
+                      class="w-10 px-2 py-3 text-left text-xs font-semibold uppercase text-gray-600"
+                    >
+                      #
+                    </th>
+  
+                    <th
+                      class="px-2 py-3 text-left text-xs font-semibold uppercase text-gray-600"
+                    >
+                      Product
+                    </th>
+  
+                    <th
+                      class="px-2 py-3 text-center text-xs font-semibold uppercase text-gray-600"
+                    >
+                      Qty
+                    </th>
+  
+                    <th
+                      class="px-2 py-3 text-right text-xs font-semibold uppercase text-gray-600"
+                    >
+                      Rate
+                    </th>
+  
+                    <th
+                      class="px-2 py-3 text-right text-xs font-semibold uppercase text-gray-600"
+                    >
+                      GST
+                    </th>
+  
+                    <th
+                      class="px-2 py-3 text-right text-xs font-semibold uppercase text-gray-600"
+                    >
+                      Amount
+                    </th>
+  
+                  </tr>
+  
+                </thead>
+  
+  
+                <tbody>
+  
+                  @for (
+                    item of completedInvoice.items;
+                    track item.productId;
+                    let index = $index
+                  ) {
+  
+                    <tr
+                      class="border-b border-gray-200"
+                    >
+  
+                      <!-- NUMBER -->
+  
+                      <td
+                        class="px-2 py-4 align-top text-sm text-gray-500"
+                      >
+                        {{ index + 1 }}
+                      </td>
+  
+  
+                      <!-- PRODUCT -->
+  
+                      <td
+                        class="px-2 py-4 align-top"
+                      >
+  
+                        <p
+                          class="text-sm font-semibold text-gray-900"
+                        >
+                          {{ item.productName }}
+                        </p>
+  
+                        @if (item.barcode) {
+  
+                          <p
+                            class="mt-1 font-mono text-[10px] text-gray-400"
+                          >
+                            {{ item.barcode }}
+                          </p>
+  
+                        }
+  
+                      </td>
+  
+  
+                      <!-- QUANTITY -->
+  
+                      <td
+                        class="px-2 py-4 text-center align-top text-sm text-gray-700"
+                      >
+                        {{ item.quantity }}
+                      </td>
+  
+  
+                      <!-- RATE -->
+  
+                      <td
+                        class="whitespace-nowrap px-2 py-4 text-right align-top text-sm text-gray-700"
+                      >
+                        ₹{{
+                          item.unitPrice
+                            | number:'1.2-2'
+                        }}
+                      </td>
+  
+  
+                      <!-- GST -->
+  
+                      <td
+                        class="whitespace-nowrap px-2 py-4 text-right align-top"
+                      >
+  
+                        <p
+                          class="text-sm text-gray-700"
+                        >
+                          ₹{{
+                            item.gstAmount
+                              | number:'1.2-2'
+                          }}
+                        </p>
+  
+                        <p
+                          class="mt-1 text-[10px] text-gray-400"
+                        >
+                          {{ item.gst }}%
+                        </p>
+  
+                      </td>
+  
+  
+                      <!-- AMOUNT -->
+  
+                      <td
+                        class="whitespace-nowrap px-2 py-4 text-right align-top text-sm font-semibold text-gray-900"
+                      >
+                        ₹{{
+                          item.total
+                            | number:'1.2-2'
+                        }}
+                      </td>
+  
+                    </tr>
+  
+                  }
+  
+                </tbody>
+  
+              </table>
+  
+            </div>
+  
+  
+            <!-- ================================================= -->
+            <!-- PAYMENT + TOTALS -->
+            <!-- ================================================= -->
+  
+            <div
+              class="invoice-summary mt-7 grid grid-cols-2 gap-12"
+            >
+  
+  
+              <!-- PAYMENT -->
+  
+              <div>
+  
+                <p
+                  class="text-xs font-semibold uppercase tracking-wide text-gray-500"
+                >
+                  Payment
+                </p>
+  
+                <p
+                  class="mt-2 text-sm font-semibold text-gray-900"
+                >
+                  {{ completedInvoice.paymentMode }}
+                </p>
+  
+              </div>
+  
+  
+              <!-- TOTALS -->
+  
+              <div
+                class="invoice-totals"
+              >
+  
+                <div
+                  class="flex justify-between gap-5 py-1.5"
+                >
+  
+                  <span
+                    class="text-sm text-gray-500"
+                  >
+                    Subtotal
+                  </span>
+  
+                  <strong
+                    class="text-sm text-gray-900"
+                  >
+                    ₹{{
+                      completedInvoice.subtotal
+                        | number:'1.2-2'
+                    }}
+                  </strong>
+  
+                </div>
+  
+  
+                <div
+                  class="flex justify-between gap-5 py-1.5"
+                >
+  
+                  <span
+                    class="text-sm text-gray-500"
+                  >
+                    GST
+                  </span>
+  
+                  <strong
+                    class="text-sm text-gray-900"
+                  >
+                    ₹{{
+                      completedInvoice.gstAmount
+                        | number:'1.2-2'
+                    }}
+                  </strong>
+  
+                </div>
+  
+  
+                <div
+                  class="flex justify-between gap-5 py-1.5"
+                >
+  
+                  <span
+                    class="text-sm text-gray-500"
+                  >
+                    Discount
+                  </span>
+  
+                  <strong
+                    class="text-sm text-gray-900"
+                  >
+                    - ₹{{
+                      completedInvoice.discount
+                        | number:'1.2-2'
+                    }}
+                  </strong>
+  
+                </div>
+  
+  
+                <!-- GRAND TOTAL -->
+  
+                <div
+                  class="invoice-grand-total mt-3 flex items-end justify-between gap-5 border-t-2 border-gray-400 pt-3"
+                >
+  
+                  <span
+                    class="text-base font-bold text-gray-900"
+                  >
+                    Grand Total
+                  </span>
+  
+                  <strong
+                    class="text-2xl font-bold text-gray-900"
+                  >
+                    ₹{{
+                      completedInvoice.grandTotal
+                        | number:'1.2-2'
+                    }}
+                  </strong>
+  
+                </div>
+  
+              </div>
+  
+            </div>
+  
+  
+            <!-- ================================================= -->
+            <!-- FOOTER -->
+            <!-- ================================================= -->
+  
+            <div
+              class="invoice-footer mt-10 border-t border-gray-200 pt-5 text-center"
+            >
+  
+              <p
+                class="text-sm font-semibold text-gray-700"
+              >
+                Thank you for your purchase!
+              </p>
+  
+              <p
+                class="mt-1 text-xs text-gray-400"
+              >
+                Invoice {{ completedInvoice.invoiceNumber }}
+              </p>
+  
+            </div>
+  
+          </div>
+  
+        </div>
+  
+  
+        <!-- =================================================== -->
+        <!-- PREVIEW ACTIONS - NOT PART OF PRINT -->
+        <!-- =================================================== -->
+  
+        <div
+          class="invoice-actions flex flex-col-reverse gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end"
+        >
+  
+          <button
+            type="button"
+            (click)="closeInvoice()"
+            class="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+          >
+            Close
+          </button>
+  
+  
+          <button
+            type="button"
+            (click)="printInvoice()"
+            class="rounded-lg bg-brand-500 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-600"
+          >
+            Print Invoice
+          </button>
+  
+        </div>
+  
+      </div>
+  
+    </div>
+  
+  }

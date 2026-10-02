@@ -83,3 +83,7 @@ nursery-dashboard/public/images/
 # Google Cloud / Firebase private keys (never commit)
 *-firebase-adminsdk-*.json
 serviceAccount*.json
+
+
+emulator-data/
+nursery-dashboard/firebase-emulator-data/

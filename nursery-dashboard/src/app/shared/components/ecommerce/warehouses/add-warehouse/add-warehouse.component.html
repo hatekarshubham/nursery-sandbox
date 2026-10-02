@@ -248,6 +248,32 @@
       class="flex flex-wrap items-center gap-3 border-t border-gray-100 pt-6 dark:border-gray-800"
     >
 
+        <!-- SAVE & ADD ANOTHER -->
+
+      <button
+      type="button"
+
+      (click)="saveAndAddAnother()"
+
+      [disabled]="isSaving"
+
+      class="rounded-lg bg-green-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+
+      @if (isSaving) {
+
+        Saving...
+
+      }
+
+      @else {
+
+        Save Warehouse
+
+      }
+
+    </button>
+
 
       <!-- SAVE & VIEW ALL -->
 
@@ -267,34 +293,7 @@
 
         @else {
 
-          Save & View All
-
-        }
-
-      </button>
-
-
-      <!-- SAVE & ADD ANOTHER -->
-
-      <button
-        type="button"
-
-        (click)="saveAndAddAnother()"
-
-        [disabled]="isSaving"
-
-        class="rounded-lg bg-green-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-
-        @if (isSaving) {
-
-          Saving...
-
-        }
-
-        @else {
-
-          Save & Add Another
+          Save & View Warehouses
 
         }
 

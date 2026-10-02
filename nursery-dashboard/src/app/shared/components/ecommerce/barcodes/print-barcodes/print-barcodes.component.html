@@ -1,0 +1,1439 @@
+<!-- ====================================================== -->
+<!-- PRINT BARCODES PAGE -->
+<!-- ====================================================== -->
+
+<div
+  class="barcode-page rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6"
+>
+
+  <!-- =================================================== -->
+  <!-- HEADER -->
+  <!-- =================================================== -->
+
+  <div
+    class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+  >
+
+    <div>
+      <h3
+        class="text-lg font-semibold text-gray-800 dark:text-white/90"
+      >
+        Print Barcodes
+      </h3>
+
+      <p
+        class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+      >
+        Select products and specify how many barcode labels
+        you want to print
+      </p>
+    </div>
+
+
+    @if (selectedProductCount > 0) {
+
+      <button
+        type="button"
+        (click)="clearSelection()"
+        class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+      >
+        Clear Selection
+      </button>
+
+    }
+
+  </div>
+
+
+  <!-- =================================================== -->
+  <!-- LOADING -->
+  <!-- =================================================== -->
+
+  @if (isLoading) {
+
+    <div
+      class="py-12 text-center text-sm text-gray-500 dark:text-gray-400"
+    >
+      Loading products...
+    </div>
+
+  }
+
+
+  <!-- =================================================== -->
+  <!-- ERROR -->
+  <!-- =================================================== -->
+
+  @if (!isLoading && errorMessage) {
+
+    <div
+      class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-400"
+    >
+      {{ errorMessage }}
+    </div>
+
+  }
+
+
+  <!-- =================================================== -->
+  <!-- CONTENT -->
+  <!-- =================================================== -->
+
+  @if (!isLoading && !errorMessage) {
+
+    <div class="space-y-6">
+
+      <!-- ================================================= -->
+      <!-- SEARCH -->
+      <!-- ================================================= -->
+
+      <div>
+
+        <label
+          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Search Products
+        </label>
+
+        <input
+          type="text"
+          [(ngModel)]="searchText"
+          placeholder="Search by product, category or barcode..."
+          class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+        />
+
+      </div>
+
+
+      <!-- ================================================= -->
+      <!-- SUMMARY -->
+      <!-- ================================================= -->
+
+      <div
+        class="grid grid-cols-1 gap-4 sm:grid-cols-2"
+      >
+
+        <div
+          class="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50"
+        >
+
+          <p
+            class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+          >
+            Selected Products
+          </p>
+
+          <p
+            class="mt-2 text-2xl font-semibold text-gray-800 dark:text-white"
+          >
+            {{ selectedProductCount }}
+          </p>
+
+        </div>
+
+
+        <div
+          class="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50"
+        >
+
+          <p
+            class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+          >
+            Total Labels
+          </p>
+
+          <p
+            class="mt-2 text-2xl font-semibold text-gray-800 dark:text-white"
+          >
+            {{ totalLabels }}
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <!-- ================================================= -->
+      <!-- NO PRODUCTS -->
+      <!-- ================================================= -->
+
+      @if (products.length === 0) {
+
+        <div
+          class="rounded-xl border border-dashed border-gray-300 py-12 text-center dark:border-gray-700"
+        >
+
+          <p
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            No active products found.
+          </p>
+
+        </div>
+
+      }
+
+
+      <!-- ================================================= -->
+      <!-- PRODUCT TABLE -->
+      <!-- ================================================= -->
+
+      @if (products.length > 0) {
+
+        <div
+          class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700"
+        >
+
+          <div class="max-w-full overflow-x-auto">
+
+            <table class="w-full text-left">
+
+              <thead
+                class="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50"
+              >
+
+                <tr>
+
+                  <th class="w-14 px-4 py-3">
+
+                    <input
+                      type="checkbox"
+                      [checked]="allSelected"
+                      (change)="toggleSelectAll($any($event.target).checked)"
+                      class="h-4 w-4 cursor-pointer rounded border-gray-300"
+                      title="Select all visible products with barcodes"
+                    />
+
+                  </th>
+
+
+                  <th
+                    class="whitespace-nowrap px-3 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                  >
+                    Product
+                  </th>
+
+
+                  <th
+                    class="whitespace-nowrap px-3 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                  >
+                    Category
+                  </th>
+
+
+                  <th
+                    class="whitespace-nowrap px-3 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                  >
+                    Barcode
+                  </th>
+
+
+                  <th
+                    class="whitespace-nowrap px-3 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                  >
+                    Price
+                  </th>
+
+
+                  <th
+                    class="whitespace-nowrap px-3 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                  >
+                    Labels
+                  </th>
+
+                </tr>
+
+              </thead>
+
+
+              <tbody
+                class="divide-y divide-gray-100 dark:divide-gray-800"
+              >
+
+                @for (
+                  product of filteredProducts;
+                  track product.id
+                ) {
+
+                  <tr
+                    [class.bg-brand-50]="product.selected"
+                    [class.dark:bg-brand-500/5]="product.selected"
+                    class="transition hover:bg-gray-50 dark:hover:bg-white/[0.02]"
+                  >
+
+                    <!-- CHECKBOX -->
+
+                    <td class="px-4 py-4">
+
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="product.selected"
+                        (ngModelChange)="onProductSelectionChange(product)"
+                        [disabled]="!canSelectProduct(product)"
+                        class="h-4 w-4 cursor-pointer rounded border-gray-300 disabled:cursor-not-allowed disabled:opacity-40"
+                      />
+
+                    </td>
+
+
+                    <!-- PRODUCT -->
+
+                    <td
+                      class="whitespace-nowrap px-3 py-4"
+                    >
+
+                      <p
+                        class="font-medium text-gray-800 text-theme-sm dark:text-white"
+                      >
+                        {{ product.name }}
+                      </p>
+
+                    </td>
+
+
+                    <!-- CATEGORY -->
+
+                    <td
+                      class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"
+                    >
+                      {{ product.category || '-' }}
+                    </td>
+
+
+                    <!-- BARCODE -->
+
+                    <td
+                      class="whitespace-nowrap px-3 py-4"
+                    >
+
+                      @if (product.barcode) {
+
+                        <span
+                          class="inline-flex rounded-lg bg-purple-50 px-2.5 py-1 font-mono text-xs font-semibold text-purple-700 dark:bg-purple-500/10 dark:text-purple-400"
+                        >
+                          {{ product.barcode }}
+                        </span>
+
+                      } @else {
+
+                        <span
+                          class="inline-flex rounded-lg bg-yellow-50 px-2.5 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
+                        >
+                          Not Generated
+                        </span>
+
+                      }
+
+                    </td>
+
+
+                    <!-- PRICE -->
+
+                    <td
+                      class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      ₹{{ product.unitPrice | number:'1.2-2' }}
+                    </td>
+
+
+                    <!-- QUANTITY -->
+
+                    <td
+                      class="whitespace-nowrap px-3 py-4"
+                    >
+
+                      @if (
+                        product.barcode &&
+                        product.selected
+                      ) {
+
+                        <div
+                          class="flex items-center justify-center gap-2"
+                        >
+
+                          <button
+                            type="button"
+                            (click)="decreaseQuantity(product)"
+                            [disabled]="product.labelQuantity <= 1"
+                            class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 bg-white text-lg font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                          >
+                            −
+                          </button>
+
+
+                          <input
+                            type="number"
+                            [(ngModel)]="product.labelQuantity"
+                            (blur)="onQuantityChange(product)"
+                            min="1"
+                            step="1"
+                            class="h-8 w-20 rounded-lg border border-gray-300 bg-white px-2 text-center text-sm font-medium text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          />
+
+
+                          <button
+                            type="button"
+                            (click)="increaseQuantity(product)"
+                            class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 bg-white text-lg font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                          >
+                            +
+                          </button>
+
+                        </div>
+
+                      } @else if (!product.barcode) {
+
+                        <p
+                          class="text-center text-xs text-gray-400 dark:text-gray-500"
+                        >
+                          Barcode required
+                        </p>
+
+                      } @else {
+
+                        <p
+                          class="text-center text-xs text-gray-400 dark:text-gray-500"
+                        >
+                          Select product
+                        </p>
+
+                      }
+
+                    </td>
+
+                  </tr>
+
+                }
+
+
+                @if (filteredProducts.length === 0) {
+
+                  <tr>
+
+                    <td
+                      colspan="6"
+                      class="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
+                    >
+                      No products match your search.
+                    </td>
+
+                  </tr>
+
+                }
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+      }
+
+
+      <!-- ================================================= -->
+      <!-- READY SUMMARY -->
+      <!-- ================================================= -->
+
+      @if (selectedProductCount > 0) {
+
+        <div
+          class="rounded-xl border border-blue-200 bg-blue-50 p-5 dark:border-blue-900/40 dark:bg-blue-900/10"
+        >
+
+          <div
+            class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+          >
+
+            <div>
+
+              <p
+                class="font-medium text-gray-800 dark:text-white"
+              >
+                Ready to generate barcode labels
+              </p>
+
+              <p
+                class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+              >
+                {{ selectedProductCount }}
+                product(s) selected ·
+                {{ totalLabels }}
+                total label(s)
+              </p>
+
+            </div>
+
+
+            <button
+              type="button"
+              (click)="previewBarcodes()"
+              [disabled]="totalLabels <= 0"
+              class="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Preview Barcodes
+            </button>
+
+          </div>
+
+        </div>
+
+      }
+
+    </div>
+
+  }
+
+</div>
+
+
+
+<!-- ====================================================== -->
+<!-- BARCODE PRINT PREVIEW -->
+<!-- ====================================================== -->
+
+@if (isPreviewOpen) {
+
+  <div
+    class="barcode-preview-overlay fixed inset-0 z-[99999] flex items-start justify-center overflow-y-auto bg-black/60 p-4 sm:p-6"
+  >
+
+    <div
+      class="barcode-preview-dialog w-full max-w-7xl overflow-hidden rounded-2xl bg-gray-100 shadow-2xl dark:bg-gray-900"
+    >
+
+
+      <!-- ================================================= -->
+      <!-- PREVIEW HEADER -->
+      <!-- ================================================= -->
+
+      <div
+        class="preview-toolbar flex flex-col gap-4 border-b border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800 lg:flex-row lg:items-center lg:justify-between"
+      >
+
+        <div>
+
+          <h2
+            class="text-xl font-semibold text-gray-800 dark:text-white"
+          >
+            Barcode Print Preview
+          </h2>
+
+          <p
+            class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+          >
+            {{ printLabels.length }}
+            barcode label(s) ready to print
+          </p>
+
+        </div>
+
+
+        <div
+          class="flex flex-wrap items-center gap-3"
+        >
+
+          <button
+            type="button"
+            (click)="closePreview()"
+            class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+          >
+            Close
+          </button>
+
+
+          <button
+            type="button"
+            (click)="printBarcodes()"
+            [disabled]="!canPrint"
+            class="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Print A4 Sheet
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- ================================================= -->
+      <!-- INFO -->
+      <!-- ================================================= -->
+
+      <div
+        class="preview-toolbar border-b border-gray-200 bg-blue-50 px-5 py-3 dark:border-gray-700 dark:bg-blue-900/10"
+      >
+
+        <p
+          class="text-sm text-blue-700 dark:text-blue-400"
+        >
+          Configure these measurements to match the physical
+          sticker sheet you are using. All dimensions are in
+          millimetres.
+        </p>
+
+      </div>
+
+
+      <!-- ================================================= -->
+      <!-- STICKER SETTINGS -->
+      <!-- ================================================= -->
+
+      <div
+        class="preview-toolbar border-b border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800"
+      >
+
+        <div
+          class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+        >
+
+          <div>
+
+            <h3
+              class="text-base font-semibold text-gray-800 dark:text-white"
+            >
+              Sticker Sheet Settings
+            </h3>
+
+            <p
+              class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+            >
+              Enter the measurements printed on the packaging
+              of your sticker sheet.
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+            (click)="resetLabelSettings()"
+            class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+          >
+            Reset Settings
+          </button>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- PAGE SIZE -->
+        <!-- ================================================= -->
+
+        <div class="mb-5">
+
+          <p
+            class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
+          >
+            Page Size
+          </p>
+
+
+          <div
+            class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          >
+
+            <div>
+
+              <label
+                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Page Width (mm)
+              </label>
+
+              <input
+                type="number"
+                [(ngModel)]="labelSettings.pageWidthMm"
+                (ngModelChange)="onLabelSettingsChange()"
+                min="1"
+                step="0.1"
+                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+
+            </div>
+
+
+            <div>
+
+              <label
+                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Page Height (mm)
+              </label>
+
+              <input
+                type="number"
+                [(ngModel)]="labelSettings.pageHeightMm"
+                (ngModelChange)="onLabelSettingsChange()"
+                min="1"
+                step="0.1"
+                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- STICKER GRID -->
+        <!-- ================================================= -->
+
+        <div class="mb-5">
+
+          <p
+            class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
+          >
+            Sticker Grid
+          </p>
+
+
+          <div
+            class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          >
+
+            <div>
+
+              <label
+                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Columns
+              </label>
+
+              <input
+                type="number"
+                [(ngModel)]="labelSettings.columns"
+                (ngModelChange)="onLabelSettingsChange()"
+                min="1"
+                step="1"
+                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+
+            </div>
+
+
+            <div>
+
+              <label
+                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Rows
+              </label>
+
+              <input
+                type="number"
+                [(ngModel)]="labelSettings.rows"
+                (ngModelChange)="onLabelSettingsChange()"
+                min="1"
+                step="1"
+                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+
+            </div>
+
+
+            <div>
+
+              <label
+                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Label Width (mm)
+              </label>
+
+              <input
+                type="number"
+                [(ngModel)]="labelSettings.labelWidthMm"
+                (ngModelChange)="onLabelSettingsChange()"
+                min="1"
+                step="0.1"
+                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+
+            </div>
+
+
+            <div>
+
+              <label
+                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Label Height (mm)
+              </label>
+
+              <input
+                type="number"
+                [(ngModel)]="labelSettings.labelHeightMm"
+                (ngModelChange)="onLabelSettingsChange()"
+                min="1"
+                step="0.1"
+                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- GAPS -->
+        <!-- ================================================= -->
+
+        <div class="mb-5">
+
+          <p
+            class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
+          >
+            Gaps Between Stickers
+          </p>
+
+
+          <div
+            class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          >
+
+            <div>
+
+              <label
+                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Horizontal Gap (mm)
+              </label>
+
+              <input
+                type="number"
+                [(ngModel)]="labelSettings.horizontalGapMm"
+                (ngModelChange)="onLabelSettingsChange()"
+                min="0"
+                step="0.1"
+                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+
+            </div>
+
+
+            <div>
+
+              <label
+                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Vertical Gap (mm)
+              </label>
+
+              <input
+                type="number"
+                [(ngModel)]="labelSettings.verticalGapMm"
+                (ngModelChange)="onLabelSettingsChange()"
+                min="0"
+                step="0.1"
+                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- MARGINS -->
+        <!-- ================================================= -->
+
+        <div class="mb-5">
+
+          <p
+            class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
+          >
+            Page Margins
+          </p>
+
+
+          <div
+            class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          >
+
+            <div>
+
+              <label
+                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Top (mm)
+              </label>
+
+              <input
+                type="number"
+                [(ngModel)]="labelSettings.marginTopMm"
+                (ngModelChange)="onLabelSettingsChange()"
+                min="0"
+                step="0.1"
+                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+
+            </div>
+
+
+            <div>
+
+              <label
+                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Right (mm)
+              </label>
+
+              <input
+                type="number"
+                [(ngModel)]="labelSettings.marginRightMm"
+                (ngModelChange)="onLabelSettingsChange()"
+                min="0"
+                step="0.1"
+                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+
+            </div>
+
+
+            <div>
+
+              <label
+                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Bottom (mm)
+              </label>
+
+              <input
+                type="number"
+                [(ngModel)]="labelSettings.marginBottomMm"
+                (ngModelChange)="onLabelSettingsChange()"
+                min="0"
+                step="0.1"
+                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+
+            </div>
+
+
+            <div>
+
+              <label
+                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Left (mm)
+              </label>
+
+              <input
+                type="number"
+                [(ngModel)]="labelSettings.marginLeftMm"
+                (ngModelChange)="onLabelSettingsChange()"
+                min="0"
+                step="0.1"
+                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- START POSITION -->
+        <!-- ================================================= -->
+
+        <div class="mb-5">
+
+          <p
+            class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
+          >
+            Printing
+          </p>
+
+
+          <div
+            class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          >
+
+            <div>
+
+              <label
+                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Start Position
+              </label>
+
+              <input
+                type="number"
+                [(ngModel)]="labelSettings.startPosition"
+                (ngModelChange)="onLabelSettingsChange()"
+                min="1"
+                [max]="labelsPerPage"
+                step="1"
+                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+
+              <p
+                class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+              >
+                Useful when some stickers on the first sheet
+                have already been used.
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- SUMMARY -->
+        <!-- ================================================= -->
+
+        <div
+          class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"
+        >
+
+          <div
+            class="rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50"
+          >
+
+            <p
+              class="text-xs text-gray-500 dark:text-gray-400"
+            >
+              Labels / Page
+            </p>
+
+            <p
+              class="mt-1 font-semibold text-gray-800 dark:text-white"
+            >
+              {{ labelsPerPage }}
+            </p>
+
+          </div>
+
+
+          <div
+            class="rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50"
+          >
+
+            <p
+              class="text-xs text-gray-500 dark:text-gray-400"
+            >
+              Grid Width
+            </p>
+
+            <p
+              class="mt-1 font-semibold text-gray-800 dark:text-white"
+            >
+              {{ gridWidthMm | number:'1.0-2' }} mm
+            </p>
+
+          </div>
+
+
+          <div
+            class="rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50"
+          >
+
+            <p
+              class="text-xs text-gray-500 dark:text-gray-400"
+            >
+              Grid Height
+            </p>
+
+            <p
+              class="mt-1 font-semibold text-gray-800 dark:text-white"
+            >
+              {{ gridHeightMm | number:'1.0-2' }} mm
+            </p>
+
+          </div>
+
+
+          <div
+            class="rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50"
+          >
+
+            <p
+              class="text-xs text-gray-500 dark:text-gray-400"
+            >
+              Required Width
+            </p>
+
+            <p
+              class="mt-1 font-semibold text-gray-800 dark:text-white"
+            >
+              {{ requiredSheetWidthMm | number:'1.0-2' }} mm
+            </p>
+
+          </div>
+
+
+          <div
+            class="rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50"
+          >
+
+            <p
+              class="text-xs text-gray-500 dark:text-gray-400"
+            >
+              Required Height
+            </p>
+
+            <p
+              class="mt-1 font-semibold text-gray-800 dark:text-white"
+            >
+              {{ requiredSheetHeightMm | number:'1.0-2' }} mm
+            </p>
+
+          </div>
+
+
+          <div
+            class="rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50"
+          >
+
+            <p
+              class="text-xs text-gray-500 dark:text-gray-400"
+            >
+              Pages
+            </p>
+
+            <p
+              class="mt-1 font-semibold text-gray-800 dark:text-white"
+            >
+              {{ totalPages }}
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- VALIDATION -->
+        <!-- ================================================= -->
+
+        @if (labelSettingsError) {
+
+          <div
+            class="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/40 dark:bg-red-900/20"
+          >
+
+            <p
+              class="text-sm font-semibold text-red-700 dark:text-red-400"
+            >
+              Sticker sheet configuration does not fit
+            </p>
+
+            <p
+              class="mt-1 text-sm text-red-600 dark:text-red-400"
+            >
+              {{ labelSettingsError }}
+            </p>
+
+            <p
+              class="mt-2 text-xs text-red-500 dark:text-red-400"
+            >
+              You can still preview the layout, but printing
+              is disabled until the measurements fit the page.
+            </p>
+
+          </div>
+
+        } @else {
+
+          <div
+            class="mt-5 rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-900/40 dark:bg-green-900/20"
+          >
+
+            <p
+              class="text-sm font-semibold text-green-700 dark:text-green-400"
+            >
+              ✓ Sticker sheet configuration fits the page
+            </p>
+
+            <p
+              class="mt-1 text-xs text-green-600 dark:text-green-400"
+            >
+              Remaining width:
+              {{ unusedWidthMm | number:'1.0-2' }} mm ·
+              Remaining height:
+              {{ unusedHeightMm | number:'1.0-2' }} mm
+            </p>
+
+          </div>
+
+        }
+
+      </div>
+
+
+      <!-- ================================================= -->
+      <!-- PREVIEW TITLE -->
+      <!-- ================================================= -->
+
+      <div
+        class="preview-toolbar border-b border-gray-200 bg-gray-50 px-5 py-3 dark:border-gray-700 dark:bg-gray-800/50"
+      >
+
+        <div
+          class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
+        >
+
+          <p
+            class="text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Physical Sheet Preview
+          </p>
+
+          <p
+            class="text-xs text-gray-500 dark:text-gray-400"
+          >
+            {{ labelSettings.columns }} columns ×
+            {{ labelSettings.rows }} rows ·
+            {{ labelSettings.labelWidthMm }} ×
+            {{ labelSettings.labelHeightMm }} mm labels
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <!-- ================================================= -->
+      <!-- PREVIEW SCROLL -->
+      <!-- ================================================= -->
+
+      <div
+        class="barcode-preview-scroll overflow-auto p-4 sm:p-8"
+      >
+
+
+        <!-- ================================================= -->
+        <!-- PHYSICAL SHEET -->
+        <!-- ================================================= -->
+
+        <div
+          id="barcode-print-area"
+          class="barcode-a4-sheet mx-auto box-border bg-white shadow-lg"
+          [style.width.mm]="labelSettings.pageWidthMm"
+          [style.height.mm]="labelSettings.pageHeightMm"
+          [style.padding-top.mm]="labelSettings.marginTopMm"
+          [style.padding-right.mm]="labelSettings.marginRightMm"
+          [style.padding-bottom.mm]="labelSettings.marginBottomMm"
+          [style.padding-left.mm]="labelSettings.marginLeftMm"
+        >
+
+
+          <!-- =============================================== -->
+          <!-- GAYATRI NURSERY -->
+          <!-- =============================================== -->
+
+          <div class="barcode-print-brand">
+
+            <div class="barcode-print-brand-name">
+              Gayatri Nursery
+            </div>
+
+          </div>
+
+
+          <!-- =============================================== -->
+          <!-- LABEL GRID -->
+          <!-- =============================================== -->
+
+          <div
+            class="barcode-label-grid"
+            [style.grid-template-columns]="'repeat(' + labelSettings.columns + ', ' + labelSettings.labelWidthMm + 'mm)'"
+            [style.grid-auto-rows]="labelSettings.labelHeightMm + 'mm'"
+            [style.column-gap.mm]="labelSettings.horizontalGapMm"
+            [style.row-gap.mm]="labelSettings.verticalGapMm"
+          >
+
+
+            <!-- ============================================= -->
+            <!-- USED POSITIONS -->
+            <!-- ============================================= -->
+
+            @for (
+              emptyPosition of [].constructor(startingEmptyLabels);
+              track $index
+            ) {
+
+              <div
+                class="barcode-label barcode-label-empty box-border"
+                [style.width.mm]="labelSettings.labelWidthMm"
+                [style.height.mm]="labelSettings.labelHeightMm"
+              >
+
+                <div
+                  class="flex h-full items-center justify-center text-center"
+                >
+
+                  <span
+                    class="text-[10px] text-gray-300"
+                  >
+                    Used
+                  </span>
+
+                </div>
+
+              </div>
+
+            }
+
+
+            <!-- ============================================= -->
+            <!-- ACTUAL LABELS -->
+            <!-- ============================================= -->
+
+            @for (
+              label of printLabels;
+              track label.renderId
+            ) {
+
+              <div
+                class="barcode-label box-border overflow-hidden"
+                [style.width.mm]="labelSettings.labelWidthMm"
+                [style.height.mm]="labelSettings.labelHeightMm"
+              >
+
+                <!-- PRODUCT NAME -->
+
+                <div
+                  class="barcode-product-name"
+                  [title]="label.productName"
+                >
+                  {{ label.productName }}
+                </div>
+
+
+                <!-- CATEGORY -->
+
+                @if (label.category) {
+
+                  <div
+                    class="barcode-category"
+                  >
+                    {{ label.category }}
+                  </div>
+
+                }
+
+
+                <!-- BARCODE -->
+
+                <div
+                  class="barcode-svg-wrapper"
+                >
+
+                  <svg
+                    [id]="getBarcodeElementId(label.renderId)"
+                    class="barcode-svg"
+                  ></svg>
+
+                </div>
+
+
+                <!-- BARCODE NUMBER -->
+
+                <div
+                  class="barcode-number"
+                >
+                  {{ label.barcode }}
+                </div>
+
+
+                <!-- PRICE -->
+
+                <div
+                  class="barcode-price"
+                >
+                  ₹{{ label.unitPrice | number:'1.2-2' }}
+                </div>
+
+              </div>
+
+            }
+
+          </div>
+          <!-- END LABEL GRID -->
+
+
+        </div>
+        <!-- END PHYSICAL SHEET -->
+
+
+      </div>
+      <!-- END PREVIEW SCROLL -->
+
+
+      <!-- ================================================= -->
+      <!-- BOTTOM TOOLBAR -->
+      <!-- ================================================= -->
+
+      <div
+        class="preview-toolbar flex flex-col gap-3 border-t border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800 sm:flex-row sm:items-center sm:justify-between"
+      >
+
+        <div>
+
+          <p
+            class="text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            {{ printLabels.length }} barcode label(s) ·
+            {{ labelsPerPage }} positions per sheet ·
+            {{ totalPages }} page(s)
+          </p>
+
+          <p
+            class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+          >
+            Print at 100% / Actual Size. Do not use
+            "Fit to Page" when printing onto precut labels.
+          </p>
+
+        </div>
+
+
+        <div
+          class="flex items-center gap-3"
+        >
+
+          <button
+            type="button"
+            (click)="closePreview()"
+            class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+          >
+            Close
+          </button>
+
+
+          <button
+            type="button"
+            (click)="printBarcodes()"
+            [disabled]="!canPrint"
+            class="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Print A4 Sheet
+          </button>
+
+        </div>
+
+      </div>
+      <!-- END BOTTOM TOOLBAR -->
+
+
+    </div>
+    <!-- END PREVIEW DIALOG -->
+
+
+  </div>
+  <!-- END PREVIEW OVERLAY -->
+
+}

@@ -128,28 +128,6 @@
       class="flex flex-wrap gap-3 border-t border-gray-100 pt-6 dark:border-gray-800"
     >
 
-
-      <!-- SAVE & VIEW ALL -->
-
-      <button
-        type="submit"
-        [disabled]="isSaving"
-        class="rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-
-        @if (isSaving) {
-
-          Saving...
-
-        } @else {
-
-          Save & View All
-
-        }
-
-      </button>
-
-
       <!-- SAVE & ADD ANOTHER -->
 
       <button
@@ -165,7 +143,28 @@
 
         } @else {
 
-          Save & Add Another
+          Save Category
+
+        }
+
+      </button>
+
+
+      <!-- SAVE & VIEW ALL -->
+
+      <button
+        type="submit"
+        [disabled]="isSaving"
+        class="rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+
+        @if (isSaving) {
+
+          Saving...
+
+        } @else {
+
+          Save & View Categories
 
         }
 

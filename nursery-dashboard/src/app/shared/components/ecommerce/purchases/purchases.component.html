@@ -1,0 +1,578 @@
+<div
+  class="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6"
+>
+
+  <!-- ===================================================== -->
+  <!-- HEADER -->
+  <!-- ===================================================== -->
+
+  <div class="mb-5">
+
+    <h3
+      class="text-lg font-semibold text-gray-800 dark:text-white/90"
+    >
+      All Purchases
+    </h3>
+
+    <p
+      class="text-sm text-gray-500 dark:text-gray-400"
+    >
+      View and manage supplier purchases.
+    </p>
+
+  </div>
+
+
+  <!-- ===================================================== -->
+  <!-- LOADING -->
+  <!-- ===================================================== -->
+
+  @if (isLoading) {
+
+    <div
+      class="py-12 text-center"
+    >
+
+      <p
+        class="text-sm text-gray-500 dark:text-gray-400"
+      >
+        Loading purchases...
+      </p>
+
+    </div>
+
+  }
+
+
+  <!-- ===================================================== -->
+  <!-- ERROR -->
+  <!-- ===================================================== -->
+
+  @if (
+    !isLoading &&
+    errorMessage
+  ) {
+
+    <div
+      class="rounded-lg border border-red-200 bg-red-50 px-4 py-4 dark:border-red-900/40 dark:bg-red-900/10"
+    >
+
+      <p
+        class="text-sm text-red-600 dark:text-red-400"
+      >
+        {{ errorMessage }}
+      </p>
+
+    </div>
+
+  }
+
+
+  <!-- ===================================================== -->
+  <!-- EMPTY STATE -->
+  <!-- ===================================================== -->
+
+  @if (
+    !isLoading &&
+    !errorMessage &&
+    purchases.length === 0
+  ) {
+
+    <div
+      class="py-12 text-center"
+    >
+
+      <p
+        class="text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        No purchases found.
+      </p>
+
+      <p
+        class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+      >
+        Purchases created from Add Purchase will appear here.
+      </p>
+
+    </div>
+
+  }
+
+
+  <!-- ===================================================== -->
+  <!-- PURCHASE TABLE -->
+  <!-- ===================================================== -->
+
+  @if (
+    !isLoading &&
+    !errorMessage &&
+    purchases.length > 0
+  ) {
+
+    <div class="max-w-full overflow-x-auto">
+
+      <table
+        class="w-full min-w-[1200px] text-left"
+      >
+
+        <!-- ================================================= -->
+        <!-- TABLE HEADER -->
+        <!-- ================================================= -->
+
+        <thead
+          class="border-y border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/40"
+        >
+
+          <tr>
+
+            <!-- DATE -->
+
+            <th
+              class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+            >
+              Date
+            </th>
+
+
+            <!-- INVOICE -->
+
+            <th
+              class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+            >
+              Invoice
+            </th>
+
+
+            <!-- SUPPLIER -->
+
+            <th
+              class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+            >
+              Supplier
+            </th>
+
+
+            <!-- WAREHOUSE -->
+
+            <th
+              class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+            >
+              Warehouse
+            </th>
+
+
+            <!-- ITEMS -->
+
+            <th
+              class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+            >
+              Items
+            </th>
+
+
+            <!-- QUANTITY -->
+
+            <th
+              class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+            >
+              Qty
+            </th>
+
+
+            <!-- SUBTOTAL -->
+
+            <th
+              class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+            >
+              Subtotal
+            </th>
+
+
+            <!-- GST -->
+
+            <th
+              class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+            >
+              GST
+            </th>
+
+
+            <!-- GRAND TOTAL -->
+
+            <th
+              class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+            >
+              Total
+            </th>
+
+
+            <!-- STATUS -->
+
+            <th
+              class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+            >
+              Status
+            </th>
+
+
+            <!-- ACTION -->
+
+            <th
+              class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+            >
+              Action
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <!-- ================================================= -->
+        <!-- TABLE BODY -->
+        <!-- ================================================= -->
+
+        <tbody
+          class="divide-y divide-gray-100 dark:divide-gray-800"
+        >
+
+          @for (
+            purchase of purchases;
+            track purchase.id
+          ) {
+
+            <tr
+              class="transition hover:bg-gray-50 dark:hover:bg-white/[0.02]"
+            >
+
+              <!-- ============================================= -->
+              <!-- PURCHASE DATE -->
+              <!-- ============================================= -->
+
+              <td
+                class="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300"
+              >
+                {{
+                  formatPurchaseDate(
+                    purchase.purchaseDate
+                  )
+                }}
+              </td>
+
+
+              <!-- ============================================= -->
+              <!-- INVOICE -->
+              <!-- ============================================= -->
+
+              <td
+                class="px-4 py-4"
+              >
+
+                @if (purchase.invoiceNumber) {
+
+                  <span
+                    class="text-sm font-medium text-gray-800 dark:text-white"
+                  >
+                    {{ purchase.invoiceNumber }}
+                  </span>
+
+                } @else {
+
+                  <span
+                    class="text-sm text-gray-400"
+                  >
+                    -
+                  </span>
+
+                }
+
+              </td>
+
+
+              <!-- ============================================= -->
+              <!-- SUPPLIER -->
+              <!-- ============================================= -->
+
+              <td
+                class="px-4 py-4"
+              >
+
+                <p
+                  class="text-sm font-medium text-gray-800 dark:text-white"
+                >
+                  {{ purchase.supplierName }}
+                </p>
+
+              </td>
+
+
+              <!-- ============================================= -->
+              <!-- WAREHOUSE -->
+              <!-- ============================================= -->
+
+              <td
+                class="px-4 py-4"
+              >
+
+                <p
+                  class="text-sm text-gray-700 dark:text-gray-300"
+                >
+                  {{ purchase.warehouseName }}
+                </p>
+
+              </td>
+
+
+              <!-- ============================================= -->
+              <!-- ITEMS -->
+              <!-- ============================================= -->
+
+              <td
+                class="whitespace-nowrap px-4 py-4 text-center text-sm text-gray-700 dark:text-gray-300"
+              >
+                {{
+                  getItemCount(
+                    purchase
+                  )
+                }}
+              </td>
+
+
+              <!-- ============================================= -->
+              <!-- TOTAL QUANTITY -->
+              <!-- ============================================= -->
+
+              <td
+                class="whitespace-nowrap px-4 py-4 text-center text-sm text-gray-700 dark:text-gray-300"
+              >
+                {{
+                  getTotalQuantity(
+                    purchase
+                  )
+                }}
+              </td>
+
+
+              <!-- ============================================= -->
+              <!-- SUBTOTAL -->
+              <!-- ============================================= -->
+
+              <td
+                class="whitespace-nowrap px-4 py-4 text-right text-sm text-gray-700 dark:text-gray-300"
+              >
+                ₹{{
+                  purchase.subtotal
+                    | number:'1.2-2'
+                }}
+              </td>
+
+
+              <!-- ============================================= -->
+              <!-- GST -->
+              <!-- ============================================= -->
+
+              <td
+                class="whitespace-nowrap px-4 py-4 text-right text-sm text-gray-700 dark:text-gray-300"
+              >
+                ₹{{
+                  purchase.gstAmount
+                    | number:'1.2-2'
+                }}
+              </td>
+
+
+              <!-- ============================================= -->
+              <!-- GRAND TOTAL -->
+              <!-- ============================================= -->
+
+              <td
+                class="whitespace-nowrap px-4 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white"
+              >
+                ₹{{
+                  purchase.grandTotal
+                    | number:'1.2-2'
+                }}
+              </td>
+
+
+              <!-- ============================================= -->
+              <!-- STATUS -->
+              <!-- ============================================= -->
+
+              <td
+                class="whitespace-nowrap px-4 py-4 text-center"
+              >
+
+                <!-- PENDING -->
+
+                @if (
+                  purchase.status ===
+                  'PENDING'
+                ) {
+
+                  <span
+                    class="inline-flex rounded-full bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
+                  >
+                    Pending
+                  </span>
+
+                }
+
+
+                <!-- COMPLETED -->
+
+                @if (
+                  purchase.status ===
+                  'COMPLETED'
+                ) {
+
+                  <span
+                    class="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+                  >
+                    Completed
+                  </span>
+
+                }
+
+
+                <!-- CANCELLED -->
+
+                @if (
+                  purchase.status ===
+                  'CANCELLED'
+                ) {
+
+                  <span
+                    class="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
+                  >
+                    Cancelled
+                  </span>
+
+                }
+
+              </td>
+
+
+              <!-- ============================================= -->
+              <!-- ACTIONS -->
+              <!-- ============================================= -->
+
+              <td
+                class="whitespace-nowrap px-4 py-4"
+              >
+
+                <!-- =========================================== -->
+                <!-- PENDING ACTIONS -->
+                <!-- =========================================== -->
+
+                @if (
+                  purchase.status ===
+                  'PENDING'
+                ) {
+
+                  <div
+                    class="flex items-center justify-center gap-2"
+                  >
+
+                    <!-- COMPLETE -->
+
+                    <button
+                      type="button"
+                      (click)="completePurchase(purchase)"
+                      [disabled]="isProcessing(purchase)"
+                      class="rounded-lg bg-green-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+
+                      @if (
+                        isProcessing(purchase)
+                      ) {
+
+                        Processing...
+
+                      } @else {
+
+                        Complete
+
+                      }
+
+                    </button>
+
+
+                    <!-- CANCEL -->
+
+                    <button
+                      type="button"
+                      (click)="cancelPurchase(purchase)"
+                      [disabled]="isProcessing(purchase)"
+                      class="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900 dark:bg-transparent dark:text-red-400 dark:hover:bg-red-900/20"
+                    >
+                      Cancel
+                    </button>
+
+                  </div>
+
+                }
+
+
+                <!-- =========================================== -->
+                <!-- COMPLETED -->
+                <!-- =========================================== -->
+
+                @if (
+                  purchase.status ===
+                  'COMPLETED'
+                ) {
+
+                  <div
+                    class="text-center"
+                  >
+
+                    <span
+                      class="text-xs text-gray-400"
+                    >
+                      No actions
+                    </span>
+
+                  </div>
+
+                }
+
+
+                <!-- =========================================== -->
+                <!-- CANCELLED -->
+                <!-- =========================================== -->
+
+                @if (
+                  purchase.status ===
+                  'CANCELLED'
+                ) {
+
+                  <div
+                    class="text-center"
+                  >
+
+                    <span
+                      class="text-xs text-gray-400"
+                    >
+                      No actions
+                    </span>
+
+                  </div>
+
+                }
+
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  }
+
+</div>
