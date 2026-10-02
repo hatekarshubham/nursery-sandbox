@@ -8,7 +8,9 @@
    ========================================================= */
 
    .barcode-preview-overlay {
+
     backdrop-filter: blur(2px);
+  
   }
   
   
@@ -17,15 +19,18 @@
      ========================================================= */
   
   .barcode-preview-dialog {
+  
     min-height: 200px;
+  
   }
   
   
   /* =========================================================
-     PREVIEW SCROLL AREA
+     PREVIEW SCROLL
      ========================================================= */
   
   .barcode-preview-scroll {
+  
     background:
       repeating-linear-gradient(
         45deg,
@@ -34,118 +39,32 @@
         #e5e7eb 10px,
         #e5e7eb 20px
       );
+  
   }
   
   
   /* =========================================================
-     A4 PAPER
+     A4 SHEET
      ========================================================= */
   
   .barcode-a4-sheet {
   
-    width: 210mm;
-  
-    min-height: 297mm;
-  
     box-sizing: border-box;
-  
-    padding: 10mm;
   
     background: #ffffff;
   
     color: #000000;
   
-    box-shadow:
-      0 4px 20px rgba(0, 0, 0, 0.15);
+    font-family:
+      Arial,
+      Helvetica,
+      sans-serif;
   
   }
   
   
   /* =========================================================
-     PRINT BRAND
-     ========================================================= */
-  
-  .barcode-print-brand {
-  
-    display: flex;
-  
-    align-items: center;
-  
-    justify-content: center;
-  
-    gap: 3mm;
-  
-    width: 100%;
-  
-    margin-bottom: 6mm;
-  
-    padding-bottom: 4mm;
-  
-    border-bottom: 0.3mm solid #e5e7eb;
-  
-  }
-  
-  
-  /* =========================================================
-     BRAND ICON
-     ========================================================= */
-  
-  .barcode-print-brand-icon {
-  
-    display: flex;
-  
-    align-items: center;
-  
-    justify-content: center;
-  
-    width: 10mm;
-  
-    height: 10mm;
-  
-    border-radius: 2mm;
-  
-    background: #16a34a;
-  
-    font-size: 6mm;
-  
-    line-height: 1;
-  
-  }
-  
-  
-  /* =========================================================
-     BRAND NAME
-     ========================================================= */
-  
-  .barcode-print-brand-name {
-  
-    font-size: 16pt;
-  
-    font-weight: 700;
-  
-    line-height: 1;
-  
-    color: #166534;
-  
-  }
-  
-  
-  /* =========================================================
-     BARCODE GRID
-     =========================================================
-     
-     IMPORTANT:
-     
-     Columns, label width and gaps are now supplied directly
-     by Angular from labelSettings.
-     
-     Therefore DO NOT hardcode:
-     
-     repeat(3, 1fr)
-     gap: 4mm
-     
-     here.
-     
+     LABEL GRID
      ========================================================= */
   
   .barcode-label-grid {
@@ -160,24 +79,29 @@
   
   
   /* =========================================================
-     SINGLE LABEL
+     LABEL
      ========================================================= */
   
   .barcode-label {
   
-    width: 100%;
-  
-    min-width: 0;
-  
-    height: 100%;
-  
     box-sizing: border-box;
-  
-    padding: 3mm;
   
     overflow: hidden;
   
-    border: 0.25mm dashed #cbd5e1;
+    display: flex;
+  
+    flex-direction: column;
+  
+    align-items: center;
+  
+    justify-content: flex-start;
+  
+    padding:
+      1.5mm 2mm;
+  
+    border:
+      0.25mm dashed
+      #94a3b8;
   
     background: #ffffff;
   
@@ -193,12 +117,70 @@
   
   
   /* =========================================================
-     PRODUCT NAME
+     EMPTY LABEL
      ========================================================= */
   
-  .barcode-product-name {
+  .barcode-label-empty {
+  
+    display: flex;
+  
+    align-items: center;
+  
+    justify-content: center;
+  
+    background: #fafafa;
+  
+  }
+  
+  
+  .used-label-text {
+  
+    font-size: 8pt;
+  
+    color: #cbd5e1;
+  
+  }
+  
+  
+  /* =========================================================
+     BRAND INSIDE EACH LABEL
+     ========================================================= */
+  
+  .barcode-label-brand {
   
     width: 100%;
+  
+    height: 4.5mm;
+  
+    display: flex;
+  
+    align-items: center;
+  
+    justify-content: center;
+  
+    gap: 1mm;
+  
+    overflow: hidden;
+  
+    white-space: nowrap;
+  
+  }
+  
+  
+  .barcode-label-brand-icon {
+  
+    flex: 0 0 auto;
+  
+    font-size: 8pt;
+  
+    line-height: 1;
+  
+  }
+  
+  
+  .barcode-label-brand-name {
+  
+    min-width: 0;
   
     overflow: hidden;
   
@@ -206,13 +188,40 @@
   
     white-space: nowrap;
   
-    font-size: 10pt;
+    font-size: 8pt;
+  
+    line-height: 1;
   
     font-weight: 700;
   
-    line-height: 1.2;
+    color: #166534;
   
-    color: #111827;
+  }
+  
+  
+  /* =========================================================
+     PRODUCT NAME
+     ========================================================= */
+  
+  .barcode-product-name {
+  
+    width: 100%;
+  
+    height: 4mm;
+  
+    overflow: hidden;
+  
+    text-overflow: ellipsis;
+  
+    white-space: nowrap;
+  
+    font-size: 8.5pt;
+  
+    line-height: 4mm;
+  
+    font-weight: 700;
+  
+    color: #000000;
   
   }
   
@@ -225,7 +234,7 @@
   
     width: 100%;
   
-    margin-top: 1mm;
+    height: 3mm;
   
     overflow: hidden;
   
@@ -233,28 +242,28 @@
   
     white-space: nowrap;
   
-    font-size: 7pt;
+    font-size: 6.5pt;
   
-    line-height: 1.2;
+    line-height: 3mm;
   
-    color: #6b7280;
+    color: #555555;
   
   }
   
   
   /* =========================================================
-     BARCODE SVG WRAPPER
+     BARCODE WRAPPER
      ========================================================= */
   
   .barcode-svg-wrapper {
   
-    display: flex;
-  
     width: 100%;
   
-    min-height: 15mm;
+    height: 13mm;
   
-    margin-top: 2mm;
+    margin-top: 0.5mm;
+  
+    display: flex;
   
     align-items: center;
   
@@ -273,9 +282,11 @@
   
     display: block;
   
-    max-width: 100%;
+    width: 100%;
   
-    height: 15mm;
+    max-width: 54mm;
+  
+    height: 11mm;
   
   }
   
@@ -286,22 +297,26 @@
   
   .barcode-number {
   
-    margin-top: 1mm;
+    width: 100%;
+  
+    height: 3mm;
+  
+    overflow: hidden;
+  
+    white-space: nowrap;
   
     font-family:
       "Courier New",
       Courier,
       monospace;
   
-    font-size: 8pt;
+    font-size: 6.5pt;
+  
+    line-height: 3mm;
   
     font-weight: 600;
   
-    line-height: 1.2;
-  
-    letter-spacing: 0.2mm;
-  
-    color: #111827;
+    color: #000000;
   
   }
   
@@ -312,13 +327,19 @@
   
   .barcode-price {
   
-    margin-top: 1mm;
+    width: 100%;
   
-    font-size: 9pt;
+    height: 3.5mm;
+  
+    overflow: hidden;
+  
+    white-space: nowrap;
+  
+    font-size: 8pt;
+  
+    line-height: 3.5mm;
   
     font-weight: 700;
-  
-    line-height: 1.2;
   
     color: #000000;
   
@@ -326,7 +347,7 @@
   
   
   /* =========================================================
-     SMALL SCREEN PREVIEW
+     SMALL SCREEN
      ========================================================= */
   
   @media screen and (max-width: 900px) {
@@ -348,11 +369,6 @@
   
   @media print {
   
-  
-    /* =======================================================
-       PAGE
-       ======================================================= */
-  
     @page {
   
       size: A4 portrait;
@@ -362,61 +378,17 @@
     }
   
   
-    /* =======================================================
-       HIDE APPLICATION
-       ======================================================= */
+    html,
+    body {
   
-    body * {
+      margin: 0 !important;
   
-      visibility: hidden !important;
-  
-    }
-  
-  
-    /* =======================================================
-       SHOW ONLY BARCODE SHEET
-       ======================================================= */
-  
-    #barcode-print-area,
-    #barcode-print-area * {
-  
-      visibility: visible !important;
-  
-    }
-  
-  
-    /* =======================================================
-       PRINT SHEET
-       ======================================================= */
-  
-    #barcode-print-area {
-  
-      position: absolute;
-  
-      top: 0;
-  
-      left: 0;
-  
-      width: 210mm;
-  
-      min-height: 297mm;
-  
-      margin: 0;
-  
-      padding: 10mm;
-  
-      box-sizing: border-box;
+      padding: 0 !important;
   
       background: #ffffff !important;
   
-      box-shadow: none !important;
-  
     }
   
-  
-    /* =======================================================
-       REMOVE PREVIEW UI
-       ======================================================= */
   
     .preview-toolbar {
   
@@ -468,114 +440,56 @@
     }
   
   
-    /* =======================================================
-       PRINT BRAND
-       ======================================================= */
+    #barcode-print-area {
   
-    .barcode-print-brand {
+      margin: 0 !important;
   
-      display: flex !important;
-  
-      align-items: center !important;
-  
-      justify-content: center !important;
-  
-      gap: 3mm !important;
-  
-      margin-bottom: 6mm !important;
-  
-      padding-bottom: 4mm !important;
-  
-      border-bottom:
-        0.3mm solid #e5e7eb !important;
+      box-shadow: none !important;
   
     }
   
-  
-    /* =======================================================
-       GRID
-       =======================================================
-       
-       DO NOT put gap: 4mm here.
-       
-       Angular's inline mm values control the actual physical
-       sticker spacing.
-       
-       ======================================================= */
-  
-    .barcode-label-grid {
-  
-      display: grid !important;
-  
-      align-items: start !important;
-  
-      justify-content: start !important;
-  
-    }
-  
-  
-    /* =======================================================
-       LABEL
-       ======================================================= */
   
     .barcode-label {
-  
-      box-sizing: border-box !important;
-  
-      padding: 3mm;
   
       background: #ffffff !important;
   
       color: #000000 !important;
   
-      break-inside: avoid !important;
+      border:
+        0.25mm dashed
+        #94a3b8 !important;
   
-      page-break-inside: avoid !important;
+      break-inside:
+        avoid !important;
+  
+      page-break-inside:
+        avoid !important;
   
     }
   
   
-    /* =======================================================
-       TEXT
-       ======================================================= */
+    .barcode-label-brand-name {
   
-    .barcode-product-name {
+      color:
+        #166534 !important;
   
-      color: #000000 !important;
+    }
+  
+  
+    .barcode-product-name,
+    .barcode-number,
+    .barcode-price {
+  
+      color:
+        #000000 !important;
   
     }
   
   
     .barcode-category {
   
-      color: #555555 !important;
-  
-    }
-  
-  
-    .barcode-number {
-  
-      color: #000000 !important;
-  
-    }
-  
-  
-    .barcode-price {
-  
-      color: #000000 !important;
-  
-    }
-  
-  
-    /* =======================================================
-       BARCODE
-       ======================================================= */
-  
-    .barcode-svg {
-  
-      max-width: 100% !important;
-  
-      height: 15mm !important;
+      color:
+        #555555 !important;
   
     }
   

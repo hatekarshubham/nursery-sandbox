@@ -15,6 +15,7 @@
   >
 
     <div>
+
       <h3
         class="text-lg font-semibold text-gray-800 dark:text-white/90"
       >
@@ -27,6 +28,7 @@
         Select products and specify how many barcode labels
         you want to print
       </p>
+
     </div>
 
 
@@ -82,6 +84,7 @@
   @if (!isLoading && !errorMessage) {
 
     <div class="space-y-6">
+
 
       <!-- ================================================= -->
       <!-- SEARCH -->
@@ -201,7 +204,6 @@
                       [checked]="allSelected"
                       (change)="toggleSelectAll($any($event.target).checked)"
                       class="h-4 w-4 cursor-pointer rounded border-gray-300"
-                      title="Select all visible products with barcodes"
                     />
 
                   </th>
@@ -261,8 +263,6 @@
                     class="transition hover:bg-gray-50 dark:hover:bg-white/[0.02]"
                   >
 
-                    <!-- CHECKBOX -->
-
                     <td class="px-4 py-4">
 
                       <input
@@ -275,8 +275,6 @@
 
                     </td>
 
-
-                    <!-- PRODUCT -->
 
                     <td
                       class="whitespace-nowrap px-3 py-4"
@@ -291,16 +289,12 @@
                     </td>
 
 
-                    <!-- CATEGORY -->
-
                     <td
                       class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"
                     >
                       {{ product.category || '-' }}
                     </td>
 
-
-                    <!-- BARCODE -->
 
                     <td
                       class="whitespace-nowrap px-3 py-4"
@@ -327,16 +321,12 @@
                     </td>
 
 
-                    <!-- PRICE -->
-
                     <td
                       class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       ₹{{ product.unitPrice | number:'1.2-2' }}
                     </td>
 
-
-                    <!-- QUANTITY -->
 
                     <td
                       class="whitespace-nowrap px-3 py-4"
@@ -433,7 +423,7 @@
 
 
       <!-- ================================================= -->
-      <!-- READY SUMMARY -->
+      <!-- READY -->
       <!-- ================================================= -->
 
       @if (selectedProductCount > 0) {
@@ -490,7 +480,7 @@
 
 
 <!-- ====================================================== -->
-<!-- BARCODE PRINT PREVIEW -->
+<!-- PRINT PREVIEW -->
 <!-- ====================================================== -->
 
 @if (isPreviewOpen) {
@@ -505,7 +495,7 @@
 
 
       <!-- ================================================= -->
-      <!-- PREVIEW HEADER -->
+      <!-- HEADER -->
       <!-- ================================================= -->
 
       <div
@@ -537,7 +527,7 @@
           <button
             type="button"
             (click)="closePreview()"
-            class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+            class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700"
           >
             Close
           </button>
@@ -547,7 +537,7 @@
             type="button"
             (click)="printBarcodes()"
             [disabled]="!canPrint"
-            class="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+            class="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50"
           >
             Print A4 Sheet
           </button>
@@ -558,26 +548,7 @@
 
 
       <!-- ================================================= -->
-      <!-- INFO -->
-      <!-- ================================================= -->
-
-      <div
-        class="preview-toolbar border-b border-gray-200 bg-blue-50 px-5 py-3 dark:border-gray-700 dark:bg-blue-900/10"
-      >
-
-        <p
-          class="text-sm text-blue-700 dark:text-blue-400"
-        >
-          Configure these measurements to match the physical
-          sticker sheet you are using. All dimensions are in
-          millimetres.
-        </p>
-
-      </div>
-
-
-      <!-- ================================================= -->
-      <!-- STICKER SETTINGS -->
+      <!-- SETTINGS -->
       <!-- ================================================= -->
 
       <div
@@ -585,7 +556,7 @@
       >
 
         <div
-          class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+          class="mb-5 flex items-center justify-between"
         >
 
           <div>
@@ -599,8 +570,7 @@
             <p
               class="mt-1 text-sm text-gray-500 dark:text-gray-400"
             >
-              Enter the measurements printed on the packaging
-              of your sticker sheet.
+              Configure the physical A4 sticker sheet.
             </p>
 
           </div>
@@ -609,7 +579,7 @@
           <button
             type="button"
             (click)="resetLabelSettings()"
-            class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+            class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700"
           >
             Reset Settings
           </button>
@@ -617,495 +587,387 @@
         </div>
 
 
-        <!-- ================================================= -->
-        <!-- PAGE SIZE -->
-        <!-- ================================================= -->
+        <!-- PAGE -->
 
-        <div class="mb-5">
+        <p
+          class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500"
+        >
+          Page Size
+        </p>
 
-          <p
-            class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
-          >
-            Page Size
-          </p>
-
-
-          <div
-            class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
-          >
-
-            <div>
-
-              <label
-                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Page Width (mm)
-              </label>
-
-              <input
-                type="number"
-                [(ngModel)]="labelSettings.pageWidthMm"
-                (ngModelChange)="onLabelSettingsChange()"
-                min="1"
-                step="0.1"
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-
-            </div>
-
-
-            <div>
-
-              <label
-                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Page Height (mm)
-              </label>
-
-              <input
-                type="number"
-                [(ngModel)]="labelSettings.pageHeightMm"
-                (ngModelChange)="onLabelSettingsChange()"
-                min="1"
-                step="0.1"
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <!-- ================================================= -->
-        <!-- STICKER GRID -->
-        <!-- ================================================= -->
-
-        <div class="mb-5">
-
-          <p
-            class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
-          >
-            Sticker Grid
-          </p>
-
-
-          <div
-            class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
-          >
-
-            <div>
-
-              <label
-                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Columns
-              </label>
-
-              <input
-                type="number"
-                [(ngModel)]="labelSettings.columns"
-                (ngModelChange)="onLabelSettingsChange()"
-                min="1"
-                step="1"
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-
-            </div>
-
-
-            <div>
-
-              <label
-                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Rows
-              </label>
-
-              <input
-                type="number"
-                [(ngModel)]="labelSettings.rows"
-                (ngModelChange)="onLabelSettingsChange()"
-                min="1"
-                step="1"
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-
-            </div>
-
-
-            <div>
-
-              <label
-                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Label Width (mm)
-              </label>
-
-              <input
-                type="number"
-                [(ngModel)]="labelSettings.labelWidthMm"
-                (ngModelChange)="onLabelSettingsChange()"
-                min="1"
-                step="0.1"
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-
-            </div>
-
-
-            <div>
-
-              <label
-                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Label Height (mm)
-              </label>
-
-              <input
-                type="number"
-                [(ngModel)]="labelSettings.labelHeightMm"
-                (ngModelChange)="onLabelSettingsChange()"
-                min="1"
-                step="0.1"
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <!-- ================================================= -->
-        <!-- GAPS -->
-        <!-- ================================================= -->
-
-        <div class="mb-5">
-
-          <p
-            class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
-          >
-            Gaps Between Stickers
-          </p>
-
-
-          <div
-            class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
-          >
-
-            <div>
-
-              <label
-                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Horizontal Gap (mm)
-              </label>
-
-              <input
-                type="number"
-                [(ngModel)]="labelSettings.horizontalGapMm"
-                (ngModelChange)="onLabelSettingsChange()"
-                min="0"
-                step="0.1"
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-
-            </div>
-
-
-            <div>
-
-              <label
-                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Vertical Gap (mm)
-              </label>
-
-              <input
-                type="number"
-                [(ngModel)]="labelSettings.verticalGapMm"
-                (ngModelChange)="onLabelSettingsChange()"
-                min="0"
-                step="0.1"
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <!-- ================================================= -->
-        <!-- MARGINS -->
-        <!-- ================================================= -->
-
-        <div class="mb-5">
-
-          <p
-            class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
-          >
-            Page Margins
-          </p>
-
-
-          <div
-            class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
-          >
-
-            <div>
-
-              <label
-                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Top (mm)
-              </label>
-
-              <input
-                type="number"
-                [(ngModel)]="labelSettings.marginTopMm"
-                (ngModelChange)="onLabelSettingsChange()"
-                min="0"
-                step="0.1"
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-
-            </div>
-
-
-            <div>
-
-              <label
-                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Right (mm)
-              </label>
-
-              <input
-                type="number"
-                [(ngModel)]="labelSettings.marginRightMm"
-                (ngModelChange)="onLabelSettingsChange()"
-                min="0"
-                step="0.1"
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-
-            </div>
-
-
-            <div>
-
-              <label
-                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Bottom (mm)
-              </label>
-
-              <input
-                type="number"
-                [(ngModel)]="labelSettings.marginBottomMm"
-                (ngModelChange)="onLabelSettingsChange()"
-                min="0"
-                step="0.1"
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-
-            </div>
-
-
-            <div>
-
-              <label
-                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Left (mm)
-              </label>
-
-              <input
-                type="number"
-                [(ngModel)]="labelSettings.marginLeftMm"
-                (ngModelChange)="onLabelSettingsChange()"
-                min="0"
-                step="0.1"
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <!-- ================================================= -->
-        <!-- START POSITION -->
-        <!-- ================================================= -->
-
-        <div class="mb-5">
-
-          <p
-            class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
-          >
-            Printing
-          </p>
-
-
-          <div
-            class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
-          >
-
-            <div>
-
-              <label
-                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Start Position
-              </label>
-
-              <input
-                type="number"
-                [(ngModel)]="labelSettings.startPosition"
-                (ngModelChange)="onLabelSettingsChange()"
-                min="1"
-                [max]="labelsPerPage"
-                step="1"
-                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-
-              <p
-                class="mt-1 text-xs text-gray-500 dark:text-gray-400"
-              >
-                Useful when some stickers on the first sheet
-                have already been used.
-              </p>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <!-- ================================================= -->
-        <!-- SUMMARY -->
-        <!-- ================================================= -->
 
         <div
-          class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"
+          class="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
         >
 
-          <div
-            class="rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50"
-          >
+          <div>
 
-            <p
-              class="text-xs text-gray-500 dark:text-gray-400"
-            >
+            <label class="mb-1 block text-sm font-medium">
+              Page Width (mm)
+            </label>
+
+            <input
+              type="number"
+              [(ngModel)]="labelSettings.pageWidthMm"
+              (ngModelChange)="onLabelSettingsChange()"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+
+          </div>
+
+
+          <div>
+
+            <label class="mb-1 block text-sm font-medium">
+              Page Height (mm)
+            </label>
+
+            <input
+              type="number"
+              [(ngModel)]="labelSettings.pageHeightMm"
+              (ngModelChange)="onLabelSettingsChange()"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+
+          </div>
+
+        </div>
+
+
+        <!-- GRID -->
+
+        <p
+          class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500"
+        >
+          Sticker Grid
+        </p>
+
+
+        <div
+          class="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        >
+
+          <div>
+
+            <label class="mb-1 block text-sm font-medium">
+              Columns
+            </label>
+
+            <input
+              type="number"
+              [(ngModel)]="labelSettings.columns"
+              (ngModelChange)="onLabelSettingsChange()"
+              min="1"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+
+          </div>
+
+
+          <div>
+
+            <label class="mb-1 block text-sm font-medium">
+              Rows
+            </label>
+
+            <input
+              type="number"
+              [(ngModel)]="labelSettings.rows"
+              (ngModelChange)="onLabelSettingsChange()"
+              min="1"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+
+          </div>
+
+
+          <div>
+
+            <label class="mb-1 block text-sm font-medium">
+              Label Width (mm)
+            </label>
+
+            <input
+              type="number"
+              [(ngModel)]="labelSettings.labelWidthMm"
+              (ngModelChange)="onLabelSettingsChange()"
+              min="1"
+              step="0.1"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+
+          </div>
+
+
+          <div>
+
+            <label class="mb-1 block text-sm font-medium">
+              Label Height (mm)
+            </label>
+
+            <input
+              type="number"
+              [(ngModel)]="labelSettings.labelHeightMm"
+              (ngModelChange)="onLabelSettingsChange()"
+              min="1"
+              step="0.1"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+
+          </div>
+
+        </div>
+
+
+        <!-- GAPS -->
+
+        <p
+          class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500"
+        >
+          Gaps
+        </p>
+
+
+        <div
+          class="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        >
+
+          <div>
+
+            <label class="mb-1 block text-sm font-medium">
+              Horizontal Gap (mm)
+            </label>
+
+            <input
+              type="number"
+              [(ngModel)]="labelSettings.horizontalGapMm"
+              (ngModelChange)="onLabelSettingsChange()"
+              min="0"
+              step="0.1"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+
+          </div>
+
+
+          <div>
+
+            <label class="mb-1 block text-sm font-medium">
+              Vertical Gap (mm)
+            </label>
+
+            <input
+              type="number"
+              [(ngModel)]="labelSettings.verticalGapMm"
+              (ngModelChange)="onLabelSettingsChange()"
+              min="0"
+              step="0.1"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+
+          </div>
+
+        </div>
+
+
+        <!-- MARGINS -->
+
+        <p
+          class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500"
+        >
+          Page Margins
+        </p>
+
+
+        <div
+          class="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        >
+
+          <div>
+
+            <label class="mb-1 block text-sm font-medium">
+              Top (mm)
+            </label>
+
+            <input
+              type="number"
+              [(ngModel)]="labelSettings.marginTopMm"
+              (ngModelChange)="onLabelSettingsChange()"
+              min="0"
+              step="0.1"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+
+          </div>
+
+
+          <div>
+
+            <label class="mb-1 block text-sm font-medium">
+              Right (mm)
+            </label>
+
+            <input
+              type="number"
+              [(ngModel)]="labelSettings.marginRightMm"
+              (ngModelChange)="onLabelSettingsChange()"
+              min="0"
+              step="0.1"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+
+          </div>
+
+
+          <div>
+
+            <label class="mb-1 block text-sm font-medium">
+              Bottom (mm)
+            </label>
+
+            <input
+              type="number"
+              [(ngModel)]="labelSettings.marginBottomMm"
+              (ngModelChange)="onLabelSettingsChange()"
+              min="0"
+              step="0.1"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+
+          </div>
+
+
+          <div>
+
+            <label class="mb-1 block text-sm font-medium">
+              Left (mm)
+            </label>
+
+            <input
+              type="number"
+              [(ngModel)]="labelSettings.marginLeftMm"
+              (ngModelChange)="onLabelSettingsChange()"
+              min="0"
+              step="0.1"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+
+          </div>
+
+        </div>
+
+
+        <!-- START POSITION -->
+
+        <p
+          class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500"
+        >
+          Printing
+        </p>
+
+
+        <div
+          class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        >
+
+          <div>
+
+            <label class="mb-1 block text-sm font-medium">
+              Start Position
+            </label>
+
+            <input
+              type="number"
+              [(ngModel)]="labelSettings.startPosition"
+              (ngModelChange)="onLabelSettingsChange()"
+              min="1"
+              [max]="labelsPerPage"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+
+          </div>
+
+        </div>
+
+
+        <!-- SUMMARY -->
+
+        <div
+          class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"
+        >
+
+          <div class="rounded-lg bg-gray-50 p-3">
+
+            <p class="text-xs text-gray-500">
               Labels / Page
             </p>
 
-            <p
-              class="mt-1 font-semibold text-gray-800 dark:text-white"
-            >
+            <p class="font-semibold">
               {{ labelsPerPage }}
             </p>
 
           </div>
 
 
-          <div
-            class="rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50"
-          >
+          <div class="rounded-lg bg-gray-50 p-3">
 
-            <p
-              class="text-xs text-gray-500 dark:text-gray-400"
-            >
+            <p class="text-xs text-gray-500">
               Grid Width
             </p>
 
-            <p
-              class="mt-1 font-semibold text-gray-800 dark:text-white"
-            >
+            <p class="font-semibold">
               {{ gridWidthMm | number:'1.0-2' }} mm
             </p>
 
           </div>
 
 
-          <div
-            class="rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50"
-          >
+          <div class="rounded-lg bg-gray-50 p-3">
 
-            <p
-              class="text-xs text-gray-500 dark:text-gray-400"
-            >
+            <p class="text-xs text-gray-500">
               Grid Height
             </p>
 
-            <p
-              class="mt-1 font-semibold text-gray-800 dark:text-white"
-            >
+            <p class="font-semibold">
               {{ gridHeightMm | number:'1.0-2' }} mm
             </p>
 
           </div>
 
 
-          <div
-            class="rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50"
-          >
+          <div class="rounded-lg bg-gray-50 p-3">
 
-            <p
-              class="text-xs text-gray-500 dark:text-gray-400"
-            >
+            <p class="text-xs text-gray-500">
               Required Width
             </p>
 
-            <p
-              class="mt-1 font-semibold text-gray-800 dark:text-white"
-            >
+            <p class="font-semibold">
               {{ requiredSheetWidthMm | number:'1.0-2' }} mm
             </p>
 
           </div>
 
 
-          <div
-            class="rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50"
-          >
+          <div class="rounded-lg bg-gray-50 p-3">
 
-            <p
-              class="text-xs text-gray-500 dark:text-gray-400"
-            >
+            <p class="text-xs text-gray-500">
               Required Height
             </p>
 
-            <p
-              class="mt-1 font-semibold text-gray-800 dark:text-white"
-            >
+            <p class="font-semibold">
               {{ requiredSheetHeightMm | number:'1.0-2' }} mm
             </p>
 
           </div>
 
 
-          <div
-            class="rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50"
-          >
+          <div class="rounded-lg bg-gray-50 p-3">
 
-            <p
-              class="text-xs text-gray-500 dark:text-gray-400"
-            >
+            <p class="text-xs text-gray-500">
               Pages
             </p>
 
-            <p
-              class="mt-1 font-semibold text-gray-800 dark:text-white"
-            >
+            <p class="font-semibold">
               {{ totalPages }}
             </p>
 
@@ -1114,51 +976,28 @@
         </div>
 
 
-        <!-- ================================================= -->
-        <!-- VALIDATION -->
-        <!-- ================================================= -->
-
         @if (labelSettingsError) {
 
           <div
-            class="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/40 dark:bg-red-900/20"
+            class="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
           >
-
-            <p
-              class="text-sm font-semibold text-red-700 dark:text-red-400"
-            >
-              Sticker sheet configuration does not fit
-            </p>
-
-            <p
-              class="mt-1 text-sm text-red-600 dark:text-red-400"
-            >
-              {{ labelSettingsError }}
-            </p>
-
-            <p
-              class="mt-2 text-xs text-red-500 dark:text-red-400"
-            >
-              You can still preview the layout, but printing
-              is disabled until the measurements fit the page.
-            </p>
-
+            {{ labelSettingsError }}
           </div>
 
         } @else {
 
           <div
-            class="mt-5 rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-900/40 dark:bg-green-900/20"
+            class="mt-5 rounded-xl border border-green-200 bg-green-50 p-4"
           >
 
             <p
-              class="text-sm font-semibold text-green-700 dark:text-green-400"
+              class="text-sm font-semibold text-green-700"
             >
               ✓ Sticker sheet configuration fits the page
             </p>
 
             <p
-              class="mt-1 text-xs text-green-600 dark:text-green-400"
+              class="mt-1 text-xs text-green-600"
             >
               Remaining width:
               {{ unusedWidthMm | number:'1.0-2' }} mm ·
@@ -1174,30 +1013,30 @@
 
 
       <!-- ================================================= -->
-      <!-- PREVIEW TITLE -->
+      <!-- PHYSICAL PREVIEW -->
       <!-- ================================================= -->
 
       <div
-        class="preview-toolbar border-b border-gray-200 bg-gray-50 px-5 py-3 dark:border-gray-700 dark:bg-gray-800/50"
+        class="preview-toolbar border-b border-gray-200 bg-gray-50 px-5 py-3"
       >
 
         <div
-          class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
+          class="flex items-center justify-between"
         >
 
           <p
-            class="text-sm font-medium text-gray-700 dark:text-gray-300"
+            class="text-sm font-medium text-gray-700"
           >
             Physical Sheet Preview
           </p>
 
           <p
-            class="text-xs text-gray-500 dark:text-gray-400"
+            class="text-xs text-gray-500"
           >
             {{ labelSettings.columns }} columns ×
             {{ labelSettings.rows }} rows ·
             {{ labelSettings.labelWidthMm }} ×
-            {{ labelSettings.labelHeightMm }} mm labels
+            {{ labelSettings.labelHeightMm }} mm
           </p>
 
         </div>
@@ -1205,47 +1044,20 @@
       </div>
 
 
-      <!-- ================================================= -->
-      <!-- PREVIEW SCROLL -->
-      <!-- ================================================= -->
-
       <div
         class="barcode-preview-scroll overflow-auto p-4 sm:p-8"
       >
-
-
-        <!-- ================================================= -->
-        <!-- PHYSICAL SHEET -->
-        <!-- ================================================= -->
 
         <div
           id="barcode-print-area"
           class="barcode-a4-sheet mx-auto box-border bg-white shadow-lg"
           [style.width.mm]="labelSettings.pageWidthMm"
-          [style.height.mm]="labelSettings.pageHeightMm"
+          [style.min-height.mm]="labelSettings.pageHeightMm"
           [style.padding-top.mm]="labelSettings.marginTopMm"
           [style.padding-right.mm]="labelSettings.marginRightMm"
           [style.padding-bottom.mm]="labelSettings.marginBottomMm"
           [style.padding-left.mm]="labelSettings.marginLeftMm"
         >
-
-
-          <!-- =============================================== -->
-          <!-- GAYATRI NURSERY -->
-          <!-- =============================================== -->
-
-          <div class="barcode-print-brand">
-
-            <div class="barcode-print-brand-name">
-              Gayatri Nursery
-            </div>
-
-          </div>
-
-
-          <!-- =============================================== -->
-          <!-- LABEL GRID -->
-          <!-- =============================================== -->
 
           <div
             class="barcode-label-grid"
@@ -1256,9 +1068,7 @@
           >
 
 
-            <!-- ============================================= -->
-            <!-- USED POSITIONS -->
-            <!-- ============================================= -->
+            <!-- EMPTY / USED POSITIONS -->
 
             @for (
               emptyPosition of [].constructor(startingEmptyLabels);
@@ -1266,31 +1076,21 @@
             ) {
 
               <div
-                class="barcode-label barcode-label-empty box-border"
+                class="barcode-label barcode-label-empty"
                 [style.width.mm]="labelSettings.labelWidthMm"
                 [style.height.mm]="labelSettings.labelHeightMm"
               >
 
-                <div
-                  class="flex h-full items-center justify-center text-center"
-                >
-
-                  <span
-                    class="text-[10px] text-gray-300"
-                  >
-                    Used
-                  </span>
-
-                </div>
+                <span class="used-label-text">
+                  Used
+                </span>
 
               </div>
 
             }
 
 
-            <!-- ============================================= -->
             <!-- ACTUAL LABELS -->
-            <!-- ============================================= -->
 
             @for (
               label of printLabels;
@@ -1298,12 +1098,34 @@
             ) {
 
               <div
-                class="barcode-label box-border overflow-hidden"
+                class="barcode-label"
                 [style.width.mm]="labelSettings.labelWidthMm"
                 [style.height.mm]="labelSettings.labelHeightMm"
               >
 
-                <!-- PRODUCT NAME -->
+
+                <!-- BRAND -->
+
+                <div
+                  class="barcode-label-brand"
+                >
+
+                  <span
+                    class="barcode-label-brand-icon"
+                  >
+                    🌱
+                  </span>
+
+                  <span
+                    class="barcode-label-brand-name"
+                  >
+                    Gayatri Nursery
+                  </span>
+
+                </div>
+
+
+                <!-- PRODUCT -->
 
                 <div
                   class="barcode-product-name"
@@ -1315,15 +1137,11 @@
 
                 <!-- CATEGORY -->
 
-                @if (label.category) {
-
-                  <div
-                    class="barcode-category"
-                  >
-                    {{ label.category }}
-                  </div>
-
-                }
+                <div
+                  class="barcode-category"
+                >
+                  {{ label.category || '\u00A0' }}
+                </div>
 
 
                 <!-- BARCODE -->
@@ -1340,7 +1158,7 @@
                 </div>
 
 
-                <!-- BARCODE NUMBER -->
+                <!-- BARCODE VALUE -->
 
                 <div
                   class="barcode-number"
@@ -1357,34 +1175,30 @@
                   ₹{{ label.unitPrice | number:'1.2-2' }}
                 </div>
 
+
               </div>
 
             }
 
           </div>
-          <!-- END LABEL GRID -->
-
 
         </div>
-        <!-- END PHYSICAL SHEET -->
-
 
       </div>
-      <!-- END PREVIEW SCROLL -->
 
 
       <!-- ================================================= -->
-      <!-- BOTTOM TOOLBAR -->
+      <!-- FOOTER -->
       <!-- ================================================= -->
 
       <div
-        class="preview-toolbar flex flex-col gap-3 border-t border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800 sm:flex-row sm:items-center sm:justify-between"
+        class="preview-toolbar flex flex-col gap-3 border-t border-gray-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between"
       >
 
         <div>
 
           <p
-            class="text-sm font-medium text-gray-700 dark:text-gray-300"
+            class="text-sm font-medium text-gray-700"
           >
             {{ printLabels.length }} barcode label(s) ·
             {{ labelsPerPage }} positions per sheet ·
@@ -1392,23 +1206,20 @@
           </p>
 
           <p
-            class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+            class="mt-1 text-xs text-gray-500"
           >
-            Print at 100% / Actual Size. Do not use
-            "Fit to Page" when printing onto precut labels.
+            Print at 100% / Actual Size.
           </p>
 
         </div>
 
 
-        <div
-          class="flex items-center gap-3"
-        >
+        <div class="flex items-center gap-3">
 
           <button
             type="button"
             (click)="closePreview()"
-            class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+            class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700"
           >
             Close
           </button>
@@ -1418,7 +1229,7 @@
             type="button"
             (click)="printBarcodes()"
             [disabled]="!canPrint"
-            class="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+            class="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50"
           >
             Print A4 Sheet
           </button>
@@ -1426,14 +1237,9 @@
         </div>
 
       </div>
-      <!-- END BOTTOM TOOLBAR -->
-
 
     </div>
-    <!-- END PREVIEW DIALOG -->
-
 
   </div>
-  <!-- END PREVIEW OVERLAY -->
 
 }

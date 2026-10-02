@@ -36,11 +36,6 @@ interface BarcodeProduct {
 
   isActive: boolean;
 
-
-  // =======================================================
-  // PRINT SELECTION
-  // =======================================================
-
   selected: boolean;
 
   labelQuantity: number;
@@ -75,45 +70,21 @@ interface BarcodePrintLabel {
 
 interface LabelSheetSettings {
 
-  // =======================================================
-  // PAGE
-  // =======================================================
-
   pageWidthMm: number;
 
   pageHeightMm: number;
-
-
-  // =======================================================
-  // GRID
-  // =======================================================
 
   columns: number;
 
   rows: number;
 
-
-  // =======================================================
-  // LABEL SIZE
-  // =======================================================
-
   labelWidthMm: number;
 
   labelHeightMm: number;
 
-
-  // =======================================================
-  // GAPS
-  // =======================================================
-
   horizontalGapMm: number;
 
   verticalGapMm: number;
-
-
-  // =======================================================
-  // PAGE MARGINS
-  // =======================================================
 
   marginTopMm: number;
 
@@ -122,11 +93,6 @@ interface LabelSheetSettings {
   marginBottomMm: number;
 
   marginLeftMm: number;
-
-
-  // =======================================================
-  // START POSITION
-  // =======================================================
 
   startPosition: number;
 
@@ -190,25 +156,26 @@ export class PrintBarcodesComponent
 
 
   // =======================================================
-  // GENERATED PRINT LABELS
+  // PRINT LABELS
   // =======================================================
 
-  printLabels:
-    BarcodePrintLabel[] = [];
+  printLabels: BarcodePrintLabel[] = [];
 
 
   // =======================================================
-  // LABEL SHEET SETTINGS
+  // LABEL SETTINGS
   // =======================================================
 
   labelSettings: LabelSheetSettings = {
+
+    // A4
 
     pageWidthMm: 210,
 
     pageHeightMm: 297,
 
 
-    // Grid
+    // 3 labels horizontally
 
     columns: 3,
 
@@ -219,17 +186,17 @@ export class PrintBarcodesComponent
 
     labelWidthMm: 60,
 
-    labelHeightMm: 38,
+    labelHeightMm: 35,
 
 
     // Gaps
 
     horizontalGapMm: 3,
 
-    verticalGapMm: 3,
+    verticalGapMm: 2,
 
 
-    // Margins
+    // Page margins
 
     marginTopMm: 10,
 
@@ -240,7 +207,7 @@ export class PrintBarcodesComponent
     marginLeftMm: 10,
 
 
-    // Start from first label
+    // First sticker
 
     startPosition: 1
 
@@ -248,7 +215,7 @@ export class PrintBarcodesComponent
 
 
   // =======================================================
-  // LABEL SETTINGS ERROR
+  // VALIDATION ERROR
   // =======================================================
 
   labelSettingsError = '';
@@ -258,8 +225,7 @@ export class PrintBarcodesComponent
   // BARCODE RENDER FLAG
   // =======================================================
 
-  private shouldRenderBarcodes =
-    false;
+  private shouldRenderBarcodes = false;
 
 
   // =======================================================
@@ -469,7 +435,7 @@ export class PrintBarcodesComponent
 
 
   // =======================================================
-  // CAN SELECT PRODUCT
+  // CAN SELECT
   // =======================================================
 
   canSelectProduct(
@@ -482,7 +448,7 @@ export class PrintBarcodesComponent
 
 
   // =======================================================
-  // PRODUCT SELECTION CHANGE
+  // SELECTION CHANGE
   // =======================================================
 
   onProductSelectionChange(
@@ -805,7 +771,7 @@ export class PrintBarcodesComponent
 
 
   // =======================================================
-  // REQUIRED SHEET WIDTH
+  // REQUIRED WIDTH
   // =======================================================
 
   get requiredSheetWidthMm():
@@ -856,7 +822,7 @@ export class PrintBarcodesComponent
 
 
   // =======================================================
-  // REQUIRED SHEET HEIGHT
+  // REQUIRED HEIGHT
   // =======================================================
 
   get requiredSheetHeightMm():
@@ -907,7 +873,7 @@ export class PrintBarcodesComponent
 
 
   // =======================================================
-  // AVAILABLE PAGE WIDTH
+  // AVAILABLE WIDTH
   // =======================================================
 
   get availablePageWidthMm():
@@ -933,7 +899,7 @@ export class PrintBarcodesComponent
 
 
   // =======================================================
-  // AVAILABLE PAGE HEIGHT
+  // AVAILABLE HEIGHT
   // =======================================================
 
   get availablePageHeightMm():
@@ -1077,7 +1043,7 @@ export class PrintBarcodesComponent
 
 
   // =======================================================
-  // EMPTY LABELS BEFORE START
+  // STARTING EMPTY LABELS
   // =======================================================
 
   get startingEmptyLabels():
@@ -1106,7 +1072,7 @@ export class PrintBarcodesComponent
 
 
   // =======================================================
-  // FIRST PAGE AVAILABLE LABELS
+  // FIRST PAGE AVAILABLE
   // =======================================================
 
   get firstPageAvailableLabels():
@@ -1197,7 +1163,7 @@ export class PrintBarcodesComponent
 
 
   // =======================================================
-  // VALIDATE SETTINGS
+  // VALIDATE LABEL SETTINGS
   // =======================================================
 
   validateLabelSettings():
@@ -1209,6 +1175,10 @@ export class PrintBarcodesComponent
     const settings =
       this.labelSettings;
 
+
+    // =====================================================
+    // PAGE WIDTH
+    // =====================================================
 
     if (
       !Number.isFinite(
@@ -1229,6 +1199,10 @@ export class PrintBarcodesComponent
     }
 
 
+    // =====================================================
+    // PAGE HEIGHT
+    // =====================================================
+
     if (
       !Number.isFinite(
         Number(
@@ -1247,6 +1221,10 @@ export class PrintBarcodesComponent
 
     }
 
+
+    // =====================================================
+    // COLUMNS
+    // =====================================================
 
     if (
       !Number.isInteger(
@@ -1267,6 +1245,10 @@ export class PrintBarcodesComponent
     }
 
 
+    // =====================================================
+    // ROWS
+    // =====================================================
+
     if (
       !Number.isInteger(
         Number(
@@ -1285,6 +1267,10 @@ export class PrintBarcodesComponent
 
     }
 
+
+    // =====================================================
+    // LABEL WIDTH
+    // =====================================================
 
     if (
       !Number.isFinite(
@@ -1305,6 +1291,10 @@ export class PrintBarcodesComponent
     }
 
 
+    // =====================================================
+    // LABEL HEIGHT
+    // =====================================================
+
     if (
       !Number.isFinite(
         Number(
@@ -1323,6 +1313,10 @@ export class PrintBarcodesComponent
 
     }
 
+
+    // =====================================================
+    // HORIZONTAL GAP
+    // =====================================================
 
     if (
       !Number.isFinite(
@@ -1343,6 +1337,10 @@ export class PrintBarcodesComponent
     }
 
 
+    // =====================================================
+    // VERTICAL GAP
+    // =====================================================
+
     if (
       !Number.isFinite(
         Number(
@@ -1361,6 +1359,10 @@ export class PrintBarcodesComponent
 
     }
 
+
+    // =====================================================
+    // MARGINS
+    // =====================================================
 
     const margins = [
 
@@ -1401,43 +1403,9 @@ export class PrintBarcodesComponent
     }
 
 
-    if (
-      this.requiredSheetWidthMm >
-      Number(
-        settings.pageWidthMm
-      )
-    ) {
-
-      this.labelSettingsError =
-
-        `The configured labels require ` +
-        `${this.requiredSheetWidthMm.toFixed(2)} mm width, ` +
-        `but the page width is only ` +
-        `${Number(settings.pageWidthMm).toFixed(2)} mm.`;
-
-      return false;
-
-    }
-
-
-    if (
-      this.requiredSheetHeightMm >
-      Number(
-        settings.pageHeightMm
-      )
-    ) {
-
-      this.labelSettingsError =
-
-        `The configured labels require ` +
-        `${this.requiredSheetHeightMm.toFixed(2)} mm height, ` +
-        `but the page height is only ` +
-        `${Number(settings.pageHeightMm).toFixed(2)} mm.`;
-
-      return false;
-
-    }
-
+    // =====================================================
+    // START POSITION
+    // =====================================================
 
     if (
       !Number.isInteger(
@@ -1476,6 +1444,52 @@ export class PrintBarcodesComponent
     }
 
 
+    // =====================================================
+    // SHEET WIDTH
+    // =====================================================
+
+    if (
+      this.requiredSheetWidthMm >
+      Number(
+        settings.pageWidthMm
+      )
+    ) {
+
+      this.labelSettingsError =
+
+        `The configured labels require ` +
+        `${this.requiredSheetWidthMm.toFixed(2)} mm width, ` +
+        `but the page width is only ` +
+        `${Number(settings.pageWidthMm).toFixed(2)} mm.`;
+
+      return false;
+
+    }
+
+
+    // =====================================================
+    // SHEET HEIGHT
+    // =====================================================
+
+    if (
+      this.requiredSheetHeightMm >
+      Number(
+        settings.pageHeightMm
+      )
+    ) {
+
+      this.labelSettingsError =
+
+        `The configured labels require ` +
+        `${this.requiredSheetHeightMm.toFixed(2)} mm height, ` +
+        `but the page height is only ` +
+        `${Number(settings.pageHeightMm).toFixed(2)} mm.`;
+
+      return false;
+
+    }
+
+
     return true;
 
   }
@@ -1499,11 +1513,11 @@ export class PrintBarcodesComponent
 
       labelWidthMm: 60,
 
-      labelHeightMm: 38,
+      labelHeightMm: 35,
 
       horizontalGapMm: 3,
 
-      verticalGapMm: 3,
+      verticalGapMm: 2,
 
       marginTopMm: 10,
 
@@ -1553,6 +1567,10 @@ export class PrintBarcodesComponent
     }
 
 
+    // =====================================================
+    // CHECK LABEL QUANTITY
+    // =====================================================
+
     const invalidQuantity =
       this.selectedProducts.find(
         product =>
@@ -1578,8 +1596,21 @@ export class PrintBarcodesComponent
     }
 
 
+    // =====================================================
+    // IMPORTANT
+    //
+    // Validate settings so the warning is populated,
+    // BUT DO NOT BLOCK PREVIEW.
+    //
+    // Preview is the customization screen.
+    // =====================================================
+
     this.validateLabelSettings();
 
+
+    // =====================================================
+    // GENERATE LABELS
+    // =====================================================
 
     const generatedLabels:
       BarcodePrintLabel[] = [];
@@ -1635,6 +1666,10 @@ export class PrintBarcodesComponent
       generatedLabels;
 
 
+    // =====================================================
+    // ALWAYS OPEN PREVIEW
+    // =====================================================
+
     this.isPreviewOpen =
       true;
 
@@ -1644,53 +1679,27 @@ export class PrintBarcodesComponent
 
 
     console.log(
-      'Products selected for barcode printing:',
-      this.selectedProducts
-    );
-
-
-    console.log(
       'Generated barcode labels:',
       this.printLabels
     );
 
 
     console.log(
-      'Total labels:',
-      this.printLabels.length
-    );
-
-
-    console.log(
-      'Label sheet settings:',
+      'Label settings:',
       this.labelSettings
     );
 
 
-    console.log(
-      'Labels per page:',
-      this.labelsPerPage
-    );
+    if (
+      this.labelSettingsError
+    ) {
 
+      console.warn(
+        'Label configuration warning:',
+        this.labelSettingsError
+      );
 
-    console.log(
-      'Required sheet width:',
-      this.requiredSheetWidthMm,
-      'mm'
-    );
-
-
-    console.log(
-      'Required sheet height:',
-      this.requiredSheetHeightMm,
-      'mm'
-    );
-
-
-    console.log(
-      'Estimated pages:',
-      this.totalPages
-    );
+    }
 
   }
 
@@ -1719,11 +1728,6 @@ export class PrintBarcodesComponent
 
           if (!element) {
 
-            console.warn(
-              'Barcode SVG element not found:',
-              elementId
-            );
-
             return;
 
           }
@@ -1739,14 +1743,22 @@ export class PrintBarcodesComponent
                 format:
                   'CODE128',
 
+
+                // Thinner barcode lines
+
                 width:
-                  1.5,
+                  1.15,
+
+
+                // Appropriate height for label
 
                 height:
-                  45,
+                  38,
+
 
                 displayValue:
                   false,
+
 
                 margin:
                   0
@@ -1806,7 +1818,7 @@ export class PrintBarcodesComponent
 
 
   // =======================================================
-  // ESCAPE HTML FOR PRINT DOCUMENT
+  // ESCAPE PRINT HTML
   // =======================================================
 
   private escapePrintHtml(
@@ -1847,7 +1859,7 @@ export class PrintBarcodesComponent
   printBarcodes() {
 
     // =====================================================
-    // CHECK LABELS
+    // LABEL CHECK
     // =====================================================
 
     if (
@@ -1864,7 +1876,7 @@ export class PrintBarcodesComponent
 
 
     // =====================================================
-    // VALIDATE SETTINGS
+    // PRINT MUST HAVE VALID DIMENSIONS
     // =====================================================
 
     if (
@@ -1881,14 +1893,14 @@ export class PrintBarcodesComponent
 
 
     // =====================================================
-    // RENDER CURRENT PREVIEW
+    // ENSURE PREVIEW SVG IS CURRENT
     // =====================================================
 
     this.renderBarcodes();
 
 
     // =====================================================
-    // CREATE CLEAN PRINT WINDOW
+    // OPEN CLEAN PRINT WINDOW
     // =====================================================
 
     const printWindow =
@@ -1911,7 +1923,7 @@ export class PrintBarcodesComponent
 
 
     // =====================================================
-    // CREATE LABEL HTML
+    // BUILD LABEL HTML
     // =====================================================
 
     const labelsHtml =
@@ -1955,8 +1967,16 @@ export class PrintBarcodesComponent
 
               <div class="barcode-label">
 
-                <div class="nursery-name">
-                  Gayatri Nursery
+                <div class="brand">
+
+                  <span class="brand-logo">
+                    🌱
+                  </span>
+
+                  <span class="brand-name">
+                    Gayatri Nursery
+                  </span>
+
                 </div>
 
 
@@ -1989,9 +2009,11 @@ export class PrintBarcodesComponent
 
 
                 <div class="price">
+
                   ₹${Number(
                     label.unitPrice
                   ).toFixed(2)}
+
                 </div>
 
               </div>
@@ -2004,7 +2026,7 @@ export class PrintBarcodesComponent
 
 
     // =====================================================
-    // EMPTY POSITIONS
+    // EMPTY STARTING POSITIONS
     // =====================================================
 
     const emptyLabelsHtml =
@@ -2099,7 +2121,7 @@ export class PrintBarcodesComponent
 
 
     // =====================================================
-    // CLEAN PRINT DOCUMENT
+    // WRITE PRINT DOCUMENT
     // =====================================================
 
     printWindow.document.open();
@@ -2115,9 +2137,8 @@ export class PrintBarcodesComponent
 
           <meta charset="UTF-8">
 
-
           <title>
-            Gayatri Nursery
+            Gayatri Nursery Barcodes
           </title>
 
 
@@ -2144,15 +2165,21 @@ export class PrintBarcodesComponent
             html,
             body {
 
-              margin: 0;
+              margin: 0 !important;
 
-              padding: 0;
+              padding: 0 !important;
 
-              width: 100%;
+              width:
+                ${pageWidth}mm;
 
-              background: #ffffff;
+              min-height:
+                ${pageHeight}mm;
 
-              color: #000000;
+              background:
+                #ffffff;
+
+              color:
+                #000000;
 
               font-family:
                 Arial,
@@ -2173,9 +2200,9 @@ export class PrintBarcodesComponent
             }
 
 
-            /* =========================================== */
-            /* LABEL SHEET */
-            /* =========================================== */
+            /* ===========================================
+               SHEET
+               =========================================== */
 
             .label-sheet {
 
@@ -2191,7 +2218,8 @@ export class PrintBarcodesComponent
                 ${marginBottom}mm
                 ${marginLeft}mm;
 
-              display: grid;
+              display:
+                grid;
 
               grid-template-columns:
                 repeat(
@@ -2208,16 +2236,18 @@ export class PrintBarcodesComponent
               row-gap:
                 ${verticalGap}mm;
 
-              align-content: start;
+              align-content:
+                start;
 
-              justify-content: start;
+              justify-content:
+                start;
 
             }
 
 
-            /* =========================================== */
-            /* LABEL */
-            /* =========================================== */
+            /* ===========================================
+               LABEL
+               =========================================== */
 
             .barcode-label {
 
@@ -2227,19 +2257,32 @@ export class PrintBarcodesComponent
               height:
                 ${labelHeight}mm;
 
-              overflow: hidden;
+              padding:
+                1.5mm 2mm;
 
-              padding: 2mm;
+              overflow:
+                hidden;
 
-              display: flex;
+              display:
+                flex;
 
-              flex-direction: column;
+              flex-direction:
+                column;
 
-              align-items: center;
+              align-items:
+                center;
 
-              justify-content: center;
+              justify-content:
+                flex-start;
 
-              text-align: center;
+              text-align:
+                center;
+
+              border:
+                0.25mm dashed #94a3b8;
+
+              background:
+                #ffffff;
 
               page-break-inside:
                 avoid;
@@ -2249,10 +2292,6 @@ export class PrintBarcodesComponent
 
             }
 
-
-            /* =========================================== */
-            /* EMPTY POSITION */
-            /* =========================================== */
 
             .empty-label {
 
@@ -2265,182 +2304,262 @@ export class PrintBarcodesComponent
             }
 
 
-            /* =========================================== */
-            /* GAYATRI NURSERY */
-            /* =========================================== */
+            /* ===========================================
+               BRAND
+               =========================================== */
 
-            .nursery-name {
+            .brand {
 
-              width: 100%;
+              width:
+                100%;
 
-              margin-bottom: 1mm;
+              height:
+                4mm;
 
-              font-size: 10pt;
+              display:
+                flex;
 
-              line-height: 1.1;
+              align-items:
+                center;
 
-              font-weight: 700;
+              justify-content:
+                center;
 
-              color: #166534;
+              gap:
+                1mm;
 
-              white-space: nowrap;
+              overflow:
+                hidden;
 
-              overflow: hidden;
-
-              text-overflow: ellipsis;
+              white-space:
+                nowrap;
 
             }
 
 
-            /* =========================================== */
-            /* PRODUCT NAME */
-            /* =========================================== */
+            .brand-logo {
+
+              font-size:
+                8pt;
+
+              line-height:
+                1;
+
+            }
+
+
+            .brand-name {
+
+              font-size:
+                7.5pt;
+
+              line-height:
+                1;
+
+              font-weight:
+                700;
+
+              color:
+                #166534;
+
+            }
+
+
+            /* ===========================================
+               PRODUCT
+               =========================================== */
 
             .product-name {
 
-              width: 100%;
+              width:
+                100%;
 
-              font-size: 9pt;
+              margin-top:
+                0.4mm;
 
-              line-height: 1.1;
+              font-size:
+                7.5pt;
 
-              font-weight: 700;
+              line-height:
+                1.05;
 
-              white-space: nowrap;
+              font-weight:
+                700;
 
-              overflow: hidden;
+              white-space:
+                nowrap;
 
-              text-overflow: ellipsis;
+              overflow:
+                hidden;
+
+              text-overflow:
+                ellipsis;
 
             }
 
-
-            /* =========================================== */
-            /* CATEGORY */
-            /* =========================================== */
 
             .category {
 
-              width: 100%;
+              width:
+                100%;
 
-              margin-top: 0.6mm;
+              margin-top:
+                0.4mm;
 
-              font-size: 7pt;
+              font-size:
+                6pt;
 
-              line-height: 1;
+              line-height:
+                1;
 
-              color: #555555;
+              color:
+                #555555;
 
-              white-space: nowrap;
+              white-space:
+                nowrap;
 
-              overflow: hidden;
+              overflow:
+                hidden;
 
-              text-overflow: ellipsis;
+              text-overflow:
+                ellipsis;
 
             }
 
 
-            /* =========================================== */
-            /* BARCODE */
-            /* =========================================== */
+            /* ===========================================
+               BARCODE
+               =========================================== */
 
             .barcode-container {
 
-              width: 100%;
+              width:
+                100%;
 
-              height: 13mm;
+              height:
+                11mm;
 
-              margin-top: 1.2mm;
+              margin-top:
+                1mm;
 
-              display: flex;
+              display:
+                flex;
 
-              align-items: center;
+              align-items:
+                center;
 
-              justify-content: center;
+              justify-content:
+                center;
 
-              overflow: hidden;
+              overflow:
+                hidden;
 
             }
 
 
             .barcode-container svg {
 
-              display: block;
+              display:
+                block;
 
-              width: auto;
+              width:
+                auto !important;
 
-              max-width: 100%;
+              max-width:
+                100% !important;
 
-              height: 12mm;
+              height:
+                10.5mm !important;
 
             }
 
 
-            /* =========================================== */
-            /* BARCODE VALUE */
-            /* =========================================== */
+            /* ===========================================
+               BARCODE VALUE
+               =========================================== */
 
             .barcode-value {
 
-              width: 100%;
+              width:
+                100%;
 
-              margin-top: 0.6mm;
+              margin-top:
+                0.4mm;
 
               font-family:
                 "Courier New",
                 monospace;
 
-              font-size: 7.5pt;
+              font-size:
+                6pt;
 
-              line-height: 1;
+              line-height:
+                1;
 
-              font-weight: 700;
+              font-weight:
+                700;
 
-              letter-spacing: 0.2px;
+              letter-spacing:
+                0.1mm;
 
-              white-space: nowrap;
+              white-space:
+                nowrap;
 
-              overflow: hidden;
+              overflow:
+                hidden;
 
             }
 
 
-            /* =========================================== */
-            /* PRICE */
-            /* =========================================== */
+            /* ===========================================
+               PRICE
+               =========================================== */
 
             .price {
 
-              margin-top: 0.8mm;
+              width:
+                100%;
 
-              font-size: 9pt;
+              margin-top:
+                0.6mm;
 
-              line-height: 1;
+              font-size:
+                7.5pt;
 
-              font-weight: 700;
+              line-height:
+                1;
+
+              font-weight:
+                700;
+
+              white-space:
+                nowrap;
 
             }
 
 
-            /* =========================================== */
-            /* PRINT */
-            /* =========================================== */
+            /* ===========================================
+               PRINT
+               =========================================== */
 
             @media print {
 
               html,
               body {
 
-                margin: 0 !important;
+                margin:
+                  0 !important;
 
-                padding: 0 !important;
+                padding:
+                  0 !important;
 
               }
 
 
               .label-sheet {
 
-                margin: 0 !important;
+                margin:
+                  0 !important;
 
               }
 
@@ -2475,7 +2594,7 @@ export class PrintBarcodesComponent
                     window.print();
 
                   },
-                  300
+                  400
                 );
 
               };
