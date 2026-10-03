@@ -19,7 +19,7 @@
         <p
           class="mt-1 text-sm text-gray-500 dark:text-gray-400"
         >
-          View completed sales and invoice details.
+          View completed sales, totals, and category or supplier breakdown.
         </p>
   
       </div>
@@ -74,7 +74,497 @@
     <!-- ===================================================== -->
   
     @if (!isLoading && !errorMessage) {
-  
+
+      <!-- ===================================================== -->
+      <!-- FILTERS -->
+      <!-- ===================================================== -->
+
+      <div
+        class="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/40"
+      >
+
+        <div class="mb-4 flex flex-wrap gap-2">
+
+          <button
+            type="button"
+            (click)="applyPreset('today')"
+            class="rounded-lg px-3 py-1.5 text-sm font-medium"
+            [class.bg-brand-500]="datePreset === 'today'"
+            [class.text-white]="datePreset === 'today'"
+            [class.bg-white]="datePreset !== 'today'"
+            [class.text-gray-700]="datePreset !== 'today'"
+            [class.dark:bg-gray-700]="datePreset !== 'today'"
+            [class.dark:text-gray-200]="datePreset !== 'today'"
+          >
+            Today
+          </button>
+
+          <button
+            type="button"
+            (click)="applyPreset('last7')"
+            class="rounded-lg px-3 py-1.5 text-sm font-medium"
+            [class.bg-brand-500]="datePreset === 'last7'"
+            [class.text-white]="datePreset === 'last7'"
+            [class.bg-white]="datePreset !== 'last7'"
+            [class.text-gray-700]="datePreset !== 'last7'"
+            [class.dark:bg-gray-700]="datePreset !== 'last7'"
+            [class.dark:text-gray-200]="datePreset !== 'last7'"
+          >
+            Last 7 days
+          </button>
+
+          <button
+            type="button"
+            (click)="applyPreset('thisMonth')"
+            class="rounded-lg px-3 py-1.5 text-sm font-medium"
+            [class.bg-brand-500]="datePreset === 'thisMonth'"
+            [class.text-white]="datePreset === 'thisMonth'"
+            [class.bg-white]="datePreset !== 'thisMonth'"
+            [class.text-gray-700]="datePreset !== 'thisMonth'"
+            [class.dark:bg-gray-700]="datePreset !== 'thisMonth'"
+            [class.dark:text-gray-200]="datePreset !== 'thisMonth'"
+          >
+            This month
+          </button>
+
+        </div>
+
+        <div
+          class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+        >
+
+          <div>
+
+            <label
+              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              From
+            </label>
+
+            <input
+              type="date"
+              [ngModel]="fromDate"
+              (change)="onFromDateInput($event)"
+              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            />
+
+          </div>
+
+          <div>
+
+            <label
+              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              To
+            </label>
+
+            <input
+              type="date"
+              [ngModel]="toDate"
+              (change)="onToDateInput($event)"
+              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            />
+
+          </div>
+
+          <div>
+
+            <label
+              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Category
+            </label>
+
+            <select
+              [(ngModel)]="selectedCategory"
+              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            >
+
+              <option value="">
+                All Categories
+              </option>
+
+              @for (category of categories; track category.id) {
+
+                <option [value]="category.id">
+                  {{ category.name }}
+                </option>
+
+              }
+
+            </select>
+
+          </div>
+
+          <div>
+
+            <label
+              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Supplier
+            </label>
+
+            <select
+              [(ngModel)]="selectedSupplier"
+              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            >
+
+              <option value="">
+                All Suppliers
+              </option>
+
+              @for (supplier of suppliers; track supplier.id) {
+
+                <option [value]="supplier.id">
+                  {{ supplier.name }}
+                </option>
+
+              }
+
+            </select>
+
+          </div>
+
+          <div>
+
+            <label
+              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Warehouse
+            </label>
+
+            <select
+              [(ngModel)]="selectedWarehouse"
+              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            >
+
+              <option value="">
+                All Warehouses
+              </option>
+
+              @for (warehouse of warehouses; track warehouse.id) {
+
+                <option [value]="warehouse.id">
+                  {{ warehouse.name }}
+                </option>
+
+              }
+
+            </select>
+
+          </div>
+
+          <div>
+
+            <label
+              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Payment
+            </label>
+
+            <select
+              [(ngModel)]="selectedPayment"
+              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            >
+
+              <option value="">
+                All Payments
+              </option>
+
+              @for (mode of paymentOptions; track mode) {
+
+                <option [value]="mode">
+                  {{ mode }}
+                </option>
+
+              }
+
+            </select>
+
+          </div>
+
+        </div>
+
+        <div
+          class="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700"
+        >
+
+          @if (dateRangeInvalid) {
+
+            <p class="text-sm text-red-600 dark:text-red-400">
+              From date must be on or before To date.
+            </p>
+
+          } @else if (isRangeLoading) {
+
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              Loading sales for this date range...
+            </p>
+
+          } @else {
+
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              Showing {{ invoiceCount }} invoice{{ invoiceCount === 1 ? '' : 's' }}
+              from {{ formatInputLabel(fromDate) }} to {{ formatInputLabel(toDate) }}.
+            </p>
+
+          }
+
+          @if (rangeErrorMessage) {
+
+            <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+              {{ rangeErrorMessage }}
+            </p>
+
+          }
+
+        </div>
+
+      </div>
+
+
+      <!-- ===================================================== -->
+      <!-- TOTALS -->
+      <!-- ===================================================== -->
+
+      <div
+        class="grid grid-cols-2 gap-4 xl:grid-cols-4"
+      >
+
+        <div
+          class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]"
+        >
+
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Total sales
+          </p>
+
+          <p class="mt-2 text-2xl font-semibold text-gray-800 dark:text-white">
+            ₹{{ totalSales | number:'1.2-2' }}
+          </p>
+
+        </div>
+
+        <div
+          class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]"
+        >
+
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Invoices
+          </p>
+
+          <p class="mt-2 text-2xl font-semibold text-gray-800 dark:text-white">
+            {{ invoiceCount }}
+          </p>
+
+        </div>
+
+        <div
+          class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]"
+        >
+
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Quantity sold
+          </p>
+
+          <p class="mt-2 text-2xl font-semibold text-gray-800 dark:text-white">
+            {{ quantitySold }}
+          </p>
+
+        </div>
+
+        <div
+          class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]"
+        >
+
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            GST collected
+          </p>
+
+          <p class="mt-2 text-2xl font-semibold text-gray-800 dark:text-white">
+            ₹{{ gstCollected | number:'1.2-2' }}
+          </p>
+
+        </div>
+
+      </div>
+
+      @if (usesLineTotals) {
+
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Category and supplier filters use product line totals. Invoice discount is not split across lines.
+        </p>
+
+      }
+
+
+      <!-- ===================================================== -->
+      <!-- BREAKDOWN -->
+      <!-- ===================================================== -->
+
+      <div
+        class="grid grid-cols-1 gap-4 xl:grid-cols-2"
+      >
+
+        <div
+          class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]"
+        >
+
+          <div class="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-white">
+              By category
+            </h3>
+
+          </div>
+
+          @if (isRangeLoading) {
+
+            <p class="px-5 py-8 text-sm text-gray-500 dark:text-gray-400">
+              Loading sales for this date range...
+            </p>
+
+          } @else if (categoryBreakdown.length === 0) {
+
+            <p class="px-5 py-8 text-sm text-gray-500 dark:text-gray-400">
+              No category sales in this range.
+            </p>
+
+          } @else {
+
+            <table class="w-full text-left">
+
+              <thead class="bg-gray-50 dark:bg-gray-800/50">
+
+                <tr>
+
+                  <th class="px-5 py-3 text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                    Category
+                  </th>
+
+                  <th class="px-5 py-3 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                    Qty
+                  </th>
+
+                  <th class="px-5 py-3 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                    Amount
+                  </th>
+
+                </tr>
+
+              </thead>
+
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+
+                @for (row of categoryBreakdown; track row.name) {
+
+                  <tr>
+
+                    <td class="px-5 py-3 text-sm text-gray-700 dark:text-gray-300">
+                      {{ row.name }}
+                    </td>
+
+                    <td class="px-5 py-3 text-right text-sm text-gray-700 dark:text-gray-300">
+                      {{ row.quantity }}
+                    </td>
+
+                    <td class="px-5 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">
+                      ₹{{ row.amount | number:'1.2-2' }}
+                    </td>
+
+                  </tr>
+
+                }
+
+              </tbody>
+
+            </table>
+
+          }
+
+        </div>
+
+        <div
+          class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]"
+        >
+
+          <div class="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-white">
+              By supplier
+            </h3>
+
+          </div>
+
+          @if (isRangeLoading) {
+
+            <p class="px-5 py-8 text-sm text-gray-500 dark:text-gray-400">
+              Loading sales for this date range...
+            </p>
+
+          } @else if (supplierBreakdown.length === 0) {
+
+            <p class="px-5 py-8 text-sm text-gray-500 dark:text-gray-400">
+              No supplier sales in this range.
+            </p>
+
+          } @else {
+
+            <table class="w-full text-left">
+
+              <thead class="bg-gray-50 dark:bg-gray-800/50">
+
+                <tr>
+
+                  <th class="px-5 py-3 text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                    Supplier
+                  </th>
+
+                  <th class="px-5 py-3 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                    Qty
+                  </th>
+
+                  <th class="px-5 py-3 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                    Amount
+                  </th>
+
+                </tr>
+
+              </thead>
+
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+
+                @for (row of supplierBreakdown; track row.name) {
+
+                  <tr>
+
+                    <td class="px-5 py-3 text-sm text-gray-700 dark:text-gray-300">
+                      {{ row.name }}
+                    </td>
+
+                    <td class="px-5 py-3 text-right text-sm text-gray-700 dark:text-gray-300">
+                      {{ row.quantity }}
+                    </td>
+
+                    <td class="px-5 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">
+                      ₹{{ row.amount | number:'1.2-2' }}
+                    </td>
+
+                  </tr>
+
+                }
+
+              </tbody>
+
+            </table>
+
+          }
+
+        </div>
+
+      </div>
+
+
       <div
         class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]"
       >
@@ -83,7 +573,17 @@
         <!-- EMPTY -->
         <!-- =============================================== -->
   
-        @if (sales.length === 0) {
+        @if (isRangeLoading) {
+
+          <div class="px-6 py-16 text-center">
+
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              Loading sales for this date range...
+            </p>
+
+          </div>
+
+        } @else if (filteredSales.length === 0) {
   
           <div
             class="px-6 py-16 text-center"
@@ -104,7 +604,7 @@
             <p
               class="mt-1 text-sm text-gray-500 dark:text-gray-400"
             >
-              Completed sales will appear here.
+              No completed sales match this date range and filters.
             </p>
   
           </div>
@@ -194,7 +694,7 @@
               >
   
                 @for (
-                  sale of sales;
+                  sale of filteredSales;
                   track sale.id
                 ) {
   

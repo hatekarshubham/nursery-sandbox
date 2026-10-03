@@ -53,7 +53,7 @@ export class SignupFormComponent {
       console.log('Sign up successful');
       // Automatically login after signup
       await this.authService.login(this.email, this.password);
-      this.router.navigate(['/dashboard']);
+      this.router.navigate(['/products']);
     } catch (error: any) {
       alert('Sign Up Error: ' + error.message);
     }

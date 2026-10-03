@@ -51,7 +51,7 @@ export class SigninFormComponent {
     try {
       await this.authService.login(this.email, this.password);
       console.log('Login successful');
-      this.router.navigate(['/dashboard']);
+      this.router.navigate(['/products']);
     } catch (error: any) {
       alert('Login Error: ' + error.message);
     }

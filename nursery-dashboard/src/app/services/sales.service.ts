@@ -9,6 +9,7 @@ import {
   doc,
   query,
   where,
+  orderBy,
   getDocs,
   runTransaction
 } from '@angular/fire/firestore';
@@ -27,6 +28,16 @@ export interface SaleItem {
   productName: string;
 
   barcode: string;
+
+  // Copied from the product at sale time so later
+  // category or supplier edits do not change history.
+  categoryId?: string;
+
+  categoryName?: string;
+
+  supplierId?: string;
+
+  supplierName?: string;
 
   quantity: number;
 
@@ -191,6 +202,39 @@ export class SalesService {
         idField: 'id'
       }
     ) as Observable<Sale[]>;
+
+  }
+
+
+  // =====================================================
+  // GET SALES BY DATE RANGE
+  // =====================================================
+  //
+  // One-shot read. Sales History uses this so a filter
+  // inside an already loaded window does not query again.
+  //
+  // =====================================================
+
+  async getSalesByDateRange(
+    start: Date,
+    end: Date
+  ): Promise<Sale[]> {
+
+    const salesQuery = query(
+      this.salesCollection,
+      where('createdAt', '>=', start),
+      where('createdAt', '<=', end),
+      orderBy('createdAt', 'desc')
+    );
+
+    const snapshot = await getDocs(salesQuery);
+
+    return snapshot.docs.map(
+      document => ({
+        id: document.id,
+        ...document.data()
+      })
+    ) as Sale[];
 
   }
 
