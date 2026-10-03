@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
 
-import { EcommerceComponent } from './pages/dashboard/ecommerce/ecommerce.component';
 import { NotFoundComponent } from './pages/other-page/not-found/not-found.component';
 import { AppLayoutComponent } from './shared/layout/app-layout/app-layout.component';
 import { SignInComponent } from './pages/auth-pages/sign-in/sign-in.component';
@@ -9,8 +8,6 @@ import { ProductsComponent } from './shared/components/ecommerce/products/produc
 import { AddProductComponent } from './shared/components/ecommerce/products/add-product/add-product.component';
 
 import { PrintBarcodesComponent } from './shared/components/ecommerce/barcodes/print-barcodes/print-barcodes.component';
-
-import { CategoryChartComponent } from './shared/components/ecommerce/category-chart/category-chart.component';
 
 import { CategoriesComponent } from './shared/components/ecommerce/categories/categories.component';
 import { AddCategoryComponent } from './shared/components/ecommerce/categories/add-category/add-category.component';
@@ -60,16 +57,6 @@ export const routes: Routes = [
     children: [
 
       // ===================================================
-      // DASHBOARD
-      // ===================================================
-
-      {
-        path: 'dashboard',
-        component: EcommerceComponent,
-      },
-
-
-      // ===================================================
       // CATEGORIES
       // ===================================================
 
@@ -101,16 +88,6 @@ export const routes: Routes = [
       {
         path: 'products/print-barcodes',
         component: PrintBarcodesComponent,
-      },
-
-
-      // ===================================================
-      // CATEGORY CHART
-      // ===================================================
-
-      {
-        path: 'category-chart',
-        component: CategoryChartComponent,
       },
 
 
