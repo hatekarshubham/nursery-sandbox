@@ -37,6 +37,9 @@ interface SaleProduct {
   id: string;
   name: string;
   category: string;
+  categoryId: string;
+  supplierId: string;
+  supplierName: string;
   barcode: string;
   unitPrice: number;
   gst: number;
@@ -56,6 +59,10 @@ interface CartItem {
   productId: string;
   productName: string;
   barcode: string;
+  categoryId: string;
+  categoryName: string;
+  supplierId: string;
+  supplierName: string;
   quantity: number;
   unitPrice: number;
   gst: number;
@@ -73,6 +80,10 @@ interface InvoiceItem {
   productId: string;
   productName: string;
   barcode: string;
+  categoryId: string;
+  categoryName: string;
+  supplierId: string;
+  supplierName: string;
   quantity: number;
   unitPrice: number;
   gst: number;
@@ -451,6 +462,15 @@ export class CreateSaleComponent implements OnInit {
             category:
               product.category ?? '',
 
+            categoryId:
+              product.categoryId ?? '',
+
+            supplierId:
+              product.supplierId ?? '',
+
+            supplierName:
+              product.supplier ?? '',
+
             barcode:
               product.barcode ?? '',
 
@@ -763,6 +783,18 @@ export class CreateSaleComponent implements OnInit {
 
       barcode:
         product.barcode,
+
+      categoryId:
+        product.categoryId,
+
+      categoryName:
+        product.category,
+
+      supplierId:
+        product.supplierId,
+
+      supplierName:
+        product.supplierName,
 
       quantity:
         1,
@@ -1282,6 +1314,18 @@ export class CreateSaleComponent implements OnInit {
               barcode:
                 item.barcode,
 
+              categoryId:
+                item.categoryId,
+
+              categoryName:
+                item.categoryName,
+
+              supplierId:
+                item.supplierId,
+
+              supplierName:
+                item.supplierName,
+
               quantity:
                 item.quantity,
 
@@ -1384,6 +1428,18 @@ export class CreateSaleComponent implements OnInit {
 
               barcode:
                 item.barcode,
+
+              categoryId:
+                item.categoryId,
+
+              categoryName:
+                item.categoryName,
+
+              supplierId:
+                item.supplierId,
+
+              supplierName:
+                item.supplierName,
 
               quantity:
                 item.quantity,
