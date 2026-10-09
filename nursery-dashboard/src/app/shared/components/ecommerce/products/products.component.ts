@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject} from '@angular/core';
+import { AppDialogService } from '../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 
 import { ProductService } from '../../../../services/product.service';
@@ -23,6 +24,24 @@ import {
   Warehouse,
   WarehouseService
 } from '../../../../services/warehouse.service';
+
+import { ProductColorFieldComponent } from './product-color-field/product-color-field.component';
+
+import {
+  PRODUCT_COLORS,
+  ResolvedProductColor,
+  resolveProductColor
+} from './product-colors';
+
+import {
+  customColorName,
+  moneyAmount,
+  optionalText,
+  percentAmount,
+  requiredText,
+  upperInput,
+  wholeQuantity
+} from '../../../utils/form-validation';
 
 
 // =======================================================
@@ -82,6 +101,10 @@ interface Product {
 
   description: string;
 
+  color?: string;
+
+  colorName?: string;
+
   unitPrice: number;
 
   gst: number;
@@ -130,7 +153,8 @@ interface Product {
 
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    ProductColorFieldComponent
   ],
 
   templateUrl: './products.component.html',
@@ -138,6 +162,9 @@ interface Product {
   styleUrl: './products.component.css'
 })
 export class ProductsComponent implements OnInit {
+
+  private readonly dialog = inject(AppDialogService);
+
 
 
   // =======================================================
@@ -1366,6 +1393,20 @@ export class ProductsComponent implements OnInit {
   // OPEN EDIT PRODUCT
   // =======================================================
 
+  onEditName(value: string) {
+
+    if (!this.editingProduct) {
+
+      return;
+
+    }
+
+    this.editingProduct.name =
+      upperInput(value);
+
+  }
+
+
   editProduct(
     product: Product
   ) {
@@ -1385,11 +1426,20 @@ export class ProductsComponent implements OnInit {
 
       ...product,
 
+      name:
+        upperInput(product.name),
+
       supplierId:
         product.supplierId ?? '',
 
       supplier:
-        product.supplier ?? ''
+        product.supplier ?? '',
+
+      color:
+        product.color ?? '',
+
+      colorName:
+        product.colorName ?? ''
 
     };
 
@@ -1463,10 +1513,69 @@ export class ProductsComponent implements OnInit {
     // PRODUCT NAME
     // =========================================
 
-    if (!product.name.trim()) {
+    const nameError =
+      requiredText(product.name, 'product name') ||
+      optionalText(
+        product.description ?? '',
+        'Description',
+        500
+      ) ||
+      moneyAmount(product.unitPrice, 'unit price') ||
+      percentAmount(product.gst) ||
+      (
+        product.standardPackage === null ||
+        product.standardPackage === undefined
+          ? ''
+          : wholeQuantity(
+              product.standardPackage,
+              'Standard package'
+            )
+      );
 
-      alert(
-        'Please enter a product name.'
+    if (nameError) {
+
+      await this.dialog.alert(nameError);
+
+      return;
+
+    }
+
+
+    const tone =
+      resolveProductColor(
+        product.color,
+        product.colorName
+      );
+
+    const colorError =
+      customColorName(
+        tone.colorName,
+        !!tone.color &&
+          !PRODUCT_COLORS.some(
+            option => option.name === tone.colorName
+          )
+      );
+
+    if (colorError) {
+
+      await this.dialog.alert(colorError);
+
+      return;
+
+    }
+
+
+    const image =
+      (product.image ?? '').trim();
+
+    if (
+      image &&
+      !/^https?:\/\//i.test(image) &&
+      !image.startsWith('data:image/')
+    ) {
+
+      await this.dialog.alert(
+        'Image must be a web address or an uploaded image.'
       );
 
       return;
@@ -1480,7 +1589,7 @@ export class ProductsComponent implements OnInit {
 
     if (!product.category) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a category.'
       );
 
@@ -1495,7 +1604,7 @@ export class ProductsComponent implements OnInit {
 
     if (!product.supplierId) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a supplier.'
       );
 
@@ -1515,7 +1624,7 @@ export class ProductsComponent implements OnInit {
       product.unitPrice <= 0
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please enter a valid unit price.'
       );
 
@@ -1572,7 +1681,7 @@ export class ProductsComponent implements OnInit {
           {
 
             name:
-              product.name.trim(),
+              product.name.trim().toUpperCase(),
 
             category:
               product.category,
@@ -1588,6 +1697,12 @@ export class ProductsComponent implements OnInit {
 
             description:
               product.description ?? '',
+
+            color:
+              tone.color,
+
+            colorName:
+              tone.colorName,
 
             unitPrice:
               product.unitPrice,
@@ -1622,7 +1737,7 @@ export class ProductsComponent implements OnInit {
         null;
 
 
-      alert(
+      await this.dialog.alert(
         'Product updated successfully.'
       );
 
@@ -1641,7 +1756,7 @@ export class ProductsComponent implements OnInit {
         false;
 
 
-      alert(
+      await this.dialog.alert(
         'Failed to update product. Please try again.'
       );
 
@@ -1675,6 +1790,25 @@ export class ProductsComponent implements OnInit {
 
     this.isDeleteModalOpen =
       true;
+
+  }
+
+
+  // =======================================================
+  // COLOR
+  // =======================================================
+
+  colorTone(
+    product: {
+      color?: string;
+      colorName?: string;
+    }
+  ): ResolvedProductColor {
+
+    return resolveProductColor(
+      product.color,
+      product.colorName
+    );
 
   }
 
@@ -1739,7 +1873,7 @@ export class ProductsComponent implements OnInit {
         null;
 
 
-      alert(
+      await this.dialog.alert(
         'Product deleted successfully.'
       );
 
@@ -1758,7 +1892,7 @@ export class ProductsComponent implements OnInit {
         false;
 
 
-      alert(
+      await this.dialog.alert(
         'Failed to delete product. Please try again.'
       );
 

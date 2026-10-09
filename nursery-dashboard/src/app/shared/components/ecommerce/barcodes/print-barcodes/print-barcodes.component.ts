@@ -4,8 +4,9 @@ import {
   AfterViewChecked,
   Component,
   OnDestroy,
-  OnInit
-} from '@angular/core';
+  OnInit,
+  inject} from '@angular/core';
+import { AppDialogService } from '../../../../services/app-dialog.service';
 
 import { FormsModule } from '@angular/forms';
 
@@ -123,6 +124,9 @@ interface LabelSheetSettings {
 })
 export class PrintBarcodesComponent
   implements OnInit, OnDestroy, AfterViewChecked {
+
+  private readonly dialog = inject(AppDialogService);
+
 
 
   // =======================================================
@@ -1552,13 +1556,13 @@ export class PrintBarcodesComponent
   // PREVIEW BARCODES
   // =======================================================
 
-  previewBarcodes() {
+  async previewBarcodes() {
 
     if (
       this.selectedProducts.length === 0
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select at least one product.'
       );
 
@@ -1587,7 +1591,7 @@ export class PrintBarcodesComponent
 
     if (invalidQuantity) {
 
-      alert(
+      await this.dialog.alert(
         `Please enter a valid label quantity for ${invalidQuantity.name}.`
       );
 
@@ -1856,7 +1860,7 @@ export class PrintBarcodesComponent
   // PRINT BARCODES
   // =======================================================
 
-  printBarcodes() {
+  async printBarcodes() {
 
     // =====================================================
     // LABEL CHECK
@@ -1866,7 +1870,7 @@ export class PrintBarcodesComponent
       this.printLabels.length === 0
     ) {
 
-      alert(
+      await this.dialog.alert(
         'There are no barcode labels to print.'
       );
 
@@ -1883,7 +1887,7 @@ export class PrintBarcodesComponent
       !this.validateLabelSettings()
     ) {
 
-      alert(
+      await this.dialog.alert(
         this.labelSettingsError
       );
 
@@ -1913,7 +1917,7 @@ export class PrintBarcodesComponent
 
     if (!printWindow) {
 
-      alert(
+      await this.dialog.alert(
         'Unable to open print window. Please allow pop-ups for this site.'
       );
 
@@ -2374,6 +2378,9 @@ export class PrintBarcodesComponent
               width:
                 100%;
 
+              max-height:
+                6.2mm;
+
               margin-top:
                 0.4mm;
 
@@ -2381,19 +2388,31 @@ export class PrintBarcodesComponent
                 7.5pt;
 
               line-height:
-                1.05;
+                1.15;
 
               font-weight:
                 700;
 
-              white-space:
-                nowrap;
+              display:
+                -webkit-box;
+
+              -webkit-box-orient:
+                vertical;
+
+              -webkit-line-clamp:
+                2;
+
+              line-clamp:
+                2;
 
               overflow:
                 hidden;
 
-              text-overflow:
-                ellipsis;
+              white-space:
+                normal;
+
+              overflow-wrap:
+                break-word;
 
             }
 

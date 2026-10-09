@@ -1,7 +1,8 @@
 import { inject, Injectable } from '@angular/core';
-import { Auth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, authState } from '@angular/fire/auth';
+import { Auth, User, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, authState } from '@angular/fire/auth';
 import { Router } from '@angular/router';
 import { Firestore,doc,getDoc } from '@angular/fire/firestore';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -13,8 +14,22 @@ export class AuthService {
   private router = inject(Router);
   private currentProfile: any = null;
 
+  readonly profile$ = new BehaviorSubject<any>(null);
+
   // Observable to track if user is logged in
   user$ = authState(this.auth);
+
+  constructor() {
+    this.user$.subscribe(user => {
+      if (!user) {
+        this.currentProfile = null;
+        this.profile$.next(null);
+        return;
+      }
+
+      void this.loadProfile(user);
+    });
+  }
 
   async login(email: string, pass: string) {
 
@@ -25,40 +40,12 @@ export class AuthService {
       pass
     );
 
-    // 2. Get Firebase user's UID
-    const uid = credential.user.uid;
+    const profile = await this.loadProfile(credential.user, true);
 
-   // 3. Get user's profile from Firestore
-   const userDoc = await getDoc(
-    doc(this.firestore, 'users', uid)
-  );
-
-  // 4. Make sure profile exists
-  if (!userDoc.exists()) {
-    throw new Error('User profile not found in Firestore');
-  }
-
-  // 5. Get profile data from Firestore
-    //    and add email from Firebase Authentication
-    const profile = {
-      ...userDoc.data(),
-      email: credential.user.email
+    return {
+      user: credential.user,
+      profile
     };
-
-    // 6. Store profile in memory
-    this.currentProfile = profile;
-
-  // Print name and role
-  // console.log('Logged-in user:', credential.user.email);
-  // console.log('User UID:', uid);
-  // console.log('User Name:', profile['name']);
-  // console.log('User Role:', profile['role']);
-
-  // 5. Return both Firebase user and Firestore profile
-  return {
-    user: credential.user,
-    profile: userDoc.data()
-  };
 
     // return signInWithEmailAndPassword(this.auth, email, pass);
   }
@@ -68,11 +55,56 @@ export class AuthService {
   }
 
   async logout() {
+    this.currentProfile = null;
+    sessionStorage.setItem('signedOut', '1');
     await signOut(this.auth);
-    this.router.navigate(['/login']);
+    await this.router.navigate(['/login'], { replaceUrl: true });
   }
 
   getProfile() {
     return this.currentProfile;
+  }
+
+  getCreator(): { id: string; name: string } {
+
+    const profile = this.currentProfile;
+
+    const user = this.auth.currentUser;
+
+    return {
+      id: profile?.uid || user?.uid || '',
+      name: (
+        profile?.name ||
+        profile?.email ||
+        user?.email ||
+        ''
+      ).trim()
+    };
+
+  }
+
+  private async loadProfile(user: User, required = false) {
+    const userDoc = await getDoc(
+      doc(this.firestore, 'users', user.uid)
+    );
+
+    if (!userDoc.exists()) {
+      if (required) {
+        throw new Error('User profile not found in Firestore');
+      }
+
+      return null;
+    }
+
+    const profile = {
+      ...userDoc.data(),
+      uid: user.uid,
+      email: user.email
+    };
+
+    this.currentProfile = profile;
+    this.profile$.next(profile);
+
+    return profile;
   }
 }

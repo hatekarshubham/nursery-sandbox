@@ -1,9 +1,12 @@
 import {
   Component,
+  DestroyRef,
   ElementRef,
   OnInit,
-  ViewChild
-} from '@angular/core';
+  ViewChild,
+  inject} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AppDialogService } from '../../../../services/app-dialog.service';
 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -26,6 +29,14 @@ import {
   SalesService,
   CreateSaleInput
 } from '../../../../../services/sales.service';
+
+import { AuthService } from '../../../../../services/auth';
+
+import {
+  indianMobile,
+  moneyAmount,
+  optionalText
+} from '../../../../utils/form-validation';
 
 
 // =======================================================
@@ -118,6 +129,8 @@ interface CompletedInvoice {
 
   warehouseName: string;
 
+  createdByName: string;
+
   items: InvoiceItem[];
 
   subtotal: number;
@@ -149,6 +162,9 @@ interface CompletedInvoice {
   styleUrl: './create-sale.component.css'
 })
 export class CreateSaleComponent implements OnInit {
+
+  private readonly dialog = inject(AppDialogService);
+
 
 
   // =====================================================
@@ -212,6 +228,8 @@ export class CreateSaleComponent implements OnInit {
 
   discount = 0;
 
+  creatorName = '';
+
 
   // =====================================================
   // LOADING
@@ -253,7 +271,9 @@ export class CreateSaleComponent implements OnInit {
     private productService: ProductService,
     private inventoryService: InventoryService,
     private warehouseService: WarehouseService,
-    private salesService: SalesService
+    private salesService: SalesService,
+    private authService: AuthService,
+    private destroyRef: DestroyRef
   ) {}
 
 
@@ -262,6 +282,14 @@ export class CreateSaleComponent implements OnInit {
   // =====================================================
 
   ngOnInit(): void {
+
+    this.creatorName = this.authService.getCreator().name;
+
+    this.authService.profile$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.creatorName = this.authService.getCreator().name;
+      });
 
     this.loadProducts();
 
@@ -547,14 +575,14 @@ export class CreateSaleComponent implements OnInit {
   // WAREHOUSE CHANGE
   // =====================================================
 
-  onWarehouseChange(): void {
+  async onWarehouseChange(): Promise<void> {
 
     if (
       this.cartItems.length > 0
     ) {
 
       const confirmed =
-        window.confirm(
+        await this.dialog.confirm(
           'Changing the warehouse will clear the current cart. Continue?'
         );
 
@@ -650,7 +678,7 @@ export class CreateSaleComponent implements OnInit {
   // BARCODE SCAN
   // =====================================================
 
-  scanBarcode(): void {
+  async scanBarcode(): Promise<void> {
 
     const barcode =
       this.barcodeText.trim();
@@ -665,7 +693,7 @@ export class CreateSaleComponent implements OnInit {
       !this.selectedWarehouseId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a warehouse first.'
       );
 
@@ -683,7 +711,7 @@ export class CreateSaleComponent implements OnInit {
 
     if (!product) {
 
-      alert(
+      await this.dialog.alert(
         `No product found for barcode: ${barcode}`
       );
 
@@ -710,15 +738,15 @@ export class CreateSaleComponent implements OnInit {
   // ADD TO CART
   // =====================================================
 
-  addToCart(
+  async addToCart(
     product: SaleProduct
-  ): void {
+  ): Promise<void> {
 
     if (
       !this.selectedWarehouseId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a warehouse first.'
       );
 
@@ -735,7 +763,7 @@ export class CreateSaleComponent implements OnInit {
       availableQuantity <= 0
     ) {
 
-      alert(
+      await this.dialog.alert(
         `${product.name} is out of stock in the selected warehouse.`
       );
 
@@ -757,7 +785,7 @@ export class CreateSaleComponent implements OnInit {
         availableQuantity
       ) {
 
-        alert(
+        await this.dialog.alert(
           `Only ${availableQuantity} unit(s) of ${product.name} are available.`
         );
 
@@ -818,9 +846,9 @@ export class CreateSaleComponent implements OnInit {
   // INCREASE QUANTITY
   // =====================================================
 
-  increaseQuantity(
+  async increaseQuantity(
     item: CartItem
-  ): void {
+  ): Promise<void> {
 
     const availableQuantity =
       this.getAvailableQuantity(
@@ -832,7 +860,7 @@ export class CreateSaleComponent implements OnInit {
       availableQuantity
     ) {
 
-      alert(
+      await this.dialog.alert(
         `Only ${availableQuantity} unit(s) of ${item.productName} are available.`
       );
 
@@ -870,9 +898,9 @@ export class CreateSaleComponent implements OnInit {
   // MANUAL QUANTITY CHANGE
   // =====================================================
 
-  onQuantityChange(
+  async onQuantityChange(
     item: CartItem
-  ): void {
+  ): Promise<void> {
 
     let quantity =
       Number(
@@ -908,7 +936,7 @@ export class CreateSaleComponent implements OnInit {
       quantity =
         availableQuantity;
 
-      alert(
+      await this.dialog.alert(
         `Only ${availableQuantity} unit(s) of ${item.productName} are available.`
       );
 
@@ -942,7 +970,7 @@ export class CreateSaleComponent implements OnInit {
   // CLEAR CART
   // =====================================================
 
-  clearCart(): void {
+  async clearCart(): Promise<void> {
 
     if (
       this.cartItems.length === 0
@@ -953,7 +981,7 @@ export class CreateSaleComponent implements OnInit {
     }
 
     const confirmed =
-      window.confirm(
+      await this.dialog.confirm(
         'Clear all products from the cart?'
       );
 
@@ -1186,8 +1214,43 @@ export class CreateSaleComponent implements OnInit {
       !this.selectedWarehouseId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a warehouse.'
+      );
+
+      return;
+
+    }
+
+
+    const customerError =
+      optionalText(
+        this.customerName,
+        'Customer name',
+        80
+      ) ||
+      indianMobile(
+        this.customerMobile,
+        false
+      );
+
+    if (customerError) {
+
+      await this.dialog.alert(customerError);
+
+      return;
+
+    }
+
+
+    if (
+      !['Cash', 'UPI', 'Card'].includes(
+        this.paymentMode
+      )
+    ) {
+
+      await this.dialog.alert(
+        'Please select a payment mode.'
       );
 
       return;
@@ -1203,7 +1266,7 @@ export class CreateSaleComponent implements OnInit {
       this.cartItems.length === 0
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please add at least one product.'
       );
 
@@ -1221,16 +1284,16 @@ export class CreateSaleComponent implements OnInit {
         this.discount ?? 0
       );
 
-    if (
-      !Number.isFinite(
-        discount
-      ) ||
-      discount < 0
-    ) {
-
-      alert(
-        'Please enter a valid discount.'
+    const discountError =
+      moneyAmount(
+        discount,
+        'Discount',
+        { allowZero: true }
       );
+
+    if (discountError) {
+
+      await this.dialog.alert(discountError);
 
       return;
 
@@ -1241,7 +1304,7 @@ export class CreateSaleComponent implements OnInit {
       this.totalBeforeDiscount
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Discount cannot be greater than the bill total.'
       );
 
@@ -1269,7 +1332,7 @@ export class CreateSaleComponent implements OnInit {
         available
       ) {
 
-        alert(
+        await this.dialog.alert(
           `Insufficient stock for ${item.productName}. Available: ${available}.`
         );
 
@@ -1365,7 +1428,13 @@ export class CreateSaleComponent implements OnInit {
           this.grandTotal,
 
         paymentMode:
-          this.paymentMode
+          this.paymentMode,
+
+        createdById:
+          this.authService.getCreator().id,
+
+        createdByName:
+          this.authService.getCreator().name
 
       };
 
@@ -1415,6 +1484,9 @@ export class CreateSaleComponent implements OnInit {
 
         warehouseName:
           this.getWarehouseName(),
+
+        createdByName:
+          this.authService.getCreator().name,
 
         items:
           this.cartItems.map(
@@ -1522,7 +1594,7 @@ export class CreateSaleComponent implements OnInit {
         error
       );
 
-      alert(
+      await this.dialog.alert(
         error?.message ??
         'Unable to complete sale.'
       );
@@ -1563,7 +1635,7 @@ export class CreateSaleComponent implements OnInit {
   //
   // =====================================================
 
-  printInvoice(): void {
+  async printInvoice(): Promise<void> {
 
     if (
       !this.completedInvoice
@@ -1693,7 +1765,7 @@ export class CreateSaleComponent implements OnInit {
 
     if (!printWindow) {
 
-      alert(
+      await this.dialog.alert(
         'Unable to open print window. Please allow pop-ups for this site.'
       );
 
@@ -2650,23 +2722,48 @@ export class CreateSaleComponent implements OnInit {
 
           window.onload = function () {
 
+            var closed = false;
+
+            function finish() {
+
+              if (closed) {
+
+                return;
+
+              }
+
+              closed = true;
+
+              window.close();
+
+            }
+
+            window.addEventListener(
+              'afterprint',
+              finish
+            );
+
+            window.focus();
+
+            window.print();
+
             setTimeout(
               function () {
 
-                window.focus();
+                window.addEventListener(
+                  'focus',
+                  finish
+                );
 
-                window.print();
+                if (document.hasFocus()) {
+
+                  finish();
+
+                }
 
               },
-              250
+              400
             );
-
-          };
-
-
-          window.onafterprint = function () {
-
-            window.close();
 
           };
 
@@ -2680,6 +2777,8 @@ export class CreateSaleComponent implements OnInit {
 
 
     printWindow.document.close();
+
+    this.closeInvoice();
 
   }
 

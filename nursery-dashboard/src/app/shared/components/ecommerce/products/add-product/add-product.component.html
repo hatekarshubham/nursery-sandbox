@@ -74,10 +74,12 @@
       <input
         type="text"
         name="name"
-        [(ngModel)]="product.name"
+        [ngModel]="product.name"
+        (ngModelChange)="product.name = upperName($event)"
         placeholder="Enter product name"
+        maxlength="80"
         required
-        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm uppercase text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
       />
 
     </div>
@@ -205,8 +207,35 @@
         [(ngModel)]="product.description"
         rows="4"
         placeholder="Enter product description"
+        maxlength="500"
         class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
       ></textarea>
+
+    </div>
+
+
+    <!-- =================================================== -->
+    <!-- COLOR -->
+    <!-- =================================================== -->
+
+    <div>
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Color
+      </label>
+
+      <app-product-color-field
+        [(color)]="product.color"
+        [(colorName)]="product.colorName"
+      />
+
+      <p
+        class="mt-2 text-xs text-gray-500 dark:text-gray-400"
+      >
+        Search for a color, or use Custom and type its name.
+      </p>
 
     </div>
 

@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject} from '@angular/core';
+import { AppDialogService } from '../../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
@@ -15,18 +16,39 @@ import {
   SupplierService
 } from '../../../../../services/supplier.service';
 
+import { ProductColorFieldComponent } from '../product-color-field/product-color-field.component';
+
+import {
+  PRODUCT_COLORS,
+  resolveProductColor
+} from '../product-colors';
+
+import {
+  customColorName,
+  moneyAmount,
+  optionalText,
+  percentAmount,
+  requiredText,
+  upperInput,
+  wholeQuantity
+} from '../../../../utils/form-validation';
+
 @Component({
   selector: 'app-add-product',
 
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    ProductColorFieldComponent
   ],
 
   templateUrl: './add-product.component.html',
   styleUrl: './add-product.component.css'
 })
 export class AddProductComponent implements OnInit {
+
+  private readonly dialog = inject(AppDialogService);
+
 
   constructor(
     private productService: ProductService,
@@ -49,6 +71,10 @@ export class AddProductComponent implements OnInit {
     supplierId: '',
 
     description: '',
+
+    color: '',
+
+    colorName: '',
 
     unitPrice: null as number | null,
 
@@ -105,6 +131,24 @@ export class AddProductComponent implements OnInit {
   // INIT
   // =========================
 
+  upperName(value: string) {
+
+    return upperInput(value);
+
+  }
+
+
+  private isPaletteColor(
+    name: string
+  ): boolean {
+
+    return PRODUCT_COLORS.some(
+      option => option.name === name
+    );
+
+  }
+
+
   ngOnInit() {
 
     this.loadCategories();
@@ -137,7 +181,7 @@ export class AddProductComponent implements OnInit {
 
         },
 
-        error: (error) => {
+        error: async (error) => {
 
           console.error(
             'Error loading categories:',
@@ -146,7 +190,7 @@ export class AddProductComponent implements OnInit {
 
           this.isLoadingCategories = false;
 
-          alert(
+          await this.dialog.alert(
             'Failed to load product categories. Please try again.'
           );
 
@@ -184,7 +228,7 @@ export class AddProductComponent implements OnInit {
 
         },
 
-        error: (error) => {
+        error: async (error) => {
 
           console.error(
             'Error loading suppliers:',
@@ -193,7 +237,7 @@ export class AddProductComponent implements OnInit {
 
           this.isLoadingSuppliers = false;
 
-          alert(
+          await this.dialog.alert(
             'Failed to load suppliers. Please try again.'
           );
 
@@ -256,7 +300,7 @@ export class AddProductComponent implements OnInit {
   // IMAGE SELECTION
   // =========================
 
-  onImageSelected(event: Event) {
+  async onImageSelected(event: Event) {
 
     const input =
       event.target as HTMLInputElement;
@@ -268,6 +312,30 @@ export class AddProductComponent implements OnInit {
 
       const file =
         input.files[0];
+
+      if (!file.type.startsWith('image/')) {
+
+        input.value = '';
+
+        await this.dialog.alert(
+          'Please choose an image file.'
+        );
+
+        return;
+
+      }
+
+      if (file.size > 2 * 1024 * 1024) {
+
+        input.value = '';
+
+        await this.dialog.alert(
+          'Image must be 2 MB or smaller.'
+        );
+
+        return;
+
+      }
 
       const reader =
         new FileReader();
@@ -342,22 +410,61 @@ export class AddProductComponent implements OnInit {
     // VALIDATION
     // -------------------------
 
-    if (
-      !this.product.name.trim() ||
-      !this.product.category ||
-      !this.product.categoryId ||
-      !this.product.supplierId ||
-      !this.product.supplier ||
-      this.product.unitPrice === null ||
-      !Number.isFinite(
-        this.product.unitPrice
-      ) ||
-      this.product.unitPrice <= 0
-    ) {
+    const name =
+      this.product.name.trim().toUpperCase();
 
-      alert(
-        'Please enter a valid product name, category, supplier, and unit price.'
+    const tone =
+      resolveProductColor(
+        this.product.color,
+        this.product.colorName
       );
+
+    const packageQuantity =
+      this.product.standardPackage;
+
+    const error =
+      requiredText(name, 'product name') ||
+      (
+        !this.product.category ||
+        !this.product.categoryId
+          ? 'Please select a category.'
+          : ''
+      ) ||
+      (
+        !this.product.supplierId ||
+        !this.product.supplier
+          ? 'Please select a supplier.'
+          : ''
+      ) ||
+      optionalText(
+        this.product.description,
+        'Description',
+        500
+      ) ||
+      moneyAmount(
+        this.product.unitPrice,
+        'unit price'
+      ) ||
+      percentAmount(this.product.gst) ||
+      (
+        packageQuantity === null ||
+        packageQuantity === undefined
+          ? ''
+          : wholeQuantity(
+              packageQuantity,
+              'Standard package'
+            )
+      ) ||
+      customColorName(
+        tone.colorName,
+        !!tone.color &&
+          tone.colorName !== '' &&
+          !this.isPaletteColor(tone.colorName)
+      );
+
+    if (error) {
+
+      await this.dialog.alert(error);
 
       return false;
 
@@ -384,11 +491,19 @@ export class AddProductComponent implements OnInit {
 
           ...this.product,
 
-          name:
-            this.product.name.trim(),
+          name,
+
+          gst:
+            this.product.gst ?? 0,
 
           description:
             this.product.description.trim(),
+
+          color:
+            tone.color,
+
+          colorName:
+            tone.colorName,
 
           createdAt:
             new Date(),
@@ -413,7 +528,7 @@ export class AddProductComponent implements OnInit {
       );
 
 
-      alert(
+      await this.dialog.alert(
         `Product added successfully!\nProduct ID: ${result.id}`
       );
 
@@ -430,7 +545,7 @@ export class AddProductComponent implements OnInit {
       );
 
 
-      alert(
+      await this.dialog.alert(
         'Failed to add product. Please try again.'
       );
 
@@ -472,6 +587,10 @@ export class AddProductComponent implements OnInit {
       supplierId: '',
 
       description: '',
+
+      color: '',
+
+      colorName: '',
 
       unitPrice: null,
 

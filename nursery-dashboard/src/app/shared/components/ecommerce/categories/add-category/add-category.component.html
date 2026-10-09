@@ -77,11 +77,13 @@
       <input
         type="text"
         name="categoryName"
-        [(ngModel)]="categoryName"
+        [ngModel]="categoryName"
+        (ngModelChange)="onNameInput($event)"
         placeholder="Enter category name"
+        maxlength="80"
         required
+        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm uppercase text-gray-800 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
         [disabled]="isSaving"
-        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
       />
 
     </div>
@@ -103,9 +105,10 @@
       <input
         type="text"
         name="categoryCode"
-        [(ngModel)]="categoryCode"
+        [ngModel]="categoryCode"
+        (ngModelChange)="onCodeInput($event)"
         placeholder="Enter category code"
-        maxlength="20"
+        maxlength="50"
         required
         [disabled]="isSaving"
         class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm uppercase text-gray-800 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-white"

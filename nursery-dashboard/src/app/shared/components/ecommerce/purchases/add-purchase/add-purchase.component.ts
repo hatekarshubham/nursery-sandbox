@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject} from '@angular/core';
+import { AppDialogService } from '../../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
@@ -20,6 +21,8 @@ import {
 import {
   PurchaseService
 } from '../../../../../services/purchase.service';
+
+import { upperInput } from '../../../../utils/form-validation';
 
 
 // =========================================================
@@ -87,6 +90,9 @@ interface ProductOption {
   styleUrl: './add-purchase.component.css'
 })
 export class AddPurchaseComponent implements OnInit {
+
+  private readonly dialog = inject(AppDialogService);
+
 
 
   constructor(
@@ -183,6 +189,13 @@ export class AddPurchaseComponent implements OnInit {
   // =======================================================
   // INIT
   // =======================================================
+
+  upperInvoice(value: string) {
+
+    return upperInput(value);
+
+  }
+
 
   ngOnInit() {
 
@@ -725,8 +738,8 @@ export class AddPurchaseComponent implements OnInit {
   // VALIDATE PURCHASE
   // =======================================================
 
-  private validatePurchase():
-    boolean {
+  private async validatePurchase():
+    Promise<boolean> {
 
     // =====================================================
     // SUPPLIER
@@ -736,7 +749,7 @@ export class AddPurchaseComponent implements OnInit {
       !this.purchase.supplierId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a supplier.'
       );
 
@@ -750,7 +763,7 @@ export class AddPurchaseComponent implements OnInit {
       !this.purchase.supplierName
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Selected supplier is invalid.'
       );
 
@@ -768,7 +781,7 @@ export class AddPurchaseComponent implements OnInit {
       !this.purchase.warehouseId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a warehouse.'
       );
 
@@ -782,7 +795,7 @@ export class AddPurchaseComponent implements OnInit {
       !this.purchase.warehouseName
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Selected warehouse is invalid.'
       );
 
@@ -800,7 +813,7 @@ export class AddPurchaseComponent implements OnInit {
       !this.purchase.purchaseDate
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a purchase date.'
       );
 
@@ -819,8 +832,42 @@ export class AddPurchaseComponent implements OnInit {
       this.today
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Purchase date cannot be in the future.'
+      );
+
+
+      return false;
+
+    }
+
+
+    this.purchase.invoiceNumber =
+      this.purchase.invoiceNumber
+        .trim()
+        .toUpperCase();
+
+
+    if (
+      !this.purchase.invoiceNumber
+    ) {
+
+      await this.dialog.alert(
+        'Please enter the supplier invoice number.'
+      );
+
+
+      return false;
+
+    }
+
+
+    if (
+      this.purchase.notes.trim().length > 500
+    ) {
+
+      await this.dialog.alert(
+        'Notes must be 500 characters or fewer.'
       );
 
 
@@ -837,7 +884,7 @@ export class AddPurchaseComponent implements OnInit {
       this.items.length === 0
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please add at least one product.'
       );
 
@@ -865,7 +912,7 @@ export class AddPurchaseComponent implements OnInit {
         !item.productId
       ) {
 
-        alert(
+        await this.dialog.alert(
           `Please select a product in row ${index + 1}.`
         );
 
@@ -879,7 +926,7 @@ export class AddPurchaseComponent implements OnInit {
         !item.productName
       ) {
 
-        alert(
+        await this.dialog.alert(
           `Invalid product in row ${index + 1}.`
         );
 
@@ -906,7 +953,7 @@ export class AddPurchaseComponent implements OnInit {
         quantity <= 0
       ) {
 
-        alert(
+        await this.dialog.alert(
           `Please enter a valid quantity in row ${index + 1}.`
         );
 
@@ -930,11 +977,12 @@ export class AddPurchaseComponent implements OnInit {
         !Number.isFinite(
           unitPrice
         ) ||
-        unitPrice < 0
+        unitPrice < 0 ||
+        /\.\d{3,}/.test(String(item.unitPrice))
       ) {
 
-        alert(
-          `Please enter a valid unit price in row ${index + 1}.`
+        await this.dialog.alert(
+          `Please enter a valid unit price in row ${index + 1}. Use at most two decimal places.`
         );
 
 
@@ -961,7 +1009,7 @@ export class AddPurchaseComponent implements OnInit {
         gst > 100
       ) {
 
-        alert(
+        await this.dialog.alert(
           `Please enter a valid GST percentage in row ${index + 1}.`
         );
 
@@ -995,7 +1043,7 @@ export class AddPurchaseComponent implements OnInit {
       productIds.length
     ) {
 
-      alert(
+      await this.dialog.alert(
         'The same product cannot be added more than once in a purchase.'
       );
 
@@ -1082,8 +1130,7 @@ export class AddPurchaseComponent implements OnInit {
         this.purchase.warehouseName,
 
       invoiceNumber:
-        this.purchase.invoiceNumber
-          .trim(),
+        this.purchase.invoiceNumber,
 
       purchaseDate:
         this.purchase.purchaseDate,
@@ -1142,7 +1189,7 @@ export class AddPurchaseComponent implements OnInit {
 
 
     if (
-      !this.validatePurchase()
+      !await this.validatePurchase()
     ) {
 
       return;
@@ -1173,7 +1220,7 @@ export class AddPurchaseComponent implements OnInit {
       );
 
 
-      alert(
+      await this.dialog.alert(
         'Purchase saved successfully as pending.'
       );
 
@@ -1191,7 +1238,7 @@ export class AddPurchaseComponent implements OnInit {
       );
 
 
-      alert(
+      await this.dialog.alert(
         error?.message ??
         'Failed to save purchase. Please try again.'
       );
@@ -1230,7 +1277,7 @@ export class AddPurchaseComponent implements OnInit {
 
 
     if (
-      !this.validatePurchase()
+      !await this.validatePurchase()
     ) {
 
       return;
@@ -1261,7 +1308,7 @@ export class AddPurchaseComponent implements OnInit {
       );
 
 
-      alert(
+      await this.dialog.alert(
         'Purchase saved successfully as pending.'
       );
 
@@ -1281,7 +1328,7 @@ export class AddPurchaseComponent implements OnInit {
       );
 
 
-      alert(
+      await this.dialog.alert(
         error?.message ??
         'Failed to save purchase. Please try again.'
       );

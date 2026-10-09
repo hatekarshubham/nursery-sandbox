@@ -259,6 +259,35 @@
             <label
               class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
+              Created by
+            </label>
+
+            <select
+              [(ngModel)]="selectedCreatedBy"
+              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            >
+
+              <option value="">
+                All users
+              </option>
+
+              @for (name of createdByOptions; track name) {
+
+                <option [value]="name">
+                  {{ name }}
+                </option>
+
+              }
+
+            </select>
+
+          </div>
+
+          <div>
+
+            <label
+              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
               Payment
             </label>
 
@@ -647,6 +676,12 @@
                   >
                     Warehouse
                   </th>
+
+                  <th
+                    class="whitespace-nowrap px-5 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                  >
+                    Created by
+                  </th>
   
                   <th
                     class="px-5 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
@@ -733,8 +768,17 @@
                     >
                       {{ sale.warehouseName || '-' }}
                     </td>
-  
-  
+
+
+                    <!-- CREATED BY -->
+
+                    <td
+                      class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300"
+                    >
+                      {{ createdByLabel(sale) }}
+                    </td>
+
+
                     <!-- PRODUCTS -->
 
                     <td

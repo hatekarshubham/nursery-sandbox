@@ -97,6 +97,12 @@ export interface Sale {
   warehouseName: string;
 
 
+  // Signed-in user who completed the sale.
+  createdById?: string;
+
+  createdByName?: string;
+
+
   // =====================================================
   // ITEMS
   // =====================================================
@@ -702,6 +708,12 @@ export class SalesService {
 
             warehouseName:
               sale.warehouseName ?? '',
+
+            createdById:
+              sale.createdById ?? '',
+
+            createdByName:
+              sale.createdByName ?? '',
 
 
             // =============================================

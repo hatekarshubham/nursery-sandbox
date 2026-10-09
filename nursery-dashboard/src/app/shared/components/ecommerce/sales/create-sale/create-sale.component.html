@@ -21,6 +21,19 @@
         >
           Scan a barcode or manually select products to create a sale.
         </p>
+
+        @if (creatorName) {
+
+          <p
+            class="mt-1 text-sm text-gray-600 dark:text-gray-300"
+          >
+            Created by
+            <span class="font-medium text-gray-800 dark:text-white">
+              {{ creatorName }}
+            </span>
+          </p>
+
+        }
   
       </div>
   
@@ -1156,6 +1169,17 @@
                         completedInvoice.createdAt
                       )
                     }}
+                  </strong>
+                </p>
+
+                <p
+                  class="mt-2 text-sm text-gray-500"
+                >
+                  Created by:
+                  <strong
+                    class="ml-1 text-gray-900"
+                  >
+                    {{ completedInvoice.createdByName || 'Unknown' }}
                   </strong>
                 </p>
   

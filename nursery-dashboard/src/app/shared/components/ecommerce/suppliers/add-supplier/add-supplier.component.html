@@ -124,7 +124,8 @@
       <input
         type="text"
         name="gstNumber"
-        [(ngModel)]="supplier.gstNumber"
+        [ngModel]="supplier.gstNumber"
+        (ngModelChange)="supplier.gstNumber = upperGst($event)"
         placeholder="Enter GST number"
         maxlength="15"
         [disabled]="isSaving"

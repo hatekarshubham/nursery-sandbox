@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './services/auth.guard';
 
 import { NotFoundComponent } from './pages/other-page/not-found/not-found.component';
 import { AppLayoutComponent } from './shared/layout/app-layout/app-layout.component';
@@ -53,6 +54,7 @@ export const routes: Routes = [
   {
     path: '',
     component: AppLayoutComponent,
+    canActivate: [authGuard],
 
     children: [
 

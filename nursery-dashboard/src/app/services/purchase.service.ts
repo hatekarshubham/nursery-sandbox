@@ -552,7 +552,9 @@ export class PurchaseService {
             purchase.purchaseDate,
 
           invoiceNumber:
-            purchase.invoiceNumber?.trim() ??
+            purchase.invoiceNumber
+              ?.trim()
+              .toUpperCase() ??
             '',
 
           notes:

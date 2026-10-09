@@ -1,0 +1,121 @@
+@if (dialog.current(); as current) {
+
+  <div
+    class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 px-4"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="current.title"
+  >
+
+    <div
+      class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:border dark:border-gray-700 dark:bg-gray-900"
+    >
+
+      <div class="flex items-start gap-4">
+
+        <div [class]="iconWrap(current.tone)">
+
+          @switch (current.tone) {
+
+            @case ('success') {
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            }
+
+            @case ('info') {
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 3a9 9 0 100 18 9 9 0 000-18z" />
+              </svg>
+            }
+
+            @default {
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86l-7.18 12a2 2 0 001.71 3h14.36a2 2 0 001.71-3l-7.18-12a2 2 0 00-3.42 0z" />
+              </svg>
+            }
+
+          }
+
+        </div>
+
+        <div>
+
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+            {{ current.title }}
+          </h3>
+
+          @if (current.message) {
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {{ current.message }}
+            </p>
+          }
+
+        </div>
+
+      </div>
+
+
+      @if (current.lines.length) {
+
+        <div
+          class="mt-6 rounded-lg border p-4"
+          [class]="current.tone === 'danger'
+            ? 'border-red-200 bg-red-50 dark:border-red-500/20 dark:bg-red-500/10'
+            : current.tone === 'success'
+              ? 'border-green-200 bg-green-50 dark:border-green-500/20 dark:bg-green-500/10'
+              : current.tone === 'info'
+                ? 'border-blue-200 bg-blue-50 dark:border-blue-500/20 dark:bg-blue-500/10'
+                : 'border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10'"
+        >
+
+          @for (line of current.lines; track $index) {
+            <p
+              class="text-sm"
+              [class.mt-1]="$index > 0"
+              [class]="current.tone === 'danger'
+                ? 'text-red-700 dark:text-red-400'
+                : current.tone === 'success'
+                  ? 'text-green-700 dark:text-green-400'
+                  : current.tone === 'info'
+                    ? 'text-blue-700 dark:text-blue-400'
+                    : 'text-amber-800 dark:text-amber-300'"
+            >
+              {{ line }}
+            </p>
+          }
+
+        </div>
+
+      }
+
+
+      <div class="mt-6 flex justify-end gap-3">
+
+        @if (current.mode === 'confirm') {
+
+          <button
+            type="button"
+            (click)="dialog.cancel()"
+            class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            {{ current.cancelLabel }}
+          </button>
+
+        }
+
+        <button
+          type="button"
+          (click)="dialog.accept()"
+          [class]="confirmButton(current.tone)"
+        >
+          {{ current.confirmLabel }}
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+}

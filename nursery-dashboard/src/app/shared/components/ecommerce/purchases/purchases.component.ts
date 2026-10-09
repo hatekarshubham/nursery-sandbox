@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import {
   Component,
   OnDestroy,
-  OnInit
-} from '@angular/core';
+  OnInit,
+  inject} from '@angular/core';
+import { AppDialogService } from '../../../services/app-dialog.service';
 
 import { RouterModule } from '@angular/router';
 
@@ -32,6 +33,9 @@ import {
 })
 export class PurchasesComponent
   implements OnInit, OnDestroy {
+
+  private readonly dialog = inject(AppDialogService);
+
 
 
   // =======================================================
@@ -170,7 +174,7 @@ export class PurchasesComponent
       !purchase.id
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Purchase ID is missing.'
       );
 
@@ -184,7 +188,7 @@ export class PurchasesComponent
       'PENDING'
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Only pending purchases can be completed.'
       );
 
@@ -203,7 +207,7 @@ export class PurchasesComponent
 
 
     const confirmed =
-      window.confirm(
+      await this.dialog.confirm(
         'Complete this purchase?\n\n' +
         'The purchased quantities will be added to inventory.'
       );
@@ -228,7 +232,7 @@ export class PurchasesComponent
         );
 
 
-      alert(
+      await this.dialog.alert(
         'Purchase completed successfully. Inventory has been updated.'
       );
 
@@ -243,7 +247,7 @@ export class PurchasesComponent
       );
 
 
-      alert(
+      await this.dialog.alert(
         error?.message ??
         'Failed to complete purchase.'
       );
@@ -279,7 +283,7 @@ export class PurchasesComponent
       !purchase.id
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Purchase ID is missing.'
       );
 
@@ -293,7 +297,7 @@ export class PurchasesComponent
       'PENDING'
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Only pending purchases can be cancelled.'
       );
 
@@ -312,7 +316,7 @@ export class PurchasesComponent
 
 
     const confirmed =
-      window.confirm(
+      await this.dialog.confirm(
         'Cancel this purchase?\n\n' +
         'Inventory will not be changed.'
       );
@@ -337,7 +341,7 @@ export class PurchasesComponent
         );
 
 
-      alert(
+      await this.dialog.alert(
         'Purchase cancelled successfully.'
       );
 
@@ -352,7 +356,7 @@ export class PurchasesComponent
       );
 
 
-      alert(
+      await this.dialog.alert(
         error?.message ??
         'Failed to cancel purchase.'
       );

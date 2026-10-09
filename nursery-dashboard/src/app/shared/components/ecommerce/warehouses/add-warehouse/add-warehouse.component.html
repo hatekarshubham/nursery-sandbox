@@ -52,7 +52,8 @@
         name="warehouseName"
         type="text"
 
-        [(ngModel)]="warehouseName"
+        [ngModel]="warehouseName"
+        (ngModelChange)="onNameInput($event)"
 
         placeholder="Example: Warehouse 1"
 
@@ -60,7 +61,7 @@
 
         [disabled]="isSaving"
 
-        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm uppercase text-gray-800 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
       />
 
 
@@ -93,7 +94,9 @@
         name="warehouseCode"
         type="text"
 
-        [(ngModel)]="warehouseCode"
+        [ngModel]="warehouseCode"
+        (ngModelChange)="onCodeInput($event)"
+        maxlength="10"
 
         placeholder="Example: WH1"
 

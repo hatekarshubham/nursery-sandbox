@@ -122,6 +122,8 @@ export class SalesComponent implements OnInit {
 
   selectedPayment = '';
 
+  selectedCreatedBy = '';
+
 
   private productById = new Map<string, any>();
 
@@ -268,6 +270,30 @@ export class SalesComponent implements OnInit {
   }
 
 
+  get createdByOptions(): string[] {
+
+    const names = new Set<string>();
+
+    for (const sale of this.salesForCurrentRange()) {
+
+      names.add(this.createdByLabel(sale));
+
+    }
+
+    return [...names].sort(
+      (a, b) => a.localeCompare(b)
+    );
+
+  }
+
+
+  createdByLabel(sale: Sale): string {
+
+    return sale.createdByName?.trim() || 'Unknown';
+
+  }
+
+
   get filteredSales(): Sale[] {
 
     if (this.dateRangeInvalid) {
@@ -314,6 +340,15 @@ export class SalesComponent implements OnInit {
       if (
         this.selectedPayment &&
         sale.paymentMode !== this.selectedPayment
+      ) {
+
+        return false;
+
+      }
+
+      if (
+        this.selectedCreatedBy &&
+        this.createdByLabel(sale) !== this.selectedCreatedBy
       ) {
 
         return false;

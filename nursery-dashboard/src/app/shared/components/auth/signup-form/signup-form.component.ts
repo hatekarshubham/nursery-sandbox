@@ -1,11 +1,13 @@
 
 import { Component, inject } from '@angular/core';
+import { AppDialogService } from '../../../services/app-dialog.service';
 import { LabelComponent } from '../../form/label/label.component';
 import { CheckboxComponent } from '../../form/input/checkbox.component';
 import { InputFieldComponent } from '../../form/input/input-field.component';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../../services/auth';
+import { emailAddress, requiredText } from '../../../utils/form-validation';
 
 
 @Component({
@@ -21,6 +23,9 @@ import { AuthService } from '../../../../services/auth';
   styles: ``
 })
 export class SignupFormComponent {
+
+  private readonly dialog = inject(AppDialogService);
+
 
   showPassword = false;
   isChecked = false;
@@ -38,13 +43,21 @@ export class SignupFormComponent {
   }
 
   async onSignUp() {
-    if (!this.fname || !this.lname || !this.email || !this.password) {
-      alert('Please fill in all fields');
+    const error =
+      requiredText(this.fname, 'first name', 40) ||
+      requiredText(this.lname, 'last name', 40) ||
+      emailAddress(this.email, true) ||
+      (!this.password.trim()
+        ? 'Please enter your password.'
+        : '');
+
+    if (error) {
+      await this.dialog.alert(error);
       return;
     }
 
     if (!this.isChecked) {
-      alert('Please agree to the Terms and Conditions');
+      await this.dialog.alert('Please agree to the Terms and Conditions');
       return;
     }
 
@@ -55,7 +68,7 @@ export class SignupFormComponent {
       await this.authService.login(this.email, this.password);
       this.router.navigate(['/products']);
     } catch (error: any) {
-      alert('Sign Up Error: ' + error.message);
+      await this.dialog.alert('Sign Up Error: ' + error.message);
     }
   }
 }

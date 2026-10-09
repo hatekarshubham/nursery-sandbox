@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import {
   Component,
   OnDestroy,
-  OnInit
-} from '@angular/core';
+  OnInit,
+  inject} from '@angular/core';
+import { AppDialogService } from '../../../../services/app-dialog.service';
 
 import { FormsModule } from '@angular/forms';
 
@@ -72,6 +73,9 @@ interface ProductOption {
 })
 export class AddStockAdjustmentComponent
   implements OnInit, OnDestroy {
+
+  private readonly dialog = inject(AppDialogService);
+
 
 
   // =======================================================
@@ -543,8 +547,8 @@ export class AddStockAdjustmentComponent
   // VALIDATE
   // =======================================================
 
-  private validateAdjustment():
-    boolean {
+  private async validateAdjustment():
+    Promise<boolean> {
 
     // =====================================================
     // WAREHOUSE
@@ -554,7 +558,7 @@ export class AddStockAdjustmentComponent
       !this.adjustment.warehouseId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a warehouse.'
       );
 
@@ -569,7 +573,7 @@ export class AddStockAdjustmentComponent
 
     if (!warehouse) {
 
-      alert(
+      await this.dialog.alert(
         'Selected warehouse is invalid.'
       );
 
@@ -586,7 +590,7 @@ export class AddStockAdjustmentComponent
       !this.adjustment.productId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a product.'
       );
 
@@ -601,7 +605,7 @@ export class AddStockAdjustmentComponent
 
     if (!product) {
 
-      alert(
+      await this.dialog.alert(
         'Selected product is invalid.'
       );
 
@@ -621,7 +625,7 @@ export class AddStockAdjustmentComponent
         'DECREASE'
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select an adjustment type.'
       );
 
@@ -647,7 +651,7 @@ export class AddStockAdjustmentComponent
       quantity <= 0
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please enter a valid adjustment quantity.'
       );
 
@@ -669,7 +673,7 @@ export class AddStockAdjustmentComponent
         !this.inventoryExists
       ) {
 
-        alert(
+        await this.dialog.alert(
           'No inventory exists for this product in the selected warehouse.'
         );
 
@@ -683,7 +687,7 @@ export class AddStockAdjustmentComponent
         this.currentQuantity
       ) {
 
-        alert(
+        await this.dialog.alert(
           `Only ${this.currentQuantity} units are currently available.`
         );
 
@@ -702,7 +706,7 @@ export class AddStockAdjustmentComponent
       !this.adjustment.reason
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select an adjustment reason.'
       );
 
@@ -719,7 +723,7 @@ export class AddStockAdjustmentComponent
       !this.adjustment.adjustmentDate
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select an adjustment date.'
       );
 
@@ -737,8 +741,21 @@ export class AddStockAdjustmentComponent
       this.today
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Adjustment date cannot be in the future.'
+      );
+
+      return false;
+
+    }
+
+
+    if (
+      (this.adjustment.notes ?? '').trim().length > 500
+    ) {
+
+      await this.dialog.alert(
+        'Notes must be 500 characters or fewer.'
       );
 
       return false;
@@ -769,7 +786,7 @@ export class AddStockAdjustmentComponent
 
 
     if (
-      !this.validateAdjustment()
+      !await this.validateAdjustment()
     ) {
 
       return;
@@ -790,7 +807,7 @@ export class AddStockAdjustmentComponent
       !warehouse
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Unable to resolve adjustment information.'
       );
 
@@ -817,7 +834,7 @@ export class AddStockAdjustmentComponent
 
 
     const confirmed =
-      window.confirm(
+      await this.dialog.confirm(
 
         `Confirm stock adjustment?\n\n` +
 
@@ -898,7 +915,7 @@ export class AddStockAdjustmentComponent
       );
 
 
-      alert(
+      await this.dialog.alert(
         'Stock adjusted successfully.'
       );
 
@@ -938,7 +955,7 @@ export class AddStockAdjustmentComponent
       );
 
 
-      alert(
+      await this.dialog.alert(
         error?.message ??
         'Failed to adjust stock.'
       );

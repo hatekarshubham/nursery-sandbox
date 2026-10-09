@@ -1,9 +1,20 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject} from '@angular/core';
+import { AppDialogService } from '../../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { SupplierService } from '../../../../../services/supplier.service';
+
+import {
+  emailAddress,
+  gstNumber,
+  indianMobile,
+  normalizeIndianMobile,
+  optionalText,
+  requiredText,
+  upperInput
+} from '../../../../utils/form-validation';
 
 @Component({
   selector: 'app-add-supplier',
@@ -15,6 +26,16 @@ import { SupplierService } from '../../../../../services/supplier.service';
   styleUrl: './add-supplier.component.css'
 })
 export class AddSupplierComponent {
+
+  upperGst(value: string) {
+
+    return upperInput(value);
+
+  }
+
+
+  private readonly dialog = inject(AppDialogService);
+
 
   supplier = {
     name: '',
@@ -88,22 +109,23 @@ export class AddSupplierComponent {
     // VALIDATION
     // -----------------------------------------------------
 
-    if (!this.supplier.name.trim()) {
+    const name =
+      this.supplier.name.trim();
 
-      alert(
-        'Please enter a supplier name.'
-      );
+    const mobile =
+      normalizeIndianMobile(this.supplier.mobile);
 
-      return false;
+    const error =
+      requiredText(name, 'supplier name') ||
+      indianMobile(this.supplier.mobile, true) ||
+      emailAddress(this.supplier.email, false) ||
+      gstNumber(this.supplier.gstNumber) ||
+      optionalText(this.supplier.address, 'Address', 300) ||
+      optionalText(this.supplier.notes, 'Notes', 500);
 
-    }
+    if (error) {
 
-
-    if (!this.supplier.mobile.trim()) {
-
-      alert(
-        'Please enter a supplier mobile number.'
-      );
+      await this.dialog.alert(error);
 
       return false;
 
@@ -127,11 +149,9 @@ export class AddSupplierComponent {
       const result =
         await this.supplierService.addSupplier({
 
-          name:
-            this.supplier.name.trim(),
+          name,
 
-          mobile:
-            this.supplier.mobile.trim(),
+          mobile,
 
           email:
             this.supplier.email.trim(),
@@ -162,7 +182,7 @@ export class AddSupplierComponent {
       );
 
 
-      alert(
+      await this.dialog.alert(
         `Supplier added successfully!\nSupplier ID: ${result.id}`
       );
 
@@ -179,7 +199,7 @@ export class AddSupplierComponent {
       );
 
 
-      alert(
+      await this.dialog.alert(
         'Failed to add supplier. Please try again.'
       );
 

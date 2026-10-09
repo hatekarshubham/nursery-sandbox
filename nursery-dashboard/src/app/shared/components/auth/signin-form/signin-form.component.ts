@@ -1,4 +1,6 @@
 import { Component, inject } from '@angular/core';
+import { AppDialogService } from '../../../services/app-dialog.service';
+import { emailAddress } from '../../../utils/form-validation';
 
 import { LabelComponent } from '../../form/label/label.component';
 import { CheckboxComponent } from '../../form/input/checkbox.component';
@@ -27,6 +29,9 @@ import { AuthService } from '../../../../services/auth';
 
 export class SigninFormComponent {
 
+  private readonly dialog = inject(AppDialogService);
+
+
   showPassword = false;
 
   isChecked = false;
@@ -43,17 +48,21 @@ export class SigninFormComponent {
   }
 
   async onSignIn() {
-    if (!this.email || !this.password) {
-      alert('Please enter your email and password');
+    const emailError = emailAddress(this.email, true);
+
+    if (emailError || !this.password.trim()) {
+      await this.dialog.alert(
+        emailError || 'Please enter your password.'
+      );
       return;
     }
 
     try {
       await this.authService.login(this.email, this.password);
-      console.log('Login successful');
-      this.router.navigate(['/products']);
+      sessionStorage.removeItem('signedOut');
+      await this.router.navigate(['/products'], { replaceUrl: true });
     } catch (error: any) {
-      alert('Login Error: ' + error.message);
+      await this.dialog.alert('Login Error: ' + error.message);
     }
   }
 }

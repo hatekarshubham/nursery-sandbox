@@ -1,32 +1,30 @@
-# Gayatri Nursery — clone `main` and run (Mac and Windows)
+# Quick start
 
-This repo is already set up. **Do not** run `ng new` or `firebase init`. Those were one-time steps.
+Clone this repo and run it. Do not run `ng new` or `firebase init`. Those steps are already done.
 
-After this guide you should have:
+You need both processes below. The UI alone has nothing to sign in to, because development mode uses the local emulators.
 
-- Angular UI at [http://localhost:4200](http://localhost:4200)
-- Firebase Emulator UI at [http://localhost:4000](http://localhost:4000)
+After this you should have:
 
-The Firebase project is **`nursery-sandbox-94f65`**. Ask an existing Editor to add you in Firebase Console → **Users and permissions** if you need to deploy.
+- App at http://localhost:4200
+- Firebase Emulator UI at http://localhost:4000
 
-GitHub: `https://github.com/hatekarshubham/nursery-sandbox`
+Firebase project: `nursery-sandbox-94f65`.
 
----
-
-## 1. Install tools (once per machine)
+## 1. Install tools once
 
 ### Node.js LTS
 
-Download LTS from [https://nodejs.org/](https://nodejs.org/). Restart the terminal.
+Install the current LTS from https://nodejs.org/, then reopen the terminal.
 
 ```bash
 node -v
 npm -v
 ```
 
-### JDK 21 (required for emulators)
+### JDK 21
 
-This is **not** in `package.json`. `java -version` must show 21.
+The Firestore emulator needs Java 21. `java -version` must show 21. This is not an npm package.
 
 **Mac**
 
@@ -36,7 +34,7 @@ sudo ln -sfn /opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk /Library/Java/Java
 java -version
 ```
 
-If `java` is not found (Apple Silicon):
+If `java` is not found on Apple Silicon:
 
 ```bash
 export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"
@@ -51,7 +49,7 @@ Add those two lines to `~/.zshrc`. Intel Macs may use `/usr/local/opt/openjdk@21
 winget install Microsoft.OpenJDK.21
 ```
 
-Reopen PowerShell, then `java -version`. Set `JAVA_HOME` to the JDK folder, **not** `bin`.
+Reopen PowerShell and run `java -version`. Set `JAVA_HOME` to the JDK folder, not to `bin`.
 
 ### Firebase CLI
 
@@ -60,33 +58,22 @@ npm install -g firebase-tools
 firebase --version
 ```
 
-Angular CLI is optional globally. This repo uses `npx ng` from `nursery-ui`.
-
----
+A global Angular CLI is optional. This repo uses `npx ng` inside `nursery-dashboard`.
 
 ## 2. Clone and install
-
-**Mac / Windows**
 
 ```bash
 git clone https://github.com/hatekarshubham/nursery-sandbox.git
 cd nursery-sandbox
-```
-
-If you already have a GitHub invite, clone with your account. Then:
-
-```bash
-cd nursery-ui
+cd nursery-dashboard
 npm install
 ```
 
-`node_modules` is not in Git. Everyone runs `npm install` locally.
+`node_modules` is not in Git. Each machine runs `npm install`.
 
----
+## 3. Select the Firebase project
 
-## 3. Log in to Firebase (same project as the repo)
-
-From the **repo root** (the folder that contains `firebase.json` and `.firebaserc`):
+From the repo root (the folder that contains `firebase.json`):
 
 ```bash
 cd ..
@@ -94,94 +81,98 @@ firebase login
 firebase use
 ```
 
-You should see **`nursery-sandbox-94f65`**. If not:
+You should see `nursery-sandbox-94f65`. If not:
 
 ```bash
 firebase use nursery-sandbox-94f65
 ```
 
-Do **not** run `firebase init` again. Config is already in the repo:
+Config already in the repo:
 
 - `.firebaserc` — project id
-- `firebase.json` — Hosting + emulator ports (Auth `9099`, Firestore `8080`, UI `4000`)
-- `firestore.rules` / `firestore.indexes.json`
-- `nursery-ui/src/environments/environment.ts` — web `firebaseConfig`
-- `nursery-ui/src/app/app.config.ts` — connects to emulators when `ng serve` is in dev mode
+- `firebase.json` — Hosting and emulator ports (Auth `9099`, Firestore `8080`, Emulator UI `4000`)
+- `firestore.rules` and `firestore.indexes.json`
+- `nursery-dashboard/src/app/app.config.ts` — connects to the emulators when `ng serve` is in development mode
 
----
-
-## 4. Run locally (two terminals)
-
-You need **both** processes. `ng serve` alone talks to empty local emulators and login will fail.
+## 4. Run locally
 
 **Terminal A — emulators** (repo root):
+
+```bash
+firebase emulators:start --import=./nursery-dashboard/firebase-emulator-data --export-on-exit=./nursery-dashboard/firebase-emulator-data
+```
+
+Open http://localhost:4000.
+
+`--import` loads the saved Auth and Firestore data in `nursery-dashboard/firebase-emulator-data`. That folder is gitignored, so a fresh clone does not have it. If the folder is missing, start without the flags:
 
 ```bash
 firebase emulators:start
 ```
 
-Open [http://localhost:4000](http://localhost:4000).
+Then create a user (next section). `--export-on-exit` writes the emulator data back to that folder when you stop the emulators, so the next start can import it.
 
-**Terminal B — Angular** :
+**Terminal B — Angular**
 
 ```bash
-cd nursery-ui
+cd nursery-dashboard
 npx ng serve
 ```
 
-Open [http://localhost:4200](http://localhost:4200).
+Open http://localhost:4200. Sign in, then the app opens All Products.
 
-### First login
+## 5. First login
 
-Emulator Auth starts **empty**. Console users are **not** copied.
+Sign-in checks Firebase Auth, then a Firestore profile at `users/{uid}`. Login fails with "User profile not found" when the Auth user exists and that document does not.
 
-1. Emulator UI → **Authentication** → **Add user** (email + password).
-2. Sign in on the Angular login page with that same pair.
+If you imported emulator data, use an account that is already in that export.
 
----
+If the emulators started empty:
 
-## 5. Deploy (optional, needs Editor access)
+1. Emulator UI → **Authentication** → **Add user** (email and password). Copy the user's UID.
+2. Emulator UI → **Firestore** → start a collection named `users`.
+3. Use that UID as the document id. Set `name` (string) and `role` (string), for example `Admin`.
+4. Sign in at http://localhost:4200 with the same email and password.
+
+Production users are not copied into the emulator.
+
+## 6. Deploy
+
+This needs Editor access on the Firebase project.
 
 ```bash
-cd nursery-ui
+cd nursery-dashboard
 npx ng build
 cd ..
 firebase deploy
 ```
 
-Live Hosting uses **production** Auth/Firestore, not the emulator. Create users in Firebase Console → Authentication for the live `.web.app` URL.
+The live site uses production Auth and Firestore, not the emulator. Create those users in Firebase Console → Authentication, and add a matching `users/{uid}` document in production Firestore.
 
----
-
-## 6. Daily Git workflow
+## 7. Daily Git
 
 ```bash
 git pull origin main
-# ... edit code ...
-git add .
 git status
+git add .
 git commit -m "Short description of the change"
 git push origin main
 ```
 
-### Do not commit
+Do not commit:
 
 - `node_modules/`
-- `dist/`, `.angular/`
-- `firebase-debug.log`, `*.log`, `.firebase/`
+- `nursery-dashboard/dist/` and `nursery-dashboard/.angular/`
+- `nursery-dashboard/firebase-emulator-data/`
+- `firebase-debug.log`, `firestore-debug.log`, and other logs
+- `.firebase/`
 - `.DS_Store`
-- `.agents/` (local Cursor skills, if present)
 - Service account JSON files
 
-`git status` must not list `node_modules`. If it does, stop and fix `.gitignore`.
+## Checklist
 
----
-
-## Checklist (new teammate)
-
-1. Node LTS and JDK 21 installed
-2. Repo cloned; `cd nursery-ui && npm install`
-3. `firebase login` and `firebase use` → `nursery-sandbox-94f65`
-4. Added as GitHub collaborator and (for deploy) Firebase Editor
-5. `firebase emulators:start` **and** `npx ng serve` both running
-6. Test user created in Emulator UI Auth, then login at `:4200`
+1. Node LTS and JDK 21 are installed.
+2. The repo is cloned and `cd nursery-dashboard && npm install` has been run.
+3. `firebase login` and `firebase use` show `nursery-sandbox-94f65`.
+4. Emulators and `npx ng serve` are both running.
+5. The Auth user has a `users/{uid}` document, then login works at http://localhost:4200.

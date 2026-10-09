@@ -436,6 +436,12 @@ export class ProductService {
         description:
           product.description ?? '',
 
+        color:
+          product.color ?? '',
+
+        colorName:
+          product.colorName ?? '',
+
         unitPrice:
           product.unitPrice,
 

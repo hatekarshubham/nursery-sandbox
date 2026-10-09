@@ -1,11 +1,20 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit, inject} from '@angular/core';
+import { AppDialogService } from '../../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import {
+  Warehouse,
   WarehouseService
 } from '../../../../../services/warehouse.service';
+
+import {
+  duplicateValue,
+  requiredText,
+  shortCode,
+  upperInput
+} from '../../../../utils/form-validation';
 
 @Component({
   selector: 'app-add-warehouse',
@@ -19,7 +28,10 @@ import {
 
   styleUrl: './add-warehouse.component.css'
 })
-export class AddWarehouseComponent {
+export class AddWarehouseComponent implements OnInit {
+
+  private readonly dialog = inject(AppDialogService);
+
 
   warehouseName = '';
 
@@ -29,11 +41,38 @@ export class AddWarehouseComponent {
 
   isSaving = false;
 
+  private warehouses: Warehouse[] = [];
+
 
   constructor(
     private warehouseService: WarehouseService,
     private router: Router
   ) {}
+
+  ngOnInit() {
+
+    this.warehouseService
+      .getWarehouses()
+      .subscribe(warehouses => {
+
+        this.warehouses = warehouses ?? [];
+
+      });
+
+  }
+
+  onNameInput(value: string) {
+
+    this.warehouseName = upperInput(value);
+
+  }
+
+
+  onCodeInput(value: string) {
+
+    this.warehouseCode = upperInput(value);
+
+  }
 
 
   // =====================================================
@@ -89,36 +128,28 @@ export class AddWarehouseComponent {
     // NAME VALIDATION
     // -----------------------------------------------------
 
-    if (!this.warehouseName.trim()) {
-
-      alert(
-        'Please enter a warehouse name.'
-      );
-
-      return false;
-
-    }
-
-
-    // -----------------------------------------------------
-    // CODE VALIDATION
-    // -----------------------------------------------------
-
-    if (!this.warehouseCode.trim()) {
-
-      alert(
-        'Please enter a warehouse code.'
-      );
-
-      return false;
-
-    }
-
+    const name =
+      this.warehouseName.trim().toUpperCase();
 
     const normalizedCode =
-      this.warehouseCode
-        .trim()
-        .toUpperCase();
+      this.warehouseCode.trim().toUpperCase();
+
+    const error =
+      requiredText(name, 'warehouse name') ||
+      shortCode(normalizedCode, 'Warehouse code') ||
+      duplicateValue(
+        normalizedCode,
+        this.warehouses.map(warehouse => warehouse.code),
+        'warehouse code'
+      );
+
+    if (error) {
+
+      await this.dialog.alert(error);
+
+      return false;
+
+    }
 
 
     // -----------------------------------------------------
@@ -134,8 +165,7 @@ export class AddWarehouseComponent {
         await this.warehouseService
           .addWarehouse({
 
-            name:
-              this.warehouseName.trim(),
+            name,
 
             code:
               normalizedCode,
@@ -152,7 +182,7 @@ export class AddWarehouseComponent {
       );
 
 
-      alert(
+      await this.dialog.alert(
         `Warehouse added successfully!\nWarehouse ID: ${result.id}`
       );
 
@@ -169,7 +199,7 @@ export class AddWarehouseComponent {
       );
 
 
-      alert(
+      await this.dialog.alert(
         'Failed to add warehouse. Please try again.'
       );
 

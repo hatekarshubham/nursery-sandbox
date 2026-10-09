@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import {
   Component,
   OnDestroy,
-  OnInit
-} from '@angular/core';
+  OnInit,
+  inject} from '@angular/core';
+import { AppDialogService } from '../../../../services/app-dialog.service';
 
 import { FormsModule } from '@angular/forms';
 
@@ -71,6 +72,9 @@ interface ProductOption {
 })
 export class AddStockTransferComponent
   implements OnInit, OnDestroy {
+
+  private readonly dialog = inject(AppDialogService);
+
 
 
   // =======================================================
@@ -393,7 +397,7 @@ export class AddStockTransferComponent
   // DESTINATION WAREHOUSE CHANGE
   // =======================================================
 
-  onDestinationWarehouseChange() {
+  async onDestinationWarehouseChange() {
 
     if (
       this.transfer.toWarehouseId ===
@@ -403,7 +407,7 @@ export class AddStockTransferComponent
       this.transfer.toWarehouseId = '';
 
 
-      alert(
+      await this.dialog.alert(
         'Source and destination warehouses cannot be the same.'
       );
 
@@ -513,8 +517,8 @@ export class AddStockTransferComponent
   // VALIDATE TRANSFER
   // =======================================================
 
-  private validateTransfer():
-    boolean {
+  private async validateTransfer():
+    Promise<boolean> {
 
     // =====================================================
     // SOURCE WAREHOUSE
@@ -524,7 +528,7 @@ export class AddStockTransferComponent
       !this.transfer.fromWarehouseId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a source warehouse.'
       );
 
@@ -539,7 +543,7 @@ export class AddStockTransferComponent
 
     if (!sourceWarehouse) {
 
-      alert(
+      await this.dialog.alert(
         'Selected source warehouse is invalid.'
       );
 
@@ -556,7 +560,7 @@ export class AddStockTransferComponent
       !this.transfer.toWarehouseId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a destination warehouse.'
       );
 
@@ -571,7 +575,7 @@ export class AddStockTransferComponent
 
     if (!destinationWarehouse) {
 
-      alert(
+      await this.dialog.alert(
         'Selected destination warehouse is invalid.'
       );
 
@@ -589,7 +593,7 @@ export class AddStockTransferComponent
       this.transfer.toWarehouseId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Source and destination warehouses cannot be the same.'
       );
 
@@ -606,7 +610,7 @@ export class AddStockTransferComponent
       !this.transfer.productId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a product.'
       );
 
@@ -621,7 +625,7 @@ export class AddStockTransferComponent
 
     if (!product) {
 
-      alert(
+      await this.dialog.alert(
         'Selected product is invalid.'
       );
 
@@ -641,7 +645,7 @@ export class AddStockTransferComponent
       this.availableQuantity <= 0
     ) {
 
-      alert(
+      await this.dialog.alert(
         'The selected product has no available stock in the source warehouse.'
       );
 
@@ -667,7 +671,7 @@ export class AddStockTransferComponent
       quantity <= 0
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please enter a valid transfer quantity.'
       );
 
@@ -681,7 +685,7 @@ export class AddStockTransferComponent
       this.availableQuantity
     ) {
 
-      alert(
+      await this.dialog.alert(
         `Only ${this.availableQuantity} units are available in the source warehouse.`
       );
 
@@ -698,7 +702,7 @@ export class AddStockTransferComponent
       !this.transfer.transferDate
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a transfer date.'
       );
 
@@ -716,8 +720,21 @@ export class AddStockTransferComponent
       this.today
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Transfer date cannot be in the future.'
+      );
+
+      return false;
+
+    }
+
+
+    if (
+      this.transfer.notes.trim().length > 500
+    ) {
+
+      await this.dialog.alert(
+        'Notes must be 500 characters or fewer.'
       );
 
       return false;
@@ -805,8 +822,8 @@ export class AddStockTransferComponent
   // CONFIRM TRANSFER
   // =======================================================
 
-  private confirmTransfer():
-    boolean {
+  private async confirmTransfer():
+    Promise<boolean> {
 
     const product =
       this.getSelectedProduct();
@@ -837,7 +854,7 @@ export class AddStockTransferComponent
       );
 
 
-    return window.confirm(
+    return await this.dialog.confirm(
 
       `Transfer ${quantity} unit(s) of ${product.name}?\n\n` +
 
@@ -870,7 +887,7 @@ export class AddStockTransferComponent
 
 
     if (
-      !this.validateTransfer()
+      !await this.validateTransfer()
     ) {
 
       return;
@@ -884,7 +901,7 @@ export class AddStockTransferComponent
 
     if (!transferData) {
 
-      alert(
+      await this.dialog.alert(
         'Unable to resolve transfer information.'
       );
 
@@ -894,7 +911,7 @@ export class AddStockTransferComponent
 
 
     if (
-      !this.confirmTransfer()
+      !await this.confirmTransfer()
     ) {
 
       return;
@@ -921,7 +938,7 @@ export class AddStockTransferComponent
       );
 
 
-      alert(
+      await this.dialog.alert(
         'Stock transferred successfully.'
       );
 
@@ -941,7 +958,7 @@ export class AddStockTransferComponent
       );
 
 
-      alert(
+      await this.dialog.alert(
         error?.message ??
         'Failed to transfer stock.'
       );
@@ -975,7 +992,7 @@ export class AddStockTransferComponent
 
 
     if (
-      !this.validateTransfer()
+      !await this.validateTransfer()
     ) {
 
       return;
@@ -989,7 +1006,7 @@ export class AddStockTransferComponent
 
     if (!transferData) {
 
-      alert(
+      await this.dialog.alert(
         'Unable to resolve transfer information.'
       );
 
@@ -999,7 +1016,7 @@ export class AddStockTransferComponent
 
 
     if (
-      !this.confirmTransfer()
+      !await this.confirmTransfer()
     ) {
 
       return;
@@ -1026,7 +1043,7 @@ export class AddStockTransferComponent
       );
 
 
-      alert(
+      await this.dialog.alert(
         'Stock transferred successfully.'
       );
 
@@ -1046,7 +1063,7 @@ export class AddStockTransferComponent
       );
 
 
-      alert(
+      await this.dialog.alert(
         error?.message ??
         'Failed to transfer stock.'
       );
