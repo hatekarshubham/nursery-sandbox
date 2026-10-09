@@ -1,29 +1,56 @@
-<div class="relative p-6 bg-white z-1 dark:bg-gray-900 sm:p-0">
-  <div
-    class="relative flex flex-col justify-center w-full h-screen lg:flex-row dark:bg-gray-900 sm:p-0"
-  >
-    <!-- Left Side (Logo) -->
-    <div
-      class="items-center hidden w-full h-full lg:w-1/2 bg-white dark:bg-gray-900 lg:grid relative"
+<div
+  class="relative min-h-screen bg-[#FAFAF5] bg-left-bottom bg-no-repeat text-[#1F2933] lg:bg-[url('/images/login/corner.jpg')] lg:bg-contain dark:bg-gray-900 dark:bg-none dark:text-gray-100"
+  style="font-family: Inter, sans-serif"
+>
+  <div class="flex min-h-screen flex-col lg:flex-row">
+
+    <aside
+      class="relative hidden lg:flex lg:w-1/2 lg:flex-col lg:justify-between"
     >
-      <div class="flex items-center justify-center h-full px-10 z-10">
-        <img
-          src="/images/logo/gnlogo.svg"
-          alt="Gayatri Nursery"
-          class="w-[420px] h-auto"
-        />
+
+      <div class="relative z-10 px-14 pt-16 xl:px-20 xl:pt-20">
+
+        <h1
+          class="mt-10 max-w-md text-4xl font-semibold leading-tight tracking-tight text-[#243028] dark:text-white"
+        >
+          Plants for a
+          <span class="text-[#166534] dark:text-[#86C48C]">Greener</span>
+          <span class="block text-[#166534] dark:text-[#86C48C]">Brighter Tomorrow</span>
+        </h1>
+
+        <span
+          class="mt-5 block h-1 w-16 rounded-full bg-[#43A047]"
+        ></span>
+
+        <p class="mt-5 text-sm text-[#6B7280] dark:text-gray-400">
+          Quality plants
+          <span class="px-1.5 text-[#43A047]">·</span>
+          Healthy homes
+          <span class="px-1.5 text-[#43A047]">·</span>
+          A greener world
+        </p>
+
       </div>
 
-      <!-- Optional Grid Background -->
-      <app-grid-shape />
-    </div>
+    </aside>
 
-    <!-- Right Side (Login Form) -->
-    <ng-content></ng-content>
+    <main
+      class="flex flex-1 flex-col items-center justify-center px-5 py-10 sm:px-8"
+    >
 
-    <!-- Theme Toggle -->
-    <div class="fixed z-50 hidden bottom-6 right-6 sm:block">
-      <app-theme-toggle-two />
-    </div>
+      <img
+        src="/images/logo/gnlogo.svg"
+        alt="Gayatri Nursery"
+        class="mb-8 h-11 w-auto"
+      />
+
+      <ng-content></ng-content>
+
+    </main>
+
+  </div>
+
+  <div class="fixed bottom-6 right-6 z-50 hidden sm:block">
+    <app-theme-toggle-two />
   </div>
 </div>

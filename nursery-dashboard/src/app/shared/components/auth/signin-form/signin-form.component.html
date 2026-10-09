@@ -1,15 +1,16 @@
-<div class="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
+<div
+  class="w-full rounded-3xl bg-white px-7 py-8 shadow-[0_18px_50px_rgba(22,101,52,0.08)] sm:px-9 sm:py-10 dark:bg-gray-800 dark:shadow-none"
+  style="font-family: Inter, sans-serif"
+>
   <div>
 
     <!-- Heading -->
-    <div class="mb-5 sm:mb-8">
-      <h1
-        class="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md"
-      >
+    <div class="mb-7">
+      <h1 class="mb-2 text-3xl font-semibold text-[#166534] dark:text-[#86C48C]">
         Login
       </h1>
 
-      <p class="text-sm text-gray-500 dark:text-gray-400">
+      <p class="text-sm text-[#6B7280] dark:text-gray-400">
         Enter your username and password to login!
       </p>
     </div>
@@ -31,7 +32,7 @@
           placeholder="Enter your username"
           [(value)]="email"
           name="email"
-          class="form-input"
+          className="!rounded-xl !border-[#E4EBE3] !bg-[#F4F7F2] !shadow-none focus:!border-[#43A047] focus:!ring-[#43A047]/20 dark:!border-gray-700 dark:!bg-gray-900 dark:!text-white"
           required
         />
       </div>
@@ -49,7 +50,7 @@
             placeholder="Enter your password"
             [(value)]="password"
             name="password"
-            class="form-input"
+            className="!rounded-xl !border-[#E4EBE3] !bg-[#F4F7F2] !shadow-none focus:!border-[#43A047] focus:!ring-[#43A047]/20 dark:!border-gray-700 dark:!bg-gray-900 dark:!text-white"
             required
           />
 
@@ -108,18 +109,21 @@
           <app-checkbox
             [(checked)]="isChecked"
             label="Keep me logged in"
+            className="!rounded-md !border-[#D5E0D4] checked:!border-[#166534] checked:!bg-[#166534]"
           />
         </div>
       </div>
 
       <!-- Login Button -->
-      <app-button
-        className="w-full"
-        size="sm"
-        (btnClick)="onSignIn()"
+      <button
+        type="submit"
+        class="flex w-full items-center justify-center gap-2 rounded-xl bg-[#166534] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#14532D]"
       >
         Login
-      </app-button>
+        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path d="M4 10h12M12 6l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
 
     </form>
 

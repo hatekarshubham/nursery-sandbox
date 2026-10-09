@@ -3,6 +3,7 @@ import { Auth, User, signInWithEmailAndPassword, createUserWithEmailAndPassword,
 import { Router } from '@angular/router';
 import { Firestore,doc,getDoc } from '@angular/fire/firestore';
 import { BehaviorSubject } from 'rxjs';
+import { AppDialogService } from '../shared/services/app-dialog.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,6 +13,7 @@ export class AuthService {
   private auth = inject(Auth);
   private firestore = inject(Firestore);
   private router = inject(Router);
+  private dialog = inject(AppDialogService);
   private currentProfile: any = null;
 
   readonly profile$ = new BehaviorSubject<any>(null);
@@ -56,9 +58,13 @@ export class AuthService {
 
   async logout() {
     this.currentProfile = null;
+    this.profile$.next(null);
     sessionStorage.setItem('signedOut', '1');
+    this.dialog.dismiss();
     await signOut(this.auth);
+    this.dialog.dismiss();
     await this.router.navigate(['/login'], { replaceUrl: true });
+    this.dialog.dismiss();
   }
 
   getProfile() {

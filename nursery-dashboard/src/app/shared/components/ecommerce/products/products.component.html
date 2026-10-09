@@ -1,5 +1,5 @@
 <div
-  class="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6"
+  class="min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6"
 >
 
   <!-- ===================================================== -->
@@ -299,9 +299,9 @@
     filteredProducts.length > 0
   ) {
 
-    <div class="min-w-0 max-w-full">
+    <div class="min-w-0 max-w-full overflow-x-hidden">
 
-      <table class="w-full table-fixed text-left">
+      <table class="w-full text-left text-theme-sm">
 
         <thead
           class="border-y border-gray-100 dark:border-gray-800"
@@ -310,37 +310,25 @@
           <tr>
 
             <th
-              class="w-16 px-2 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-16 px-3 py-3 font-medium text-gray-500 dark:text-gray-400"
             >
               Image
             </th>
 
             <th
-              class="px-2 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="px-3 py-3 font-medium text-gray-500 dark:text-gray-400"
             >
               Product Name
             </th>
 
             <th
-              class="px-2 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="px-3 py-3 font-medium text-gray-500 dark:text-gray-400"
             >
               Category
             </th>
 
             <th
-              class="px-2 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-            >
-              Supplier
-            </th>
-
-            <th
-              class="px-2 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-            >
-              Color
-            </th>
-
-            <th
-              class="px-2 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="px-3 py-3 font-medium text-gray-500 dark:text-gray-400"
             >
               Unit Price
             </th>
@@ -354,7 +342,7 @@
             ) {
 
               <th
-                class="px-2 py-3 text-center font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+                class="w-24 px-3 py-3 font-medium text-gray-500 dark:text-gray-400"
               >
                 {{ getWarehouseCode(warehouse) }} Qty
               </th>
@@ -363,25 +351,19 @@
 
 
             <th
-              class="px-2 py-3 text-center font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="px-3 py-3 font-medium text-gray-500 dark:text-gray-400"
             >
               Total
             </th>
 
             <th
-              class="px-2 py-3 text-center font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-            >
-              Stock Level
-            </th>
-
-            <th
-              class="px-2 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="px-3 py-3 font-medium text-gray-500 dark:text-gray-400"
             >
               Status
             </th>
 
             <th
-              class="w-20 px-2 py-3 text-right font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="px-3 py-3 text-right font-medium text-gray-500 dark:text-gray-400"
             >
               Action
             </th>
@@ -409,7 +391,7 @@
 
               <!-- IMAGE -->
 
-              <td class="px-2 py-4">
+              <td class="px-3 py-4">
 
                 <div
                   class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50"
@@ -444,89 +426,42 @@
               <!-- PRODUCT NAME -->
 
               <td
-                class="break-words px-2 py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90"
+                class="cursor-pointer whitespace-normal px-3 py-4"
+                (click)="openProductDetails(product)"
               >
-                {{ product.name }}
+                <div class="font-medium text-gray-800 dark:text-white/90">
+                  {{ product.name }}
+                </div>
+
+                @if (colorTone(product).colorName) {
+
+                  <div
+                    class="mt-1 inline-flex items-center gap-1.5 text-xs font-normal text-gray-500 dark:text-gray-400"
+                  >
+                    <span
+                      class="h-3.5 w-3.5 shrink-0 rounded-full border border-gray-300 dark:border-gray-600"
+                      [style.background]="colorTone(product).swatch"
+                    ></span>
+                    {{ colorTone(product).colorName }}
+                  </div>
+
+                }
               </td>
 
 
               <!-- CATEGORY -->
 
               <td
-                class="break-words px-2 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+                class="whitespace-nowrap px-3 py-4 text-gray-500 dark:text-gray-400"
               >
                 {{ product.category }}
-              </td>
-
-
-              <!-- SUPPLIER -->
-
-              <td
-                class="px-2 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
-              >
-
-                @if (
-                  getSupplierName(product) !==
-                  'No supplier'
-                ) {
-
-                  <span
-                    class="inline-flex max-w-full break-words rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
-                  >
-                    {{ getSupplierName(product) }}
-                  </span>
-
-                } @else {
-
-                  <span
-                    class="text-xs text-gray-400 dark:text-gray-500"
-                  >
-                    No supplier
-                  </span>
-
-                }
-
-              </td>
-
-
-              <!-- COLOR -->
-
-              <td
-                class="px-2 py-4"
-              >
-
-                @if (colorTone(product).colorName) {
-
-                  <span
-                    class="inline-flex max-w-full items-center gap-2 break-words text-theme-sm text-gray-600 dark:text-gray-300"
-                  >
-
-                    <span
-                      class="h-5 w-5 rounded-full border border-gray-300 dark:border-gray-600"
-                      [style.background]="colorTone(product).swatch"
-                    ></span>
-
-                    {{ colorTone(product).colorName }}
-
-                  </span>
-
-                } @else {
-
-                  <span
-                    class="text-gray-400 text-theme-sm"
-                  >
-                    -
-                  </span>
-
-                }
-
               </td>
 
 
               <!-- UNIT PRICE -->
 
               <td
-                class="px-2 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+                class="whitespace-nowrap px-3 py-4 text-gray-500 dark:text-gray-400"
               >
                 ₹{{ product.unitPrice | number:'1.2-2' }}
               </td>
@@ -540,7 +475,7 @@
               ) {
 
                 <td
-                  class="px-2 py-4 text-center text-theme-sm"
+                  class="px-3 py-4"
                 >
 
                   @if (
@@ -586,7 +521,7 @@
               -->
 
               <td
-                class="px-2 py-4 text-center"
+                class="px-3 py-4"
               >
 
                 @if (
@@ -623,65 +558,14 @@
               </td>
 
 
-              <!-- ================================================= -->
-              <!-- STOCK LEVEL -->
-              <!-- ================================================= -->
-
-              <td
-                class="px-2 py-4 text-center"
-              >
-
-                @if (
-                  getStockLevel(product) === 'outOfStock'
-                ) {
-
-                  <span
-                    class="inline-flex max-w-full whitespace-normal rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
-                  >
-                    Out of Stock
-                  </span>
-
-                } @else if (
-                  getStockLevel(product) === 'low'
-                ) {
-
-                  <span
-                    class="inline-flex max-w-full whitespace-normal rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
-                  >
-                    Low Stock
-                  </span>
-
-                } @else if (
-                  getStockLevel(product) === 'medium'
-                ) {
-
-                  <span
-                    class="inline-flex max-w-full whitespace-normal rounded-full bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
-                  >
-                    Medium Stock
-                  </span>
-
-                } @else {
-
-                  <span
-                    class="inline-flex max-w-full whitespace-normal rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
-                  >
-                    Healthy Stock
-                  </span>
-
-                }
-
-              </td>
-
-
               <!-- STATUS -->
 
-              <td class="px-2 py-4">
+              <td class="whitespace-nowrap px-3 py-4">
 
                 @if (product.isAvailable) {
 
                   <span
-                    class="inline-flex max-w-full whitespace-normal rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+                    class="inline-flex whitespace-nowrap rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
                   >
                     Active
                   </span>
@@ -693,7 +577,7 @@
                 ) {
 
                   <span
-                    class="inline-flex max-w-full whitespace-normal rounded-full bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
+                    class="inline-flex whitespace-nowrap rounded-full bg-yellow-50 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
                   >
                     Out of Stock
                   </span>
@@ -704,7 +588,7 @@
                 ) {
 
                   <span
-                    class="inline-flex max-w-full whitespace-normal rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                    class="inline-flex whitespace-nowrap rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
                   >
                     Product Inactive
                   </span>
@@ -715,7 +599,7 @@
                 ) {
 
                   <span
-                    class="inline-flex max-w-full whitespace-normal rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                    class="inline-flex whitespace-nowrap rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
                   >
                     Category Inactive
                   </span>
@@ -723,7 +607,7 @@
                 } @else {
 
                   <span
-                    class="inline-flex max-w-full whitespace-normal rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                    class="inline-flex whitespace-nowrap rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
                   >
                     Inactive
                   </span>
@@ -736,7 +620,7 @@
               <!-- ACTIONS -->
 
               <td
-                class="px-2 py-4 text-right"
+                class="px-3 py-4"
               >
 
                 <div
@@ -1121,7 +1005,7 @@
           ) {
 
             <span
-              class="inline-flex max-w-full whitespace-normal rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
+              class="inline-flex whitespace-nowrap rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
             >
               Out of Stock
             </span>
@@ -1131,7 +1015,7 @@
           ) {
 
             <span
-              class="inline-flex max-w-full whitespace-normal rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
+              class="inline-flex whitespace-nowrap rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
             >
               Low Stock
             </span>
@@ -1141,7 +1025,7 @@
           ) {
 
             <span
-              class="inline-flex max-w-full whitespace-normal rounded-full bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
+              class="inline-flex whitespace-nowrap rounded-full bg-yellow-50 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
             >
               Medium Stock
             </span>
@@ -1149,7 +1033,7 @@
           } @else {
 
             <span
-              class="inline-flex max-w-full whitespace-normal rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+              class="inline-flex whitespace-nowrap rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
             >
               Healthy Stock
             </span>
@@ -1174,7 +1058,7 @@
           @if (selectedProduct.isAvailable) {
 
             <span
-              class="inline-flex max-w-full whitespace-normal rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+              class="inline-flex whitespace-nowrap rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
             >
               Active
             </span>
@@ -1186,7 +1070,7 @@
           ) {
 
             <span
-              class="inline-flex max-w-full whitespace-normal rounded-full bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
+              class="inline-flex whitespace-nowrap rounded-full bg-yellow-50 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
             >
               Out of Stock
             </span>
@@ -1197,7 +1081,7 @@
           ) {
 
             <span
-              class="inline-flex max-w-full whitespace-normal rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+              class="inline-flex whitespace-nowrap rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
             >
               Product Inactive
             </span>
@@ -1208,7 +1092,7 @@
           ) {
 
             <span
-              class="inline-flex max-w-full whitespace-normal rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+              class="inline-flex whitespace-nowrap rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
             >
               Category Inactive
             </span>
@@ -1216,7 +1100,7 @@
           } @else {
 
             <span
-              class="inline-flex max-w-full whitespace-normal rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+              class="inline-flex whitespace-nowrap rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
             >
               Inactive
             </span>

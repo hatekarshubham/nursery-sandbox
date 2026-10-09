@@ -4,7 +4,6 @@ import { emailAddress } from '../../../utils/form-validation';
 
 import { LabelComponent } from '../../form/label/label.component';
 import { CheckboxComponent } from '../../form/input/checkbox.component';
-import { ButtonComponent } from '../../ui/button/button.component';
 import { InputFieldComponent } from '../../form/input/input-field.component';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +15,6 @@ import { AuthService } from '../../../../services/auth';
   imports: [
     LabelComponent,
     CheckboxComponent,
-    ButtonComponent,
     InputFieldComponent,
     RouterModule,
     FormsModule

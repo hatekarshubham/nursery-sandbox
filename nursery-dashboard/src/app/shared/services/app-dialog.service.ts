@@ -61,6 +61,25 @@ export class AppDialogService {
   }
 
 
+  dismiss(): void {
+
+    const pending = this.queue.splice(0);
+
+    const resolve = this.activeResolve;
+
+    this.activeResolve = null;
+
+    this.current.set(null);
+
+    resolve?.(false);
+
+    for (const item of pending) {
+      item.resolve(false);
+    }
+
+  }
+
+
   private open(
     state: DialogState
   ): Promise<boolean> {

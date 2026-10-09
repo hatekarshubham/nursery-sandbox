@@ -729,7 +729,29 @@ export class AppSidebarComponent {
     path: string
   ): boolean {
 
-    return this.router.url === path;
+    return this.currentPath() === path;
+
+  }
+
+
+  isSectionActive(
+    nav: NavItem
+  ): boolean {
+
+    const url = this.currentPath();
+
+    return !!nav.subItems?.some(
+      (subItem) =>
+        url === subItem.path ||
+        url.startsWith(subItem.path + '/')
+    );
+
+  }
+
+
+  private currentPath(): string {
+
+    return this.router.url.split('?')[0].split('#')[0];
 
   }
 

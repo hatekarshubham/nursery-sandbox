@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject} from '@angular/core';
+import { Auth } from '@angular/fire/auth';
 import { AppDialogService } from '../../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -48,6 +49,8 @@ import {
 export class AddProductComponent implements OnInit {
 
   private readonly dialog = inject(AppDialogService);
+
+  private readonly auth = inject(Auth);
 
 
   constructor(
@@ -190,6 +193,10 @@ export class AddProductComponent implements OnInit {
 
           this.isLoadingCategories = false;
 
+          if (!this.auth.currentUser) {
+            return;
+          }
+
           await this.dialog.alert(
             'Failed to load product categories. Please try again.'
           );
@@ -236,6 +243,10 @@ export class AddProductComponent implements OnInit {
           );
 
           this.isLoadingSuppliers = false;
+
+          if (!this.auth.currentUser) {
+            return;
+          }
 
           await this.dialog.alert(
             'Failed to load suppliers. Please try again.'
