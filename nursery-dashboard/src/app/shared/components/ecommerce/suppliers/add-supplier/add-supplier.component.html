@@ -244,7 +244,7 @@
         type="button"
         (click)="saveAndAddAnother()"
         [disabled]="isSaving"
-        class="rounded-lg bg-green-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+        class="rounded-lg bg-brand-500 px-6 py-3 text-sm font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
       >
 
         @if (isSaving) {
@@ -265,7 +265,7 @@
       <button
         type="submit"
         [disabled]="isSaving"
-        class="rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        class="rounded-lg border border-brand-500 bg-white px-6 py-3 text-sm font-medium text-brand-500 transition hover:bg-[#EAF7EB] dark:border-brand-400 dark:bg-transparent dark:text-brand-400 dark:hover:bg-brand-500/10 disabled:cursor-not-allowed disabled:opacity-50"
       >
 
         @if (isSaving) {
