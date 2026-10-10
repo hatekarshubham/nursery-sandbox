@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import {
   Component,
   OnDestroy,
-  OnInit
+  OnInit,
+  inject
 } from '@angular/core';
 
 import { Subscription } from 'rxjs';
@@ -12,6 +13,10 @@ import {
   StockAdjustment,
   StockAdjustmentService
 } from '../../../../services/stock-adjustment.service';
+
+import {
+  AlertService
+} from '../../../../shared/services/alert.service';
 
 
 @Component({
@@ -64,6 +69,14 @@ export class StockAdjustmentsComponent
 
   private subscription =
     new Subscription();
+
+
+  // =======================================================
+  // ALERT SERVICE
+  // =======================================================
+
+  private alertService =
+    inject(AlertService);
 
 
   // =======================================================
@@ -142,6 +155,13 @@ export class StockAdjustmentsComponent
 
 
             this.isLoading = false;
+
+
+            this.alertService.error(
+              'Failed to Load Stock Adjustments',
+              'Failed to load stock adjustments.',
+              'Please try again.'
+            );
 
           }
 

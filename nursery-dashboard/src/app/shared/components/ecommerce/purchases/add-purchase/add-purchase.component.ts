@@ -21,6 +21,8 @@ import {
   PurchaseService
 } from '../../../../../services/purchase.service';
 
+import { AlertService } from '../../../../../shared/services/alert.service';
+
 
 // =========================================================
 // PURCHASE PRODUCT
@@ -94,7 +96,8 @@ export class AddPurchaseComponent implements OnInit {
     private warehouseService: WarehouseService,
     private productService: ProductService,
     private purchaseService: PurchaseService,
-    private router: Router
+    private router: Router,
+    private alertService: AlertService
   ) {}
 
 
@@ -736,7 +739,8 @@ export class AddPurchaseComponent implements OnInit {
       !this.purchase.supplierId
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Supplier Required',
         'Please select a supplier.'
       );
 
@@ -750,7 +754,8 @@ export class AddPurchaseComponent implements OnInit {
       !this.purchase.supplierName
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Invalid Supplier',
         'Selected supplier is invalid.'
       );
 
@@ -768,7 +773,8 @@ export class AddPurchaseComponent implements OnInit {
       !this.purchase.warehouseId
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Warehouse Required',
         'Please select a warehouse.'
       );
 
@@ -782,7 +788,8 @@ export class AddPurchaseComponent implements OnInit {
       !this.purchase.warehouseName
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Invalid Warehouse',
         'Selected warehouse is invalid.'
       );
 
@@ -800,7 +807,8 @@ export class AddPurchaseComponent implements OnInit {
       !this.purchase.purchaseDate
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Purchase Date Required',
         'Please select a purchase date.'
       );
 
@@ -819,7 +827,8 @@ export class AddPurchaseComponent implements OnInit {
       this.today
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Invalid Purchase Date',
         'Purchase date cannot be in the future.'
       );
 
@@ -837,7 +846,8 @@ export class AddPurchaseComponent implements OnInit {
       this.items.length === 0
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Product Required',
         'Please add at least one product.'
       );
 
@@ -865,7 +875,8 @@ export class AddPurchaseComponent implements OnInit {
         !item.productId
       ) {
 
-        alert(
+        this.alertService.warning(
+          'Product Required',
           `Please select a product in row ${index + 1}.`
         );
 
@@ -879,7 +890,8 @@ export class AddPurchaseComponent implements OnInit {
         !item.productName
       ) {
 
-        alert(
+        this.alertService.warning(
+          'Invalid Product',
           `Invalid product in row ${index + 1}.`
         );
 
@@ -906,7 +918,8 @@ export class AddPurchaseComponent implements OnInit {
         quantity <= 0
       ) {
 
-        alert(
+        this.alertService.warning(
+          'Invalid Quantity',
           `Please enter a valid quantity in row ${index + 1}.`
         );
 
@@ -933,7 +946,8 @@ export class AddPurchaseComponent implements OnInit {
         unitPrice < 0
       ) {
 
-        alert(
+        this.alertService.warning(
+          'Invalid Unit Price',
           `Please enter a valid unit price in row ${index + 1}.`
         );
 
@@ -961,7 +975,8 @@ export class AddPurchaseComponent implements OnInit {
         gst > 100
       ) {
 
-        alert(
+        this.alertService.warning(
+          'Invalid GST',
           `Please enter a valid GST percentage in row ${index + 1}.`
         );
 
@@ -995,7 +1010,8 @@ export class AddPurchaseComponent implements OnInit {
       productIds.length
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Duplicate Product',
         'The same product cannot be added more than once in a purchase.'
       );
 
@@ -1173,7 +1189,8 @@ export class AddPurchaseComponent implements OnInit {
       );
 
 
-      alert(
+      this.alertService.success(
+        'Purchase Saved Successfully',
         'Purchase saved successfully as pending.'
       );
 
@@ -1191,7 +1208,8 @@ export class AddPurchaseComponent implements OnInit {
       );
 
 
-      alert(
+      this.alertService.error(
+        'Failed to Save Purchase',
         error?.message ??
         'Failed to save purchase. Please try again.'
       );
@@ -1261,7 +1279,8 @@ export class AddPurchaseComponent implements OnInit {
       );
 
 
-      alert(
+      this.alertService.success(
+        'Purchase Saved Successfully',
         'Purchase saved successfully as pending.'
       );
 
@@ -1281,7 +1300,8 @@ export class AddPurchaseComponent implements OnInit {
       );
 
 
-      alert(
+      this.alertService.error(
+        'Failed to Save Purchase',
         error?.message ??
         'Failed to save purchase. Please try again.'
       );

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { ProductService } from '../../../../services/product.service';
@@ -23,6 +23,8 @@ import {
   Warehouse,
   WarehouseService
 } from '../../../../services/warehouse.service';
+
+import { AlertService } from '../../../../shared/services/alert.service';
 
 
 // =======================================================
@@ -96,14 +98,6 @@ interface Product {
   // =========================
   // CALCULATED INVENTORY
   // =========================
-  //
-  // Total quantity across ALL
-  // warehouses.
-  //
-  // This is NOT stored inside
-  // the product document.
-  //
-  // =========================
 
   quantity: number;
 
@@ -151,6 +145,9 @@ export class ProductsComponent implements OnInit {
     private inventoryService: InventoryService,
     private warehouseService: WarehouseService
   ) {}
+
+
+  private alertService = inject(AlertService);
 
 
   // =======================================================
@@ -212,28 +209,6 @@ export class ProductsComponent implements OnInit {
 
   // =======================================================
   // FILTERED + SORTED PRODUCTS
-  // =======================================================
-  //
-  // IMPORTANT:
-  //
-  // Filtering happens first.
-  //
-  // Then products are sorted using TOTAL quantity across
-  // all warehouses.
-  //
-  // Lowest stock appears first.
-  //
-  // Example:
-  //
-  // 0
-  // 0
-  // 3
-  // 8
-  // 15
-  // 40
-  // 86
-  // 95
-  //
   // =======================================================
 
   get filteredProducts(): Product[] {
@@ -354,16 +329,6 @@ export class ProductsComponent implements OnInit {
     // =====================================================
     // SORT BY TOTAL QUANTITY
     // =====================================================
-    //
-    // IMPORTANT:
-    //
-    // quantity = stock across ALL warehouses.
-    //
-    // Lowest stock appears first.
-    //
-    // slice() creates a copy so we don't mutate tableData.
-    //
-    // =====================================================
 
     return filtered
       .slice()
@@ -403,12 +368,6 @@ export class ProductsComponent implements OnInit {
           // =========================================
           // SECONDARY SORT
           // PRODUCT NAME
-          // =========================================
-          //
-          // If two products have the same quantity,
-          // keep the table predictable by sorting
-          // alphabetically.
-          //
           // =========================================
 
           return (
@@ -458,17 +417,6 @@ export class ProductsComponent implements OnInit {
 
   // =======================================================
   // STOCK LEVEL
-  // =======================================================
-  //
-  // IMPORTANT:
-  //
-  // This uses TOTAL quantity across ALL warehouses.
-  //
-  // 0      = Out of Stock
-  // 1-10   = Low Stock
-  // 11-50  = Medium Stock
-  // 51+    = Healthy Stock
-  //
   // =======================================================
 
   getStockLevel(
@@ -965,11 +913,6 @@ export class ProductsComponent implements OnInit {
                 // =========================================
                 // TOTAL INVENTORY
                 // =========================================
-                //
-                // quantity = sum of inventory from
-                // every warehouse.
-                //
-                // =========================================
 
                 const totalQuantity =
                   this.getProductTotalQuantity(
@@ -1086,25 +1029,6 @@ export class ProductsComponent implements OnInit {
   // =======================================================
   // RECALCULATE PRODUCT INVENTORY
   // =======================================================
-  //
-  // Inventory is an Observable.
-  //
-  // If a purchase or sale changes inventory,
-  // the total quantity is recalculated automatically.
-  //
-  // Because filteredProducts sorts using quantity,
-  // products automatically move to the correct position.
-  //
-  // Example:
-  //
-  // Product A = 60
-  //
-  // Sale reduces it to 8.
-  //
-  // It will automatically move into the low-stock
-  // section near the top of the table.
-  //
-  // =======================================================
 
   private recalculateProductInventory() {
 
@@ -1144,21 +1068,6 @@ export class ProductsComponent implements OnInit {
 
   // =======================================================
   // GET PRODUCT TOTAL QUANTITY
-  // =======================================================
-  //
-  // IMPORTANT:
-  //
-  // This adds inventory from ALL warehouses.
-  //
-  // Example:
-  //
-  // WH1 = 6
-  // WH2 = 7
-  //
-  // Total Qty = 13
-  //
-  // Stock level = Medium Stock
-  //
   // =======================================================
 
   private getProductTotalQuantity(
@@ -1465,7 +1374,8 @@ export class ProductsComponent implements OnInit {
 
     if (!product.name.trim()) {
 
-      alert(
+      this.alertService.warning(
+        'Invalid Product Name',
         'Please enter a product name.'
       );
 
@@ -1480,7 +1390,8 @@ export class ProductsComponent implements OnInit {
 
     if (!product.category) {
 
-      alert(
+      this.alertService.warning(
+        'Category Required',
         'Please select a category.'
       );
 
@@ -1495,7 +1406,8 @@ export class ProductsComponent implements OnInit {
 
     if (!product.supplierId) {
 
-      alert(
+      this.alertService.warning(
+        'Supplier Required',
         'Please select a supplier.'
       );
 
@@ -1515,7 +1427,8 @@ export class ProductsComponent implements OnInit {
       product.unitPrice <= 0
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Invalid Unit Price',
         'Please enter a valid unit price.'
       );
 
@@ -1622,7 +1535,8 @@ export class ProductsComponent implements OnInit {
         null;
 
 
-      alert(
+      this.alertService.success(
+        'Product Updated Successfully',
         'Product updated successfully.'
       );
 
@@ -1641,7 +1555,8 @@ export class ProductsComponent implements OnInit {
         false;
 
 
-      alert(
+      this.alertService.error(
+        'Update Failed',
         'Failed to update product. Please try again.'
       );
 
@@ -1739,7 +1654,8 @@ export class ProductsComponent implements OnInit {
         null;
 
 
-      alert(
+      this.alertService.success(
+        'Product Deleted Successfully',
         'Product deleted successfully.'
       );
 
@@ -1758,7 +1674,8 @@ export class ProductsComponent implements OnInit {
         false;
 
 
-      alert(
+      this.alertService.error(
+        'Delete Failed',
         'Failed to delete product. Please try again.'
       );
 

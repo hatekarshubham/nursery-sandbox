@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import {
   Component,
   OnDestroy,
-  OnInit
+  OnInit,
+  inject
 } from '@angular/core';
 
 import { RouterModule } from '@angular/router';
@@ -14,6 +15,8 @@ import {
   StockTransfer,
   StockTransferService
 } from '../../../../services/stock-transfer.service';
+
+import { AlertService } from '../../../../shared/services/alert.service';
 
 
 @Component({
@@ -64,6 +67,14 @@ export class StockTransfersComponent
 
   private subscription =
     new Subscription();
+
+
+  // =======================================================
+  // ALERT SERVICE
+  // =======================================================
+
+  private alertService =
+    inject(AlertService);
 
 
   // =======================================================
@@ -142,6 +153,13 @@ export class StockTransfersComponent
 
 
             this.isLoading = false;
+
+
+            this.alertService.error(
+              'Failed to Load Stock Transfers',
+              'Failed to load stock transfers.',
+              'Please try again.'
+            );
 
           }
 

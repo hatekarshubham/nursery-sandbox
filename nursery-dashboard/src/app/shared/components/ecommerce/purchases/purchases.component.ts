@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import {
   Component,
   OnDestroy,
-  OnInit
+  OnInit,
+  inject
 } from '@angular/core';
 
 import { RouterModule } from '@angular/router';
@@ -14,6 +15,8 @@ import {
   Purchase,
   PurchaseService
 } from '../../../../services/purchase.service';
+
+import { AlertService } from '../../../../shared/services/alert.service';
 
 
 @Component({
@@ -68,6 +71,8 @@ export class PurchasesComponent
   constructor(
     private purchaseService: PurchaseService
   ) {}
+
+  private alertService = inject(AlertService);
 
 
   // =======================================================
@@ -170,7 +175,8 @@ export class PurchasesComponent
       !purchase.id
     ) {
 
-      alert(
+      this.alertService.error(
+        'Purchase ID Missing',
         'Purchase ID is missing.'
       );
 
@@ -184,7 +190,8 @@ export class PurchasesComponent
       'PENDING'
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Cannot Complete Purchase',
         'Only pending purchases can be completed.'
       );
 
@@ -203,10 +210,21 @@ export class PurchasesComponent
 
 
     const confirmed =
-      window.confirm(
-        'Complete this purchase?\n\n' +
-        'The purchased quantities will be added to inventory.'
-      );
+      await this.alertService.confirm({
+
+        title:
+          'Complete Purchase',
+
+        message:
+          'The purchased quantities will be added to inventory.',
+
+        confirmText:
+          'Complete',
+
+        cancelText:
+          'Cancel'
+
+      });
 
 
     if (!confirmed) {
@@ -228,7 +246,8 @@ export class PurchasesComponent
         );
 
 
-      alert(
+      this.alertService.success(
+        'Purchase Completed Successfully',
         'Purchase completed successfully. Inventory has been updated.'
       );
 
@@ -243,7 +262,8 @@ export class PurchasesComponent
       );
 
 
-      alert(
+      this.alertService.error(
+        'Failed to Complete Purchase',
         error?.message ??
         'Failed to complete purchase.'
       );
@@ -279,7 +299,8 @@ export class PurchasesComponent
       !purchase.id
     ) {
 
-      alert(
+      this.alertService.error(
+        'Purchase ID Missing',
         'Purchase ID is missing.'
       );
 
@@ -293,7 +314,8 @@ export class PurchasesComponent
       'PENDING'
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Cannot Cancel Purchase',
         'Only pending purchases can be cancelled.'
       );
 
@@ -312,10 +334,21 @@ export class PurchasesComponent
 
 
     const confirmed =
-      window.confirm(
-        'Cancel this purchase?\n\n' +
-        'Inventory will not be changed.'
-      );
+      await this.alertService.confirm({
+
+        title:
+          'Cancel Purchase',
+
+        message:
+          'Inventory will not be changed.',
+
+        confirmText:
+          'Cancel Purchase',
+
+        cancelText:
+          'Keep Purchase'
+
+      });
 
 
     if (!confirmed) {
@@ -337,7 +370,8 @@ export class PurchasesComponent
         );
 
 
-      alert(
+      this.alertService.success(
+        'Purchase Cancelled Successfully',
         'Purchase cancelled successfully.'
       );
 
@@ -352,7 +386,8 @@ export class PurchasesComponent
       );
 
 
-      alert(
+      this.alertService.error(
+        'Failed to Cancel Purchase',
         error?.message ??
         'Failed to cancel purchase.'
       );

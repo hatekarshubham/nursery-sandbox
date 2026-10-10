@@ -1,23 +1,98 @@
-<div class="rounded-xl border p-4" [ngClass]="variantClasses.container">
-  <div class="flex items-start gap-3">
-    <div class="-mt-0.5" [ngClass]="variantClasses.icon" [innerHTML]="iconSvg | safeHtml"></div>
+@if (alert(); as currentAlert) {
 
-    <div>
-      <h4 class="mb-1 text-sm font-semibold text-gray-800 dark:text-white/90">
-        {{ title }}
-      </h4>
-      
+  <div
+    class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4"
+    (click)="onBackdropClick()"
+  >
 
-      <p class="text-sm text-gray-500 dark:text-gray-400">{{ message }}</p>
+    <div
+      class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800"
+      (click)="$event.stopPropagation()"
+    >
 
-      @if (showLink) {
-      <a
-        [routerLink]="linkHref"
-        class="inline-block mt-3 text-sm font-medium text-gray-500 underline dark:text-gray-400"
+      <!-- Header -->
+      <div class="mb-5">
+
+        <h2
+          class="text-xl font-semibold text-gray-800 dark:text-white"
+        >
+          {{ currentAlert.title }}
+        </h2>
+
+        @if (currentAlert.description) {
+
+          <p
+            class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+          >
+            {{ currentAlert.description }}
+          </p>
+
+        }
+
+      </div>
+
+
+      <!-- Message -->
+      <div
+        class="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/40 dark:bg-red-900/20"
       >
-        {{ linkText }}
-      </a>
-      }
+
+        <p
+          class="text-sm leading-6 text-gray-700 dark:text-gray-300"
+        >
+          {{ currentAlert.message }}
+        </p>
+
+      </div>
+
+
+      <!-- Buttons -->
+      <div
+        class="mt-6 flex justify-end gap-3"
+      >
+
+        <!-- Cancel Button -->
+        @if (currentAlert.showCancel) {
+
+          <button
+            type="button"
+            (click)="cancel()"
+            class="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+          >
+            {{ currentAlert.cancelText || 'Cancel' }}
+          </button>
+
+        }
+
+
+        <!-- Confirm / OK Button -->
+        <button
+          type="button"
+          (click)="confirm()"
+          class="rounded-lg px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+
+          [ngClass]="{
+            'bg-green-600 hover:bg-green-700':
+              currentAlert.type === 'success',
+
+            'bg-yellow-500 hover:bg-yellow-600':
+              currentAlert.type === 'warning',
+
+            'bg-red-600 hover:bg-red-700':
+              currentAlert.type === 'error' ||
+              currentAlert.type === 'confirm',
+
+            'bg-blue-600 hover:bg-blue-700':
+              currentAlert.type === 'info'
+          }"
+        >
+          {{ currentAlert.confirmText || 'OK' }}
+        </button>
+
+      </div>
+
     </div>
+
   </div>
-</div>
+
+}

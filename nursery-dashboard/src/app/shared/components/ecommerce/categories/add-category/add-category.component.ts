@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { CategoryService } from '../../../../../services/category.service';
+import { AlertService } from '../../../../../shared/services/alert.service';
 
 @Component({
   selector: 'app-add-category',
@@ -20,6 +21,8 @@ export class AddCategoryComponent {
   categoryCode = '';
 
   isSaving = false;
+
+  private alertService = inject(AlertService);
 
   constructor(
     private categoryService: CategoryService,
@@ -86,7 +89,8 @@ export class AddCategoryComponent {
 
     if (!name) {
 
-      alert(
+      this.alertService.warning(
+        'Category Name Required',
         'Please enter a category name.'
       );
 
@@ -99,7 +103,8 @@ export class AddCategoryComponent {
 
     if (!code) {
 
-      alert(
+      this.alertService.warning(
+        'Category Code Required',
         'Please enter a category code.'
       );
 
@@ -135,8 +140,9 @@ export class AddCategoryComponent {
       );
 
 
-      alert(
-        `Category added successfully!\nCategory ID: ${result.id}`
+      this.alertService.success(
+        'Category Added Successfully',
+        `Category added successfully! Category ID: ${result.id}`
       );
 
 
@@ -152,7 +158,8 @@ export class AddCategoryComponent {
       );
 
 
-      alert(
+      this.alertService.error(
+        'Failed to Add Category',
         'Failed to add category. Please try again.'
       );
 
@@ -181,7 +188,6 @@ export class AddCategoryComponent {
     }
 
     this.categoryName = '';
-
     this.categoryCode = '';
 
   }

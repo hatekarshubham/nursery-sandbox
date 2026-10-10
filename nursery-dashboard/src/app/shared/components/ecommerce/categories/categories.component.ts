@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import {
   Category,
   CategoryService
 } from '../../../../services/category.service';
+
+import { AlertService } from '../../../../shared/services/alert.service';
 
 @Component({
   selector: 'app-categories',
@@ -21,6 +23,8 @@ export class CategoriesComponent implements OnInit {
   categories: Category[] = [];
 
   isLoading = true;
+
+  private alertService = inject(AlertService);
 
   // =========================
   // EDIT CATEGORY
@@ -105,12 +109,18 @@ export class CategoriesComponent implements OnInit {
         .toUpperCase();
 
     if (!name) {
-      alert('Please enter a category name.');
+      this.alertService.warning(
+        'Category Name Required',
+        'Please enter a category name.'
+      );
       return;
     }
 
     if (!code) {
-      alert('Please enter a category code.');
+      this.alertService.warning(
+        'Category Code Required',
+        'Please enter a category code.'
+      );
       return;
     }
 
@@ -121,7 +131,8 @@ export class CategoriesComponent implements OnInit {
         code
       );
 
-      alert(
+      this.alertService.success(
+        'Category Updated Successfully',
         'Category updated successfully.'
       );
 
@@ -133,7 +144,8 @@ export class CategoriesComponent implements OnInit {
         error
       );
 
-      alert(
+      this.alertService.error(
+        'Update Failed',
         'Failed to update category. Please try again.'
       );
     }
@@ -162,7 +174,10 @@ export class CategoriesComponent implements OnInit {
         newStatus
       );
 
-      alert(
+      this.alertService.success(
+        newStatus
+          ? 'Category Activated'
+          : 'Category Made Inactive',
         newStatus
           ? 'Category activated successfully.'
           : 'Category made inactive successfully.'
@@ -174,7 +189,8 @@ export class CategoriesComponent implements OnInit {
         error
       );
 
-      alert(
+      this.alertService.error(
+        'Status Update Failed',
         'Failed to update category status. Please try again.'
       );
     }
@@ -216,7 +232,8 @@ export class CategoriesComponent implements OnInit {
 
       this.closeDeleteModal();
 
-      alert(
+      this.alertService.error(
+        'Failed to Check Products',
         'Failed to check products in this category. Please try again.'
       );
 
@@ -287,9 +304,9 @@ export class CategoriesComponent implements OnInit {
 
       this.isCheckingProducts = false;
 
-      alert(
-        `Category deleted successfully.\n\n` +
-        `Products deleted: ${result.productsDeleted}`
+      this.alertService.success(
+        'Category Deleted Successfully',
+        `Category deleted successfully. Products deleted: ${result.productsDeleted}`
       );
 
     } catch (error) {
@@ -301,7 +318,8 @@ export class CategoriesComponent implements OnInit {
 
       this.isDeleting = false;
 
-      alert(
+      this.alertService.error(
+        'Delete Failed',
         'Failed to delete category. Please try again.'
       );
     }

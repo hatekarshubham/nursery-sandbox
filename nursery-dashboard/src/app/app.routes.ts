@@ -29,7 +29,7 @@ import { AddStockAdjustmentComponent } from './shared/components/ecommerce/stock
 
 import { SalesComponent } from './shared/components/ecommerce/sales/sales.component';
 import { CreateSaleComponent } from './shared/components/ecommerce/sales/create-sale/create-sale.component';
-
+import { authGuard } from './guards/auth.guard';
 
 
 
@@ -53,6 +53,7 @@ export const routes: Routes = [
   {
     path: '',
     component: AppLayoutComponent,
+    canActivate: [authGuard],
 
     children: [
 

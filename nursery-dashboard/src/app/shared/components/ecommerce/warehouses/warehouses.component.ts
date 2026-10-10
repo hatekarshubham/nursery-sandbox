@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import {
   Warehouse,
   WarehouseService
 } from '../../../../services/warehouse.service';
+
+import { AlertService } from '../../../../shared/services/alert.service';
 
 
 @Component({
@@ -25,6 +27,8 @@ export class WarehousesComponent implements OnInit {
   constructor(
     private warehouseService: WarehouseService
   ) {}
+
+  private alertService = inject(AlertService);
 
 
   // =========================
@@ -165,7 +169,8 @@ export class WarehousesComponent implements OnInit {
 
     if (!this.editingWarehouseName.trim()) {
 
-      alert(
+      this.alertService.warning(
+        'Warehouse Name Required',
         'Please enter a warehouse name.'
       );
 
@@ -180,7 +185,8 @@ export class WarehousesComponent implements OnInit {
 
     if (!this.editingWarehouseCode.trim()) {
 
-      alert(
+      this.alertService.warning(
+        'Warehouse Code Required',
         'Please enter a warehouse code.'
       );
 
@@ -213,7 +219,8 @@ export class WarehousesComponent implements OnInit {
 
     if (duplicateWarehouse) {
 
-      alert(
+      this.alertService.warning(
+        'Duplicate Warehouse Code',
         'Another warehouse already uses this code.'
       );
 
@@ -247,7 +254,8 @@ export class WarehousesComponent implements OnInit {
       this.cancelEdit();
 
 
-      alert(
+      this.alertService.success(
+        'Warehouse Updated Successfully',
         'Warehouse updated successfully.'
       );
 
@@ -264,7 +272,8 @@ export class WarehousesComponent implements OnInit {
       this.isSaving = false;
 
 
-      alert(
+      this.alertService.error(
+        'Update Failed',
         'Failed to update warehouse. Please try again.'
       );
 
@@ -341,7 +350,8 @@ export class WarehousesComponent implements OnInit {
       this.isUpdatingStatus = false;
 
 
-      alert(
+      this.alertService.error(
+        'Status Update Failed',
         'Failed to update warehouse status. Please try again.'
       );
 

@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import {
   Component,
   OnDestroy,
-  OnInit
+  OnInit,
+  inject
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
@@ -33,6 +34,10 @@ import {
   StockAdjustmentService,
   StockAdjustmentType
 } from '../../../../../services/stock-adjustment.service';
+
+import {
+  AlertService
+} from '../../../../../shared/services/alert.service';
 
 
 // =========================================================
@@ -188,6 +193,14 @@ export class AddStockAdjustmentComponent
 
 
   // =======================================================
+  // ALERT SERVICE
+  // =======================================================
+
+  private alertService =
+    inject(AlertService);
+
+
+  // =======================================================
   // CONSTRUCTOR
   // =======================================================
 
@@ -326,6 +339,13 @@ export class AddStockAdjustmentComponent
 
             this.isLoading =
               false;
+
+
+            this.alertService.error(
+              'Failed to Load Stock Adjustment Data',
+              'Failed to load stock adjustment data.',
+              'Please try again.'
+            );
 
           }
 
@@ -554,7 +574,8 @@ export class AddStockAdjustmentComponent
       !this.adjustment.warehouseId
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Warehouse Required',
         'Please select a warehouse.'
       );
 
@@ -569,7 +590,8 @@ export class AddStockAdjustmentComponent
 
     if (!warehouse) {
 
-      alert(
+      this.alertService.warning(
+        'Invalid Warehouse',
         'Selected warehouse is invalid.'
       );
 
@@ -586,7 +608,8 @@ export class AddStockAdjustmentComponent
       !this.adjustment.productId
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Product Required',
         'Please select a product.'
       );
 
@@ -601,7 +624,8 @@ export class AddStockAdjustmentComponent
 
     if (!product) {
 
-      alert(
+      this.alertService.warning(
+        'Invalid Product',
         'Selected product is invalid.'
       );
 
@@ -621,7 +645,8 @@ export class AddStockAdjustmentComponent
         'DECREASE'
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Adjustment Type Required',
         'Please select an adjustment type.'
       );
 
@@ -647,7 +672,8 @@ export class AddStockAdjustmentComponent
       quantity <= 0
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Invalid Quantity',
         'Please enter a valid adjustment quantity.'
       );
 
@@ -669,7 +695,8 @@ export class AddStockAdjustmentComponent
         !this.inventoryExists
       ) {
 
-        alert(
+        this.alertService.warning(
+          'No Inventory Found',
           'No inventory exists for this product in the selected warehouse.'
         );
 
@@ -683,7 +710,8 @@ export class AddStockAdjustmentComponent
         this.currentQuantity
       ) {
 
-        alert(
+        this.alertService.warning(
+          'Insufficient Stock',
           `Only ${this.currentQuantity} units are currently available.`
         );
 
@@ -702,7 +730,8 @@ export class AddStockAdjustmentComponent
       !this.adjustment.reason
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Reason Required',
         'Please select an adjustment reason.'
       );
 
@@ -719,7 +748,8 @@ export class AddStockAdjustmentComponent
       !this.adjustment.adjustmentDate
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Adjustment Date Required',
         'Please select an adjustment date.'
       );
 
@@ -737,7 +767,8 @@ export class AddStockAdjustmentComponent
       this.today
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Invalid Adjustment Date',
         'Adjustment date cannot be in the future.'
       );
 
@@ -790,7 +821,8 @@ export class AddStockAdjustmentComponent
       !warehouse
     ) {
 
-      alert(
+      this.alertService.error(
+        'Adjustment Error',
         'Unable to resolve adjustment information.'
       );
 
@@ -817,25 +849,30 @@ export class AddStockAdjustmentComponent
 
 
     const confirmed =
-      window.confirm(
+      await this.alertService.confirm({
 
-        `Confirm stock adjustment?\n\n` +
+        title:
+          'Confirm Stock Adjustment',
 
-        `Product: ${product.name}\n` +
+        message:
+          'Confirm stock adjustment?',
 
-        `Warehouse: ${warehouse.code} - ${warehouse.name}\n` +
+        description:
+          `Product: ${product.name}\n` +
+          `Warehouse: ${warehouse.code} - ${warehouse.name}\n` +
+          `Action: ${actionText}\n` +
+          `Quantity: ${quantity}\n` +
+          `Current Stock: ${this.currentQuantity}\n` +
+          `Stock After Adjustment: ${quantityAfter}\n` +
+          `Reason: ${this.adjustment.reason}`,
 
-        `Action: ${actionText}\n` +
+        confirmText:
+          'Adjust Stock',
 
-        `Quantity: ${quantity}\n` +
+        cancelText:
+          'Cancel'
 
-        `Current Stock: ${this.currentQuantity}\n` +
-
-        `Stock After Adjustment: ${quantityAfter}\n` +
-
-        `Reason: ${this.adjustment.reason}`
-
-      );
+      });
 
 
     if (!confirmed) {
@@ -898,7 +935,8 @@ export class AddStockAdjustmentComponent
       );
 
 
-      alert(
+      this.alertService.success(
+        'Stock Adjustment Successful',
         'Stock adjusted successfully.'
       );
 
@@ -938,7 +976,8 @@ export class AddStockAdjustmentComponent
       );
 
 
-      alert(
+      this.alertService.error(
+        'Stock Adjustment Failed',
         error?.message ??
         'Failed to adjust stock.'
       );

@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { SupplierService } from '../../../../../services/supplier.service';
+import { AlertService } from '../../../../../shared/services/alert.service';
 
 @Component({
   selector: 'app-add-supplier',
@@ -29,6 +30,8 @@ export class AddSupplierComponent {
   supplierId: string | null = null;
 
   isSaving = false;
+
+  private alertService = inject(AlertService);
 
 
   constructor(
@@ -90,7 +93,8 @@ export class AddSupplierComponent {
 
     if (!this.supplier.name.trim()) {
 
-      alert(
+      this.alertService.warning(
+        'Supplier Name Required',
         'Please enter a supplier name.'
       );
 
@@ -101,7 +105,8 @@ export class AddSupplierComponent {
 
     if (!this.supplier.mobile.trim()) {
 
-      alert(
+      this.alertService.warning(
+        'Supplier Mobile Required',
         'Please enter a supplier mobile number.'
       );
 
@@ -162,8 +167,9 @@ export class AddSupplierComponent {
       );
 
 
-      alert(
-        `Supplier added successfully!\nSupplier ID: ${result.id}`
+      this.alertService.success(
+        'Supplier Added Successfully',
+        `Supplier added successfully! Supplier ID: ${result.id}`
       );
 
 
@@ -179,7 +185,8 @@ export class AddSupplierComponent {
       );
 
 
-      alert(
+      this.alertService.error(
+        'Failed to Add Supplier',
         'Failed to add supplier. Please try again.'
       );
 

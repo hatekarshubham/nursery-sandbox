@@ -2,7 +2,8 @@ import {
   Component,
   ElementRef,
   OnInit,
-  ViewChild
+  ViewChild,
+  inject
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
@@ -26,6 +27,10 @@ import {
   SalesService,
   CreateSaleInput
 } from '../../../../../services/sales.service';
+
+import {
+  AlertService
+} from '../../../../../shared/services/alert.service';
 
 
 // =======================================================
@@ -96,15 +101,6 @@ interface InvoiceItem {
 
 // =======================================================
 // COMPLETED INVOICE
-// =======================================================
-//
-// Customer details exist ONLY in this temporary object.
-//
-// They are NOT sent to SalesService.
-// They are NOT stored in Firestore.
-//
-// Once the invoice modal is closed, this object is removed.
-//
 // =======================================================
 
 interface CompletedInvoice {
@@ -256,6 +252,8 @@ export class CreateSaleComponent implements OnInit {
     private salesService: SalesService
   ) {}
 
+  private alertService = inject(AlertService);
+
 
   // =====================================================
   // INIT
@@ -307,6 +305,12 @@ export class CreateSaleComponent implements OnInit {
 
           this.errorMessage =
             'Unable to load products.';
+
+          this.alertService.error(
+            'Unable to Load Products',
+            'Unable to load products.',
+            'Please try again.'
+          );
 
           this.buildProductList();
 
@@ -360,6 +364,12 @@ export class CreateSaleComponent implements OnInit {
 
           this.errorMessage =
             'Unable to load inventory.';
+
+          this.alertService.error(
+            'Unable to Load Inventory',
+            'Unable to load inventory.',
+            'Please try again.'
+          );
 
           this.buildProductList();
 
@@ -415,6 +425,12 @@ export class CreateSaleComponent implements OnInit {
 
           this.errorMessage =
             'Unable to load warehouses.';
+
+          this.alertService.error(
+            'Unable to Load Warehouses',
+            'Unable to load warehouses.',
+            'Please try again.'
+          );
 
           this.buildProductList();
 
@@ -547,16 +563,28 @@ export class CreateSaleComponent implements OnInit {
   // WAREHOUSE CHANGE
   // =====================================================
 
-  onWarehouseChange(): void {
+  async onWarehouseChange(): Promise<void> {
 
     if (
       this.cartItems.length > 0
     ) {
 
       const confirmed =
-        window.confirm(
-          'Changing the warehouse will clear the current cart. Continue?'
-        );
+        await this.alertService.confirm({
+
+          title:
+            'Change Warehouse',
+
+          message:
+            'Changing the warehouse will clear the current cart. Continue?',
+
+          confirmText:
+            'Continue',
+
+          cancelText:
+            'Cancel'
+
+        });
 
       if (!confirmed) {
 
@@ -665,7 +693,8 @@ export class CreateSaleComponent implements OnInit {
       !this.selectedWarehouseId
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Warehouse Required',
         'Please select a warehouse first.'
       );
 
@@ -683,7 +712,8 @@ export class CreateSaleComponent implements OnInit {
 
     if (!product) {
 
-      alert(
+      this.alertService.warning(
+        'Product Not Found',
         `No product found for barcode: ${barcode}`
       );
 
@@ -718,7 +748,8 @@ export class CreateSaleComponent implements OnInit {
       !this.selectedWarehouseId
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Warehouse Required',
         'Please select a warehouse first.'
       );
 
@@ -735,7 +766,8 @@ export class CreateSaleComponent implements OnInit {
       availableQuantity <= 0
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Out of Stock',
         `${product.name} is out of stock in the selected warehouse.`
       );
 
@@ -757,7 +789,8 @@ export class CreateSaleComponent implements OnInit {
         availableQuantity
       ) {
 
-        alert(
+        this.alertService.warning(
+          'Insufficient Stock',
           `Only ${availableQuantity} unit(s) of ${product.name} are available.`
         );
 
@@ -832,7 +865,8 @@ export class CreateSaleComponent implements OnInit {
       availableQuantity
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Insufficient Stock',
         `Only ${availableQuantity} unit(s) of ${item.productName} are available.`
       );
 
@@ -908,7 +942,8 @@ export class CreateSaleComponent implements OnInit {
       quantity =
         availableQuantity;
 
-      alert(
+      this.alertService.warning(
+        'Insufficient Stock',
         `Only ${availableQuantity} unit(s) of ${item.productName} are available.`
       );
 
@@ -942,7 +977,7 @@ export class CreateSaleComponent implements OnInit {
   // CLEAR CART
   // =====================================================
 
-  clearCart(): void {
+  async clearCart(): Promise<void> {
 
     if (
       this.cartItems.length === 0
@@ -953,9 +988,21 @@ export class CreateSaleComponent implements OnInit {
     }
 
     const confirmed =
-      window.confirm(
-        'Clear all products from the cart?'
-      );
+      await this.alertService.confirm({
+
+        title:
+          'Clear Cart',
+
+        message:
+          'Clear all products from the cart?',
+
+        confirmText:
+          'Clear Cart',
+
+        cancelText:
+          'Cancel'
+
+      });
 
     if (!confirmed) {
 
@@ -1186,7 +1233,8 @@ export class CreateSaleComponent implements OnInit {
       !this.selectedWarehouseId
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Warehouse Required',
         'Please select a warehouse.'
       );
 
@@ -1203,7 +1251,8 @@ export class CreateSaleComponent implements OnInit {
       this.cartItems.length === 0
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Cart Empty',
         'Please add at least one product.'
       );
 
@@ -1228,7 +1277,8 @@ export class CreateSaleComponent implements OnInit {
       discount < 0
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Invalid Discount',
         'Please enter a valid discount.'
       );
 
@@ -1241,7 +1291,8 @@ export class CreateSaleComponent implements OnInit {
       this.totalBeforeDiscount
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Invalid Discount',
         'Discount cannot be greater than the bill total.'
       );
 
@@ -1269,7 +1320,8 @@ export class CreateSaleComponent implements OnInit {
         available
       ) {
 
-        alert(
+        this.alertService.warning(
+          'Insufficient Stock',
           `Insufficient stock for ${item.productName}. Available: ${available}.`
         );
 
@@ -1282,14 +1334,6 @@ export class CreateSaleComponent implements OnInit {
 
     // ===================================================
     // SALE DATA
-    // ===================================================
-    //
-    // IMPORTANT:
-    //
-    // CUSTOMER NAME AND MOBILE ARE NOT INCLUDED.
-    //
-    // Therefore they are NOT stored in Firestore.
-    //
     // ===================================================
 
     const saleData:
@@ -1522,7 +1566,8 @@ export class CreateSaleComponent implements OnInit {
         error
       );
 
-      alert(
+      this.alertService.error(
+        'Unable to Complete Sale',
         error?.message ??
         'Unable to complete sale.'
       );
@@ -1541,26 +1586,6 @@ export class CreateSaleComponent implements OnInit {
 
   // =====================================================
   // PRINT INVOICE
-  // =====================================================
-  //
-  // IMPORTANT:
-  //
-  // We DO NOT call window.print() on the Angular page.
-  //
-  // Instead:
-  //
-  // 1. Create a clean browser window.
-  // 2. Put ONLY the invoice inside it.
-  // 3. Print that window.
-  //
-  // Therefore:
-  //
-  // - sidebar will not print
-  // - dashboard header will not print
-  // - barcode screen will not print
-  // - product screen will not print
-  // - emulator warning will not print
-  //
   // =====================================================
 
   printInvoice(): void {
@@ -1693,8 +1718,10 @@ export class CreateSaleComponent implements OnInit {
 
     if (!printWindow) {
 
-      alert(
-        'Unable to open print window. Please allow pop-ups for this site.'
+      this.alertService.error(
+        'Print Window Blocked',
+        'Unable to open print window.',
+        'Please allow pop-ups for this site.'
       );
 
       return;
@@ -1726,10 +1753,6 @@ export class CreateSaleComponent implements OnInit {
 
 
         <style>
-
-          /* ===============================================
-             PAGE
-             =============================================== */
 
           @page {
 
@@ -1788,10 +1811,6 @@ export class CreateSaleComponent implements OnInit {
           }
 
 
-          /* ===============================================
-             NURSERY HEADER
-             =============================================== */
-
           .business-header {
 
             text-align: center;
@@ -1835,10 +1854,6 @@ export class CreateSaleComponent implements OnInit {
           }
 
 
-          /* ===============================================
-             SALES INVOICE
-             =============================================== */
-
           .invoice-title {
 
             margin-top: 18px;
@@ -1860,10 +1875,6 @@ export class CreateSaleComponent implements OnInit {
 
           }
 
-
-          /* ===============================================
-             INVOICE META
-             =============================================== */
 
           .meta {
 
@@ -1929,10 +1940,6 @@ export class CreateSaleComponent implements OnInit {
           }
 
 
-          /* ===============================================
-             CUSTOMER
-             =============================================== */
-
           .customer {
 
             margin-top: 18px;
@@ -1997,10 +2004,6 @@ export class CreateSaleComponent implements OnInit {
 
           }
 
-
-          /* ===============================================
-             PRODUCTS TABLE
-             =============================================== */
 
           .products {
 
@@ -2144,10 +2147,6 @@ export class CreateSaleComponent implements OnInit {
           }
 
 
-          /* ===============================================
-             SUMMARY
-             =============================================== */
-
           .summary {
 
             display: grid;
@@ -2265,10 +2264,6 @@ export class CreateSaleComponent implements OnInit {
           }
 
 
-          /* ===============================================
-             FOOTER
-             =============================================== */
-
           .footer {
 
             margin-top: 45px;
@@ -2306,10 +2301,6 @@ export class CreateSaleComponent implements OnInit {
           }
 
 
-          /* ===============================================
-             PRINT
-             =============================================== */
-
           @media print {
 
             html,
@@ -2343,10 +2334,6 @@ export class CreateSaleComponent implements OnInit {
         <div class="invoice">
 
 
-          <!-- =============================================
-               BUSINESS
-               ============================================= -->
-
           <div class="business-header">
 
             <h1 class="business-name">
@@ -2356,10 +2343,6 @@ export class CreateSaleComponent implements OnInit {
           </div>
 
 
-          <!-- =============================================
-               TITLE
-               ============================================= -->
-
           <div class="invoice-title">
 
             <h2>
@@ -2368,10 +2351,6 @@ export class CreateSaleComponent implements OnInit {
 
           </div>
 
-
-          <!-- =============================================
-               META
-               ============================================= -->
 
           <div class="meta">
 
@@ -2436,10 +2415,6 @@ export class CreateSaleComponent implements OnInit {
           </div>
 
 
-          <!-- =============================================
-               CUSTOMER
-               ============================================= -->
-
           <div class="customer">
 
             <div class="section-label">
@@ -2480,10 +2455,6 @@ export class CreateSaleComponent implements OnInit {
 
           </div>
 
-
-          <!-- =============================================
-               PRODUCTS
-               ============================================= -->
 
           <div class="products">
 
@@ -2532,10 +2503,6 @@ export class CreateSaleComponent implements OnInit {
 
           </div>
 
-
-          <!-- =============================================
-               SUMMARY
-               ============================================= -->
 
           <div class="summary">
 
@@ -2624,10 +2591,6 @@ export class CreateSaleComponent implements OnInit {
           </div>
 
 
-          <!-- =============================================
-               FOOTER
-               ============================================= -->
-
           <div class="footer">
 
             <div class="thank-you">
@@ -2712,13 +2675,6 @@ export class CreateSaleComponent implements OnInit {
 
   // =====================================================
   // ESCAPE HTML
-  // =====================================================
-  //
-  // Customer/product names are inserted into the
-  // temporary HTML document.
-  //
-  // Escape them before insertion.
-  //
   // =====================================================
 
   private escapeHtml(

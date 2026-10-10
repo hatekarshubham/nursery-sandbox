@@ -1,78 +1,153 @@
 import { inject, Injectable } from '@angular/core';
-import { Auth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, authState } from '@angular/fire/auth';
+import {
+  Auth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  authState
+} from '@angular/fire/auth';
 import { Router } from '@angular/router';
-import { Firestore,doc,getDoc } from '@angular/fire/firestore';
+import { Firestore, doc, getDoc } from '@angular/fire/firestore';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
-
 export class AuthService {
+
   private auth = inject(Auth);
   private firestore = inject(Firestore);
   private router = inject(Router);
+
   private currentProfile: any = null;
 
-  // Observable to track if user is logged in
+  // Profile ko reactive rakhenge
+  private profileSubject = new BehaviorSubject<any>(null);
+
+  // Components isko subscribe kar sakte hain
+  profile$ = this.profileSubject.asObservable();
+
+  // Firebase authentication state
   user$ = authState(this.auth);
+
+
+  constructor() {
+
+    // Browser refresh ke baad Firebase user restore karega
+    this.user$.subscribe(async (user) => {
+
+      if (!user) {
+        this.currentProfile = null;
+        this.profileSubject.next(null);
+        return;
+      }
+
+      try {
+
+        const userDoc = await getDoc(
+          doc(this.firestore, 'users', user.uid)
+        );
+
+        if (userDoc.exists()) {
+
+          this.currentProfile = {
+            ...userDoc.data(),
+            email: user.email
+          };
+
+          // Component ko new profile batao
+          this.profileSubject.next(this.currentProfile);
+
+          console.log(
+            'Profile restored:',
+            this.currentProfile
+          );
+
+        } else {
+
+          console.warn(
+            'User profile not found in Firestore'
+          );
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          'Error loading profile:',
+          error
+        );
+
+      }
+    });
+  }
+
 
   async login(email: string, pass: string) {
 
-    // 1. Login using Firebase Authentication
     const credential = await signInWithEmailAndPassword(
       this.auth,
       email,
       pass
     );
 
-    // 2. Get Firebase user's UID
     const uid = credential.user.uid;
 
-   // 3. Get user's profile from Firestore
-   const userDoc = await getDoc(
-    doc(this.firestore, 'users', uid)
-  );
+    const userDoc = await getDoc(
+      doc(this.firestore, 'users', uid)
+    );
 
-  // 4. Make sure profile exists
-  if (!userDoc.exists()) {
-    throw new Error('User profile not found in Firestore');
-  }
+    if (!userDoc.exists()) {
+      throw new Error(
+        'User profile not found in Firestore'
+      );
+    }
 
-  // 5. Get profile data from Firestore
-    //    and add email from Firebase Authentication
     const profile = {
       ...userDoc.data(),
       email: credential.user.email
     };
 
-    // 6. Store profile in memory
     this.currentProfile = profile;
 
-  // Print name and role
-  // console.log('Logged-in user:', credential.user.email);
-  // console.log('User UID:', uid);
-  // console.log('User Name:', profile['name']);
-  // console.log('User Role:', profile['role']);
+    // Profile ko components tak bhejo
+    this.profileSubject.next(profile);
 
-  // 5. Return both Firebase user and Firestore profile
-  return {
-    user: credential.user,
-    profile: userDoc.data()
-  };
+    console.log(
+      'Logged-in profile:',
+      profile
+    );
 
-    // return signInWithEmailAndPassword(this.auth, email, pass);
+    return {
+      user: credential.user,
+      profile: profile
+    };
   }
+
 
   async signUp(email: string, pass: string) {
-    return createUserWithEmailAndPassword(this.auth, email, pass);
+
+    return createUserWithEmailAndPassword(
+      this.auth,
+      email,
+      pass
+    );
   }
+
 
   async logout() {
+
     await signOut(this.auth);
-    this.router.navigate(['/login']);
+
+    this.currentProfile = null;
+    this.profileSubject.next(null);
+
+    this.router.navigate(['/login'],{replaceUrl:true});
   }
 
+
   getProfile() {
+
     return this.currentProfile;
   }
 }

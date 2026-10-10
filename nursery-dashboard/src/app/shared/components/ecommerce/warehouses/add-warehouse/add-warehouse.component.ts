@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import {
   WarehouseService
 } from '../../../../../services/warehouse.service';
+
+import { AlertService } from '../../../../../shared/services/alert.service';
 
 @Component({
   selector: 'app-add-warehouse',
@@ -28,6 +30,9 @@ export class AddWarehouseComponent {
   isActive = true;
 
   isSaving = false;
+
+
+  private alertService = inject(AlertService);
 
 
   constructor(
@@ -91,7 +96,8 @@ export class AddWarehouseComponent {
 
     if (!this.warehouseName.trim()) {
 
-      alert(
+      this.alertService.warning(
+        'Warehouse Name Required',
         'Please enter a warehouse name.'
       );
 
@@ -106,7 +112,8 @@ export class AddWarehouseComponent {
 
     if (!this.warehouseCode.trim()) {
 
-      alert(
+      this.alertService.warning(
+        'Warehouse Code Required',
         'Please enter a warehouse code.'
       );
 
@@ -152,14 +159,16 @@ export class AddWarehouseComponent {
       );
 
 
-      alert(
-        `Warehouse added successfully!\nWarehouse ID: ${result.id}`
+      this.alertService.success(
+        'Warehouse Added Successfully',
+        `Warehouse added successfully! Warehouse ID: ${result.id}`
       );
 
 
       return true;
 
     }
+
 
     catch (error) {
 
@@ -169,7 +178,8 @@ export class AddWarehouseComponent {
       );
 
 
-      alert(
+      this.alertService.error(
+        'Failed to Add Warehouse',
         'Failed to add warehouse. Please try again.'
       );
 
@@ -177,6 +187,7 @@ export class AddWarehouseComponent {
       return false;
 
     }
+
 
     finally {
 

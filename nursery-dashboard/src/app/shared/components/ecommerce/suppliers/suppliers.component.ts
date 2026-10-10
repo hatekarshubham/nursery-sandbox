@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import {
   Supplier,
   SupplierService
 } from '../../../../services/supplier.service';
+
+import { AlertService } from '../../../../shared/services/alert.service';
 
 @Component({
   selector: 'app-suppliers',
@@ -21,6 +23,8 @@ export class SuppliersComponent implements OnInit {
   constructor(
     private supplierService: SupplierService
   ) {}
+
+  private alertService = inject(AlertService);
 
   suppliers: Supplier[] = [];
 
@@ -133,7 +137,8 @@ export class SuppliersComponent implements OnInit {
 
     if (!this.editingSupplierName.trim()) {
 
-      alert(
+      this.alertService.warning(
+        'Supplier Name Required',
         'Please enter a supplier name.'
       );
 
@@ -143,7 +148,8 @@ export class SuppliersComponent implements OnInit {
 
     if (!this.editingSupplierMobile.trim()) {
 
-      alert(
+      this.alertService.warning(
+        'Supplier Mobile Required',
         'Please enter a supplier mobile number.'
       );
 
@@ -174,7 +180,8 @@ export class SuppliersComponent implements OnInit {
 
       this.cancelEdit();
 
-      alert(
+      this.alertService.success(
+        'Supplier Updated Successfully',
         'Supplier updated successfully.'
       );
 
@@ -187,7 +194,8 @@ export class SuppliersComponent implements OnInit {
 
       this.isSaving = false;
 
-      alert(
+      this.alertService.error(
+        'Update Failed',
         'Failed to update supplier. Please try again.'
       );
 
@@ -248,7 +256,8 @@ export class SuppliersComponent implements OnInit {
 
       this.isUpdatingStatus = false;
 
-      alert(
+      this.alertService.error(
+        'Status Update Failed',
         'Failed to update supplier status. Please try again.'
       );
 
@@ -317,7 +326,8 @@ export class SuppliersComponent implements OnInit {
 
       this.supplierToDelete = null;
 
-      alert(
+      this.alertService.success(
+        'Supplier Deleted Successfully',
         'Supplier deleted successfully.'
       );
 
@@ -330,7 +340,8 @@ export class SuppliersComponent implements OnInit {
 
       this.isDeleting = false;
 
-      alert(
+      this.alertService.error(
+        'Delete Failed',
         'Failed to delete supplier. Please try again.'
       );
 

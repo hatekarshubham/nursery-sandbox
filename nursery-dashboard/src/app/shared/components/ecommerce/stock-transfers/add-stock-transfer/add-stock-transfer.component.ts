@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import {
   Component,
   OnDestroy,
-  OnInit
+  OnInit,
+  inject
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
@@ -32,6 +33,10 @@ import {
 import {
   StockTransferService
 } from '../../../../../services/stock-transfer.service';
+
+import {
+  AlertService
+} from '../../../../../shared/services/alert.service';
 
 
 // =========================================================
@@ -138,6 +143,14 @@ export class AddStockTransferComponent
 
   private subscription =
     new Subscription();
+
+
+  // =======================================================
+  // ALERT SERVICE
+  // =======================================================
+
+  private alertService =
+    inject(AlertService);
 
 
   // =======================================================
@@ -280,6 +293,13 @@ export class AddStockTransferComponent
             this.isLoading =
               false;
 
+
+            this.alertService.error(
+              'Failed to Load Stock Transfer Data',
+              'Failed to load stock transfer data.',
+              'Please try again.'
+            );
+
           }
 
         });
@@ -403,7 +423,8 @@ export class AddStockTransferComponent
       this.transfer.toWarehouseId = '';
 
 
-      alert(
+      this.alertService.warning(
+        'Invalid Warehouse Selection',
         'Source and destination warehouses cannot be the same.'
       );
 
@@ -524,7 +545,8 @@ export class AddStockTransferComponent
       !this.transfer.fromWarehouseId
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Source Warehouse Required',
         'Please select a source warehouse.'
       );
 
@@ -539,7 +561,8 @@ export class AddStockTransferComponent
 
     if (!sourceWarehouse) {
 
-      alert(
+      this.alertService.warning(
+        'Invalid Source Warehouse',
         'Selected source warehouse is invalid.'
       );
 
@@ -556,7 +579,8 @@ export class AddStockTransferComponent
       !this.transfer.toWarehouseId
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Destination Warehouse Required',
         'Please select a destination warehouse.'
       );
 
@@ -571,7 +595,8 @@ export class AddStockTransferComponent
 
     if (!destinationWarehouse) {
 
-      alert(
+      this.alertService.warning(
+        'Invalid Destination Warehouse',
         'Selected destination warehouse is invalid.'
       );
 
@@ -589,7 +614,8 @@ export class AddStockTransferComponent
       this.transfer.toWarehouseId
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Invalid Warehouse Selection',
         'Source and destination warehouses cannot be the same.'
       );
 
@@ -606,7 +632,8 @@ export class AddStockTransferComponent
       !this.transfer.productId
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Product Required',
         'Please select a product.'
       );
 
@@ -621,7 +648,8 @@ export class AddStockTransferComponent
 
     if (!product) {
 
-      alert(
+      this.alertService.warning(
+        'Invalid Product',
         'Selected product is invalid.'
       );
 
@@ -641,7 +669,8 @@ export class AddStockTransferComponent
       this.availableQuantity <= 0
     ) {
 
-      alert(
+      this.alertService.warning(
+        'No Available Stock',
         'The selected product has no available stock in the source warehouse.'
       );
 
@@ -667,7 +696,8 @@ export class AddStockTransferComponent
       quantity <= 0
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Invalid Quantity',
         'Please enter a valid transfer quantity.'
       );
 
@@ -681,7 +711,8 @@ export class AddStockTransferComponent
       this.availableQuantity
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Insufficient Stock',
         `Only ${this.availableQuantity} units are available in the source warehouse.`
       );
 
@@ -698,7 +729,8 @@ export class AddStockTransferComponent
       !this.transfer.transferDate
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Transfer Date Required',
         'Please select a transfer date.'
       );
 
@@ -716,7 +748,8 @@ export class AddStockTransferComponent
       this.today
     ) {
 
-      alert(
+      this.alertService.warning(
+        'Invalid Transfer Date',
         'Transfer date cannot be in the future.'
       );
 
@@ -805,8 +838,8 @@ export class AddStockTransferComponent
   // CONFIRM TRANSFER
   // =======================================================
 
-  private confirmTransfer():
-    boolean {
+  private async confirmTransfer():
+    Promise<boolean> {
 
     const product =
       this.getSelectedProduct();
@@ -837,15 +870,25 @@ export class AddStockTransferComponent
       );
 
 
-    return window.confirm(
+    return await this.alertService.confirm({
 
-      `Transfer ${quantity} unit(s) of ${product.name}?\n\n` +
+      title:
+        'Confirm Stock Transfer',
 
-      `From: ${sourceWarehouse.code} - ${sourceWarehouse.name}\n` +
+      message:
+        `Transfer ${quantity} unit(s) of ${product.name}?`,
 
-      `To: ${destinationWarehouse.code} - ${destinationWarehouse.name}`
+      description:
+        `From: ${sourceWarehouse.code} - ${sourceWarehouse.name}\n` +
+        `To: ${destinationWarehouse.code} - ${destinationWarehouse.name}`,
 
-    );
+      confirmText:
+        'Transfer',
+
+      cancelText:
+        'Cancel'
+
+    });
 
   }
 
@@ -884,7 +927,8 @@ export class AddStockTransferComponent
 
     if (!transferData) {
 
-      alert(
+      this.alertService.error(
+        'Transfer Error',
         'Unable to resolve transfer information.'
       );
 
@@ -894,7 +938,7 @@ export class AddStockTransferComponent
 
 
     if (
-      !this.confirmTransfer()
+      !(await this.confirmTransfer())
     ) {
 
       return;
@@ -921,7 +965,8 @@ export class AddStockTransferComponent
       );
 
 
-      alert(
+      this.alertService.success(
+        'Stock Transfer Successful',
         'Stock transferred successfully.'
       );
 
@@ -941,7 +986,8 @@ export class AddStockTransferComponent
       );
 
 
-      alert(
+      this.alertService.error(
+        'Stock Transfer Failed',
         error?.message ??
         'Failed to transfer stock.'
       );
@@ -989,7 +1035,8 @@ export class AddStockTransferComponent
 
     if (!transferData) {
 
-      alert(
+      this.alertService.error(
+        'Transfer Error',
         'Unable to resolve transfer information.'
       );
 
@@ -999,7 +1046,7 @@ export class AddStockTransferComponent
 
 
     if (
-      !this.confirmTransfer()
+      !(await this.confirmTransfer())
     ) {
 
       return;
@@ -1026,7 +1073,8 @@ export class AddStockTransferComponent
       );
 
 
-      alert(
+      this.alertService.success(
+        'Stock Transfer Successful',
         'Stock transferred successfully.'
       );
 
@@ -1046,7 +1094,8 @@ export class AddStockTransferComponent
       );
 
 
-      alert(
+      this.alertService.error(
+        'Stock Transfer Failed',
         error?.message ??
         'Failed to transfer stock.'
       );
