@@ -28,11 +28,6 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              },
-              {
-                "glob": "corner.jpg",
-                "input": "public/images/login",
-                "output": "/images/login"
               }
             ],
             "styles": [
@@ -93,11 +88,6 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              },
-              {
-                "glob": "corner.jpg",
-                "input": "public/images/login",
-                "output": "/images/login"
               }
             ],
             "styles": [
