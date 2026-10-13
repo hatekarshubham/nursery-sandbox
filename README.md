@@ -18,7 +18,8 @@ In a second terminal, start the UI:
 
 ```bash
 cd nursery-dashboard
-npx ng serve
+npm ci        # first time only
+npm start
 ```
 
 - App: http://localhost:4200
