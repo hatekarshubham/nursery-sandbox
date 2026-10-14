@@ -1,7 +1,11 @@
 import {
+
   Component,
-  OnInit
+  OnInit,
+  DestroyRef,
+  inject
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import {
   CommonModule
@@ -90,6 +94,9 @@ interface BreakdownRow {
 })
 export class SalesComponent implements OnInit {
 
+  private destroyRef = inject(DestroyRef);
+
+
 
   sales: Sale[] = [];
 
@@ -121,6 +128,9 @@ export class SalesComponent implements OnInit {
   selectedWarehouse = '';
 
   selectedPayment = '';
+
+  // Search box: invoice number or product name.
+  searchText = '';
 
   selectedCreatedBy = '';
 
@@ -158,8 +168,6 @@ export class SalesComponent implements OnInit {
   ngOnInit(): void {
 
     this.applyPreset('today');
-
-    this.loadProducts();
 
     this.loadCategories();
 
@@ -355,9 +363,46 @@ export class SalesComponent implements OnInit {
 
       }
 
+      if (!this.matchesSearch(sale)) {
+
+        return false;
+
+      }
+
       return this.visibleLines(sale).length > 0;
 
     });
+
+  }
+
+
+  // Searches only the sales already loaded for the chosen dates,
+  // so it costs no extra reads.
+  private matchesSearch(sale: Sale): boolean {
+
+    const term = this.searchText.trim().toLowerCase();
+
+    if (!term) {
+
+      return true;
+
+    }
+
+    if (
+      String(sale.invoiceNumber ?? '')
+        .toLowerCase()
+        .includes(term)
+    ) {
+
+      return true;
+
+    }
+
+    return (sale.items ?? []).some(item =>
+      String(item.productName ?? '')
+        .toLowerCase()
+        .includes(term)
+    );
 
   }
 
@@ -599,6 +644,8 @@ export class SalesComponent implements OnInit {
 
         this.sales = this.mergeSales(this.sales, gaps);
 
+        this.ensureProductFallback(gaps);
+
         this.cacheFrom = mergedStart;
 
         this.cacheTo = mergedEnd;
@@ -624,6 +671,8 @@ export class SalesComponent implements OnInit {
         }
 
         this.extraSales = this.sortSales(loaded);
+
+        this.ensureProductFallback(loaded);
 
         this.extraFrom = requestedStart;
 
@@ -679,6 +728,8 @@ export class SalesComponent implements OnInit {
         );
 
       this.sales = this.sortSales(loaded);
+
+      this.ensureProductFallback(loaded);
 
       this.cacheFrom = start;
 
@@ -772,21 +823,25 @@ export class SalesComponent implements OnInit {
 
   private initialWindowStart(): Date {
 
+    // Load only what the screen is showing (today by default).
+    // Wider ranges (last 7 days, this month) fetch just the
+    // missing earlier days when they are chosen, instead of
+    // reading about a month of sales every time the screen opens.
     const today = this.startOfDay(new Date());
 
-    const monthStart = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      1
-    );
+    const requestedStart =
+      this.parseInputDate(this.fromDate);
 
-    const last7Start = new Date(today);
+    if (
+      !requestedStart ||
+      requestedStart.getTime() > today.getTime()
+    ) {
 
-    last7Start.setDate(last7Start.getDate() - 6);
+      return today;
 
-    return monthStart.getTime() < last7Start.getTime()
-      ? monthStart
-      : last7Start;
+    }
+
+    return this.startOfDay(requestedStart);
 
   }
 
@@ -851,10 +906,45 @@ export class SalesComponent implements OnInit {
   }
 
 
+  // Sales save the category and supplier names at the time of sale,
+  // so the product list is normally not needed here. Only older sales
+  // that were saved without those names fall back to the product list,
+  // and only then is it loaded (it is shared with other screens).
+  private productsRequested = false;
+
+  private ensureProductFallback(
+    sales: Sale[]
+  ): void {
+
+    if (this.productsRequested) {
+
+      return;
+
+    }
+
+    const needsProducts = sales.some(
+      sale =>
+        (sale.items ?? []).some(
+          item => !item.categoryName
+        )
+    );
+
+    if (needsProducts) {
+
+      this.productsRequested = true;
+
+      this.loadProducts();
+
+    }
+
+  }
+
+
   private loadProducts(): void {
 
     this.productService
       .getProducts()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (products: any[]) => {
@@ -885,6 +975,7 @@ export class SalesComponent implements OnInit {
 
     this.categoryService
       .getCategories()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (categories) => {
@@ -914,6 +1005,7 @@ export class SalesComponent implements OnInit {
 
     this.supplierService
       .getSuppliers()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (suppliers) => {
@@ -943,6 +1035,7 @@ export class SalesComponent implements OnInit {
 
     this.warehouseService
       .getWarehouses()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (warehouses) => {

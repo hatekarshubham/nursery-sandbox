@@ -11,10 +11,9 @@ import { FormsModule } from '@angular/forms';
 
 import { Router } from '@angular/router';
 
-import {
-  Subscription,
-  combineLatest
-} from 'rxjs';
+import { ProductPickerComponent } from '../../product-picker/product-picker.component';
+
+import { Subscription } from 'rxjs';
 
 import {
   ProductService
@@ -61,7 +60,8 @@ interface ProductOption {
 
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    ProductPickerComponent
   ],
 
   templateUrl:
@@ -191,77 +191,14 @@ export class AddStockTransferComponent
 
 
     const dataSubscription =
-      combineLatest([
-
-        this.warehouseService
-          .getActiveWarehouses(),
-
-        this.productService
-          .getProducts(),
-
-        this.inventoryService
-          .getInventory()
-
-      ])
+      this.warehouseService
+        .getActiveWarehouses()
         .subscribe({
 
-          next: ([
-            warehouses,
-            products,
-            inventory
-          ]) => {
-
-            // =============================================
-            // WAREHOUSES
-            // =============================================
+          next: (warehouses) => {
 
             this.warehouses =
               warehouses;
-
-
-            // =============================================
-            // PRODUCTS
-            // =============================================
-
-            this.products =
-              products
-
-                .filter(
-                  product =>
-                    !!product.id &&
-                    product.isActive !== false
-                )
-
-                .map(
-                  product => ({
-
-                    id:
-                      product.id,
-
-                    name:
-                      product.name ?? '',
-
-                    isActive:
-                      product.isActive !== false
-
-                  })
-                );
-
-
-            // =============================================
-            // INVENTORY
-            // =============================================
-
-            this.inventory =
-              inventory;
-
-
-            // =============================================
-            // REFRESH AVAILABLE QUANTITY
-            // =============================================
-
-            this.updateAvailableQuantity();
-
 
             this.isLoading =
               false;
@@ -272,13 +209,13 @@ export class AddStockTransferComponent
           error: (error) => {
 
             console.error(
-              'Error loading stock transfer data:',
+              'Error loading warehouses:',
               error
             );
 
 
             this.errorMessage =
-              'Failed to load stock transfer data.';
+              'Failed to load warehouses.';
 
 
             this.isLoading =
@@ -297,43 +234,105 @@ export class AddStockTransferComponent
 
 
   // =======================================================
-  // PRODUCTS AVAILABLE IN SOURCE WAREHOUSE
+  // PRODUCT PICKED (from the product picker)
+  // =======================================================
+  //
+  // The picker searches Firestore, so the whole product list is
+  // never loaded. Stock for the chosen product in the source
+  // warehouse is read with one small query.
+  //
   // =======================================================
 
-  getAvailableProducts():
-    ProductOption[] {
+  async onProductPicked(
+    product: any | null
+  ) {
 
-    if (
-      !this.transfer.fromWarehouseId
-    ) {
+    this.transfer.quantity = null;
 
-      return [];
+    if (!product) {
+
+      this.transfer.productId = '';
+
+      this.inventory = [];
+
+      this.availableQuantity = 0;
+
+      return;
 
     }
 
+    if (!this.products.some(entry => entry.id === product.id)) {
 
-    return this.products.filter(
-      product => {
+      this.products.push({
 
-        const inventoryRecord =
-          this.inventory.find(
-            inventoryItem =>
-              inventoryItem.productId ===
-                product.id &&
-              inventoryItem.warehouseId ===
-                this.transfer.fromWarehouseId
+        id: product.id,
+
+        name: product.name ?? '',
+
+        isActive: product.isActive !== false
+
+      });
+
+    }
+
+    this.transfer.productId = product.id;
+
+    this.availableQuantity = 0;
+
+    await this.refreshStock();
+
+  }
+
+
+  // Reads the chosen product's stock in the source warehouse.
+  private async refreshStock() {
+
+    const productId = this.transfer.productId;
+
+    const warehouseId = this.transfer.fromWarehouseId;
+
+    if (!productId || !warehouseId) {
+
+      this.inventory = [];
+
+      this.availableQuantity = 0;
+
+      return;
+
+    }
+
+    try {
+
+      const record =
+        await this.inventoryService
+          .getInventoryByProductAndWarehouse(
+            productId,
+            warehouseId
           );
 
+      // Ignore the answer if the user already chose something else.
+      if (
+        productId !== this.transfer.productId ||
+        warehouseId !== this.transfer.fromWarehouseId
+      ) {
 
-        return (
-          inventoryRecord !== undefined &&
-          Number(
-            inventoryRecord.quantity ?? 0
-          ) > 0
-        );
+        return;
 
       }
-    );
+
+      this.inventory = record ? [record] : [];
+
+      this.updateAvailableQuantity();
+
+    } catch (error) {
+
+      console.error('Error reading stock:', error);
+
+      this.inventory = [];
+
+      this.availableQuantity = 0;
+
+    }
 
   }
 
@@ -373,6 +372,8 @@ export class AddStockTransferComponent
     // products depend on the source warehouse.
 
     this.transfer.productId = '';
+
+    this.inventory = [];
 
     this.transfer.quantity = null;
 
@@ -637,8 +638,10 @@ export class AddStockTransferComponent
     // =====================================================
     // AVAILABLE STOCK
     // =====================================================
+    //
+    // Read the latest stock again right before saving.
 
-    this.updateAvailableQuantity();
+    await this.refreshStock();
 
 
     if (
@@ -1137,6 +1140,8 @@ export class AddStockTransferComponent
 
 
     this.availableQuantity = 0;
+
+    this.inventory = [];
 
   }
 

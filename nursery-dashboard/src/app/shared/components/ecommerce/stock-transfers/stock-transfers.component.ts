@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
 
+import { FormsModule } from '@angular/forms';
+
 import {
   Component,
   OnDestroy,
@@ -9,6 +11,8 @@ import {
 import { RouterModule } from '@angular/router';
 
 import { Subscription } from 'rxjs';
+
+import { LIST_PAGE_SIZE } from '../../../../services/list-page';
 
 import {
   StockTransfer,
@@ -23,6 +27,7 @@ import {
 
   imports: [
     CommonModule,
+    FormsModule,
     RouterModule
   ],
 
@@ -46,6 +51,16 @@ export class StockTransfersComponent
   // =======================================================
 
   isLoading = true;
+
+  // How many newest records are loaded; "Load older" raises it.
+  limitCount = LIST_PAGE_SIZE;
+
+  hasMore = false;
+
+  // Search box text
+  searchText = '';
+
+  private listSubscription?: Subscription;
 
   errorMessage = '';
 
@@ -93,6 +108,8 @@ export class StockTransfersComponent
 
   private loadStockTransfers() {
 
+    this.listSubscription?.unsubscribe();
+
     this.isLoading = true;
 
     this.errorMessage = '';
@@ -100,7 +117,7 @@ export class StockTransfersComponent
 
     const stockTransferSubscription =
       this.stockTransferService
-        .getStockTransfers()
+        .getStockTransfers(this.limitCount)
         .subscribe({
 
           next: (transfers) => {
@@ -120,6 +137,9 @@ export class StockTransfersComponent
                   )
               );
 
+
+            this.hasMore =
+              this.stockTransfers.length >= this.limitCount;
 
             this.isLoading = false;
 
@@ -147,6 +167,8 @@ export class StockTransfersComponent
 
         });
 
+
+    this.listSubscription = stockTransferSubscription;
 
     this.subscription.add(
       stockTransferSubscription
@@ -366,6 +388,42 @@ export class StockTransfersComponent
   // =======================================================
   // DESTROY
   // =======================================================
+
+
+  // Searches the records already loaded (the newest ones), so it
+  // costs no extra reads. "Load older" brings more into the search.
+  get filteredStockTransfers(): StockTransfer[] {
+
+    const term = this.searchText.trim().toLowerCase();
+
+    if (!term) {
+
+      return this.stockTransfers;
+
+    }
+
+    return this.stockTransfers.filter(transfer =>
+      [
+        transfer.productName,
+        transfer.fromWarehouseName,
+        transfer.toWarehouseName,
+        transfer.notes
+      ].some(value =>
+        String(value ?? '').toLowerCase().includes(term)
+      )
+    );
+
+  }
+
+
+  loadMore(): void {
+
+    this.limitCount += LIST_PAGE_SIZE;
+
+    this.loadStockTransfers();
+
+  }
+
 
   ngOnDestroy() {
 

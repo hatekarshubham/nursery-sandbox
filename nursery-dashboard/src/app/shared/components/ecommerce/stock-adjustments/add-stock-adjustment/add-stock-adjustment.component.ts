@@ -11,10 +11,9 @@ import { FormsModule } from '@angular/forms';
 
 import { Router } from '@angular/router';
 
-import {
-  Subscription,
-  combineLatest
-} from 'rxjs';
+import { ProductPickerComponent } from '../../product-picker/product-picker.component';
+
+import { Subscription } from 'rxjs';
 
 import {
   ProductService
@@ -62,7 +61,8 @@ interface ProductOption {
 
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    ProductPickerComponent
   ],
 
   templateUrl:
@@ -238,77 +238,14 @@ export class AddStockAdjustmentComponent
 
 
     const dataSubscription =
-      combineLatest([
-
-        this.warehouseService
-          .getActiveWarehouses(),
-
-        this.productService
-          .getProducts(),
-
-        this.inventoryService
-          .getInventory()
-
-      ])
+      this.warehouseService
+        .getActiveWarehouses()
         .subscribe({
 
-          next: ([
-            warehouses,
-            products,
-            inventory
-          ]) => {
-
-            // =============================================
-            // WAREHOUSES
-            // =============================================
+          next: (warehouses) => {
 
             this.warehouses =
               warehouses;
-
-
-            // =============================================
-            // PRODUCTS
-            // =============================================
-
-            this.products =
-              products
-
-                .filter(
-                  product =>
-                    !!product.id &&
-                    product.isActive !== false
-                )
-
-                .map(
-                  product => ({
-
-                    id:
-                      product.id!,
-
-                    name:
-                      product.name ?? '',
-
-                    isActive:
-                      product.isActive !== false
-
-                  })
-                );
-
-
-            // =============================================
-            // INVENTORY
-            // =============================================
-
-            this.inventory =
-              inventory;
-
-
-            // =============================================
-            // REFRESH CURRENT STOCK
-            // =============================================
-
-            this.updateCurrentQuantity();
-
 
             this.isLoading =
               false;
@@ -319,13 +256,13 @@ export class AddStockAdjustmentComponent
           error: (error) => {
 
             console.error(
-              'Error loading stock adjustment data:',
+              'Error loading warehouses:',
               error
             );
 
 
             this.errorMessage =
-              'Failed to load stock adjustment data.';
+              'Failed to load warehouses.';
 
 
             this.isLoading =
@@ -360,6 +297,118 @@ export class AddStockAdjustmentComponent
     this.currentQuantity = 0;
 
     this.inventoryExists = false;
+
+    this.inventory = [];
+
+  }
+
+
+  // =======================================================
+  // PRODUCT PICKED (from the product picker)
+  // =======================================================
+  //
+  // The picker searches Firestore, so the whole product list is
+  // never loaded. Stock for the chosen product in the selected
+  // warehouse is read with one small query.
+  //
+  // =======================================================
+
+  async onProductPicked(
+    product: any | null
+  ) {
+
+    this.adjustment.quantity = null;
+
+    this.adjustment.reason = '';
+
+    this.adjustment.adjustmentType = '';
+
+    if (!product) {
+
+      this.adjustment.productId = '';
+
+      this.inventory = [];
+
+      this.updateCurrentQuantity();
+
+      return;
+
+    }
+
+    if (!this.products.some(entry => entry.id === product.id)) {
+
+      this.products.push({
+
+        id: product.id,
+
+        name: product.name ?? '',
+
+        isActive: product.isActive !== false
+
+      });
+
+    }
+
+    this.adjustment.productId = product.id;
+
+    this.currentQuantity = 0;
+
+    this.inventoryExists = false;
+
+    await this.refreshStock();
+
+  }
+
+
+  // Reads the chosen product's stock in the selected warehouse.
+  private async refreshStock() {
+
+    const productId = this.adjustment.productId;
+
+    const warehouseId = this.adjustment.warehouseId;
+
+    if (!productId || !warehouseId) {
+
+      this.inventory = [];
+
+      this.updateCurrentQuantity();
+
+      return;
+
+    }
+
+    try {
+
+      const record =
+        await this.inventoryService
+          .getInventoryByProductAndWarehouse(
+            productId,
+            warehouseId
+          );
+
+      // Ignore the answer if the user already chose something else.
+      if (
+        productId !== this.adjustment.productId ||
+        warehouseId !== this.adjustment.warehouseId
+      ) {
+
+        return;
+
+      }
+
+      this.inventory = record ? [record] : [];
+
+      this.updateCurrentQuantity();
+
+    } catch (error) {
+
+      console.error('Error reading stock:', error);
+
+      this.inventory = [];
+
+      this.updateCurrentQuantity();
+
+    }
 
   }
 
@@ -663,6 +712,11 @@ export class AddStockAdjustmentComponent
     // =====================================================
     // DECREASE VALIDATION
     // =====================================================
+    //
+    // Read the latest stock again right before saving.
+
+    await this.refreshStock();
+
 
     if (
       this.adjustment.adjustmentType ===
@@ -1003,6 +1057,8 @@ export class AddStockAdjustmentComponent
     this.currentQuantity = 0;
 
     this.inventoryExists = false;
+
+    this.inventory = [];
 
   }
 

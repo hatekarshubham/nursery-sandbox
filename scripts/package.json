@@ -1,0 +1,9 @@
+{
+  "name": "nursery-scripts",
+  "private": true,
+  "type": "module",
+  "description": "One-off maintenance scripts (backfills) for the nursery Firestore database.",
+  "dependencies": {
+    "firebase-admin": "^13.0.0"
+  }
+}

@@ -11,7 +11,11 @@ import {
   DocumentData
 } from '@angular/fire/firestore';
 
-import { Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
+
+import { shareLiveStream } from './shared-stream';
+
+import { assertFieldsUnique } from './unique-key';
 
 
 export interface Warehouse {
@@ -47,14 +51,31 @@ export class WarehouseService {
   // GET ALL WAREHOUSES
   // =========================
 
+  // Small collection: one shared listener for the whole
+  // session, kept open for the full default grace period.
+
+  private readonly warehouses$: Observable<Warehouse[]> =
+    shareLiveStream<Warehouse[]>(
+      'warehouses',
+      () =>
+        collectionData(
+          this.warehousesCollection,
+          {
+            idField: 'id'
+          }
+        ) as Observable<Warehouse[]>
+    );
+
+
+  private readonly uniqueRules = [
+    { field: 'name', label: 'Warehouse name' },
+    { field: 'code', label: 'Warehouse code' }
+  ];
+
+
   getWarehouses(): Observable<Warehouse[]> {
 
-    return collectionData(
-      this.warehousesCollection,
-      {
-        idField: 'id'
-      }
-    ) as Observable<Warehouse[]>;
+    return this.warehouses$;
 
   }
 
@@ -110,6 +131,12 @@ export class WarehouseService {
     >
   ) {
 
+    assertFieldsUnique(
+      await firstValueFrom(this.warehouses$),
+      warehouse,
+      this.uniqueRules
+    );
+
     return addDoc(
       this.warehousesCollection,
       {
@@ -150,6 +177,30 @@ export class WarehouseService {
         'warehouses',
         warehouseId
       );
+
+    if (
+      warehouse.name !== undefined ||
+      warehouse.code !== undefined
+    ) {
+
+      const current =
+        await firstValueFrom(this.warehouses$);
+
+      const existing =
+        current.find(item => item.id === warehouseId);
+
+      assertFieldsUnique(
+        current,
+        {
+          name: warehouse.name ?? existing?.name,
+          code: warehouse.code ?? existing?.code
+        },
+        this.uniqueRules,
+        warehouseId
+      );
+
+    }
+
 
     const updateData: any = {
       updatedAt: new Date()

@@ -2,9 +2,16 @@ import { ApplicationConfig, isDevMode, provideZoneChangeDetection } from '@angul
 import { provideRouter } from '@angular/router';
 
 import { routes } from './app.routes';
-import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
+import { getApp, initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getAuth, provideAuth, connectAuthEmulator } from '@angular/fire/auth';
-import { getFirestore, provideFirestore, connectFirestoreEmulator } from '@angular/fire/firestore';
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  provideFirestore,
+  connectFirestoreEmulator
+} from '@angular/fire/firestore';
 import { environment } from '../environments/environment';
 
 export const appConfig: ApplicationConfig = {
@@ -20,7 +27,35 @@ export const appConfig: ApplicationConfig = {
       return auth;
     }),
     provideFirestore(() => {
-      const firestore = getFirestore();
+
+      // Keep a copy of the data in the browser (IndexedDB), shared by
+      // every open tab. After a page refresh Firestore then only reads
+      // the documents that changed, not the whole collection again.
+      //
+      // This affects what is DISPLAYED only. Stock changes still run in
+      // transactions that read the live value from the server.
+      //
+      // If this browser cannot use IndexedDB (private mode, old browser),
+      // fall back to the normal in-memory cache.
+      let firestore;
+
+      try {
+
+        firestore = initializeFirestore(
+          getApp(),
+          {
+            localCache: persistentLocalCache({
+              tabManager: persistentMultipleTabManager()
+            })
+          }
+        );
+
+      } catch {
+
+        firestore = getFirestore();
+
+      }
+
       if (isDevMode()) {
         connectFirestoreEmulator(firestore, 'localhost', 8080);
       }

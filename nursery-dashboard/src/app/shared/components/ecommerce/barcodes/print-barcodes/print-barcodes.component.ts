@@ -360,11 +360,6 @@ export class PrintBarcodesComponent
               false;
 
 
-            console.log(
-              'Barcode products loaded:',
-              this.products
-            );
-
           },
 
 

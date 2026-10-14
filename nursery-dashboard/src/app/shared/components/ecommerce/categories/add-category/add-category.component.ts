@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject} from '@angular/core';
+import { DuplicateError } from '../../../../../services/unique-key';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppDialogService } from '../../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -27,6 +29,9 @@ import {
 })
 export class AddCategoryComponent implements OnInit {
 
+  private destroyRef = inject(DestroyRef);
+
+
   private readonly dialog = inject(AppDialogService);
 
 
@@ -46,6 +51,7 @@ export class AddCategoryComponent implements OnInit {
 
     this.categoryService
       .getCategories()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(categories => {
 
         this.categories = categories ?? [];
@@ -170,7 +176,7 @@ export class AddCategoryComponent implements OnInit {
 
 
       await this.dialog.alert(
-        `Category added successfully!\nCategory ID: ${result.id}`
+        'Category added successfully!'
       );
 
 
@@ -187,7 +193,9 @@ export class AddCategoryComponent implements OnInit {
 
 
       await this.dialog.alert(
-        'Failed to add category. Please try again.'
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to add category. Please try again.')
       );
 
 

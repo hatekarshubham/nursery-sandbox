@@ -9,10 +9,75 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  getDocs,
+  query,
+  where,
+  documentId,
+  limit,
   runTransaction
 } from '@angular/fire/firestore';
 
 import { Observable } from 'rxjs';
+
+import { shareLiveStream } from './shared-stream';
+
+import {
+  DuplicateError,
+  buildUniqueKey,
+  reserveUniqueKey
+} from './unique-key';
+
+
+// Search key stored as products.nameLower (lower-case, single spaces).
+export function normalizeProductName(name: unknown): string {
+
+  return String(name ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+
+}
+
+
+// Longest word prefix that is stored and searched (keeps the index small).
+const MAX_PREFIX_LENGTH = 10;
+
+const MAX_SEARCH_WORDS = 8;
+
+
+// Splits text into lower-case words (letters and digits only).
+export function searchWords(text: unknown): string[] {
+
+  return String(text ?? '')
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(word => word.length > 0);
+
+}
+
+
+// Stored as products.searchPrefixes so a product can be found by the
+// start of ANY word in its name. "Red Rose" is found by "r", "ro", "red"
+// and "rose". Typing "red ro" works too (see searchProducts).
+export function buildSearchPrefixes(name: unknown): string[] {
+
+  const prefixes = new Set<string>();
+
+  for (const word of searchWords(name).slice(0, MAX_SEARCH_WORDS)) {
+
+    const limit = Math.min(word.length, MAX_PREFIX_LENGTH);
+
+    for (let length = 1; length <= limit; length++) {
+
+      prefixes.add(word.slice(0, length));
+
+    }
+
+  }
+
+  return [...prefixes];
+
+}
 
 
 @Injectable({
@@ -101,6 +166,95 @@ export class ProductService {
 
 
   // =========================================================
+  // DUPLICATE PRODUCT CHECK
+  // =========================================================
+  //
+  // A product is a duplicate when the same supplier already
+  // has a product with the same name (ignoring case and extra
+  // spaces). The same name from a different supplier is fine.
+  //
+  // =========================================================
+
+  private duplicateProductMessage(
+    name: unknown,
+    supplier: unknown
+  ): string {
+
+    const supplierText =
+      String(supplier ?? '').trim();
+
+    return (
+      `Product "${String(name ?? '').trim()}" already exists` +
+      (supplierText ? ` for ${supplierText}` : '') +
+      '.'
+    );
+
+  }
+
+
+  private async assertProductNotDuplicate(
+    product: any,
+    excludeProductId?: string
+  ): Promise<void> {
+
+    const supplierId =
+      String(product.supplierId ?? '');
+
+    if (!supplierId) {
+
+      return;
+
+    }
+
+    const nameLower =
+      normalizeProductName(product.name);
+
+    const rawName =
+      String(product.name ?? '').trim();
+
+    // nameLower covers products saved after search was added;
+    // the plain name covers older products that do not have it.
+    const [byKey, byName] =
+      await Promise.all([
+        getDocs(
+          query(
+            collection(this.firestore, 'products'),
+            where('supplierId', '==', supplierId),
+            where('nameLower', '==', nameLower),
+            limit(5)
+          )
+        ),
+        getDocs(
+          query(
+            collection(this.firestore, 'products'),
+            where('supplierId', '==', supplierId),
+            where('name', '==', rawName),
+            limit(5)
+          )
+        )
+      ]);
+
+    const clash =
+      [...byKey.docs, ...byName.docs].some(
+        entry =>
+          entry.id !== excludeProductId
+      );
+
+    if (clash) {
+
+      throw new DuplicateError(
+        this.duplicateProductMessage(
+          product.name,
+          product.supplier
+        )
+      );
+
+    }
+
+  }
+
+
+  // =========================================================
   // ADD PRODUCT
   // =========================================================
 
@@ -123,6 +277,9 @@ export class ProductService {
     //
     // It DOES NOT write anything to Firestore yet.
     // ---------------------------------------------------------
+
+    await this.assertProductNotDuplicate(product);
+
 
     const productRef =
       doc(
@@ -219,6 +376,41 @@ export class ProductService {
 
 
             // =================================================
+            // SAME SUPPLIER + SAME NAME = DUPLICATE
+            // =================================================
+
+            const supplierId =
+              String(product.supplierId ?? '');
+
+            const nameLower =
+              normalizeProductName(product.name);
+
+            const writeLock =
+              supplierId
+                ? await reserveUniqueKey(
+                    this.firestore,
+                    transaction,
+                    buildUniqueKey(
+                      'product',
+                      supplierId,
+                      nameLower
+                    ),
+                    productRef,
+                    data =>
+                      data?.supplierId ===
+                        supplierId &&
+                      normalizeProductName(
+                        data?.name
+                      ) === nameLower,
+                    this.duplicateProductMessage(
+                      product.name,
+                      product.supplier
+                    )
+                  )
+                : null;
+
+
+            // =================================================
             // CREATE PRODUCT
             // =================================================
 
@@ -227,6 +419,13 @@ export class ProductService {
               {
 
                 ...product,
+
+                // Lower-case copy of the name, used for prefix search.
+                nameLower:
+                  normalizeProductName(product.name),
+
+                searchPrefixes:
+                  buildSearchPrefixes(product.name),
 
                 barcode,
 
@@ -239,6 +438,9 @@ export class ProductService {
 
               }
             );
+
+
+            writeLock?.();
 
 
             // =================================================
@@ -275,6 +477,9 @@ export class ProductService {
           barcode
         );
 
+
+        // A new product must show up in supplier product lists.
+        this.supplierProductsCache.clear();
 
         // -----------------------------------------------------
         // Keep this return structure useful for future screens.
@@ -351,22 +556,234 @@ export class ProductService {
   // GET ALL PRODUCTS
   // =========================================================
 
+  //
+  // One shared listener for the whole session. Every screen
+  // that calls getProducts() reuses it instead of reading
+  // the whole collection again.
+  //
+  // =========================================================
+
+  private readonly products$: Observable<any[]> =
+    shareLiveStream<any[]>(
+      'products',
+      () => {
+
+        const productsCollection =
+          collection(
+            this.firestore,
+            'products'
+          ) as CollectionReference<DocumentData>;
+
+
+        return collectionData(
+          productsCollection,
+          {
+            idField: 'id'
+          }
+        ) as Observable<any[]>;
+
+      }
+    );
+
+
   getProducts():
     Observable<any[]> {
 
-    const productsCollection =
-      collection(
-        this.firestore,
-        'products'
-      ) as CollectionReference<DocumentData>;
+    return this.products$;
+
+  }
 
 
-    return collectionData(
-      productsCollection,
-      {
-        idField: 'id'
-      }
-    ) as Observable<any[]>;
+  // =========================================================
+  // SERVER SEARCH (for the product picker)
+  // =========================================================
+  //
+  // These read only the few matching products instead of the
+  // whole catalogue. Name search needs products.nameLower,
+  // which new/edited products get automatically and old ones get
+  // from scripts/backfill.mjs.
+  //
+  // =========================================================
+
+  //
+  // Finds products whose name has a word starting with what was
+  // typed ("ro" finds "Red Rose"). Several words must all match
+  // ("red ro"). Optionally limited to one supplier.
+  //
+  // Reads at most `fetchLimit` documents per search.
+  //
+  async searchProducts(
+    term: string,
+    options: {
+      supplierId?: string;
+      maxResults?: number;
+      fetchLimit?: number;
+    } = {}
+  ): Promise<any[]> {
+
+    const words = searchWords(term);
+
+    if (words.length === 0) {
+
+      return [];
+
+    }
+
+    const maxResults = options.maxResults ?? 20;
+
+    const fetchLimit = options.fetchLimit ?? 60;
+
+    // The longest word narrows the server query the most.
+    const key = [...words]
+      .sort((a, b) => b.length - a.length)[0]
+      .slice(0, MAX_PREFIX_LENGTH);
+
+    const constraints: any[] = [
+      where('searchPrefixes', 'array-contains', key)
+    ];
+
+    if (options.supplierId) {
+
+      constraints.push(
+        where('supplierId', '==', options.supplierId)
+      );
+
+    }
+
+    const snapshot = await getDocs(
+      query(
+        collection(this.firestore, 'products'),
+        ...constraints,
+        limit(fetchLimit)
+      )
+    );
+
+    return snapshot.docs
+      .map(entry => ({ id: entry.id, ...entry.data() } as any))
+      .filter(product => {
+
+        const nameWords = searchWords(product.name);
+
+        return words.every(word =>
+          nameWords.some(nameWord => nameWord.startsWith(word))
+        );
+
+      })
+      .sort((a, b) =>
+        String(a.name ?? '').localeCompare(String(b.name ?? ''))
+      )
+      .slice(0, maxResults);
+
+  }
+
+
+  //
+  // All products of one supplier (used by the product picker on
+  // Add Purchase so the list can be shown straight away).
+  // Reads one document per product of that supplier, not the whole
+  // catalogue. The answer is reused for 2 minutes so several rows
+  // on the same screen share one read. Asks for one more than
+  // `maxProducts` so the caller can tell the list was cut off.
+  //
+  private supplierProductsCache =
+    new Map<string, { at: number; list: Promise<any[]> }>();
+
+  getProductsBySupplier(
+    supplierId: string,
+    maxProducts = 300
+  ): Promise<any[]> {
+
+    const cached = this.supplierProductsCache.get(supplierId);
+
+    if (cached && Date.now() - cached.at < 2 * 60 * 1000) {
+
+      return cached.list;
+
+    }
+
+    const list = getDocs(
+      query(
+        collection(this.firestore, 'products'),
+        where('supplierId', '==', supplierId),
+        limit(maxProducts + 1)
+      )
+    ).then(snapshot =>
+      snapshot.docs
+        .map(entry => ({ id: entry.id, ...entry.data() } as any))
+        .sort((a, b) =>
+          String(a.name ?? '').localeCompare(String(b.name ?? ''))
+        )
+    );
+
+    // Do not keep a failed read.
+    list.catch(() => this.supplierProductsCache.delete(supplierId));
+
+    this.supplierProductsCache.set(supplierId, { at: Date.now(), list });
+
+    return list;
+
+  }
+
+
+  // Fetches specific products by their IDs (30 per query, the
+  // Firestore limit). Reads one document per ID.
+  async getProductsByIds(ids: string[]): Promise<any[]> {
+
+    const unique = [...new Set(ids.filter(Boolean))];
+
+    const chunks: string[][] = [];
+
+    for (let i = 0; i < unique.length; i += 30) {
+
+      chunks.push(unique.slice(i, i + 30));
+
+    }
+
+    const snapshots = await Promise.all(
+      chunks.map(chunk =>
+        getDocs(
+          query(
+            collection(this.firestore, 'products'),
+            where(documentId(), 'in', chunk)
+          )
+        )
+      )
+    );
+
+    return snapshots.flatMap(snapshot =>
+      snapshot.docs.map(
+        entry => ({ id: entry.id, ...entry.data() } as any)
+      )
+    );
+
+  }
+
+
+  async findProductByBarcode(
+    barcode: string
+  ): Promise<any | null> {
+
+    const code = String(barcode ?? '').trim();
+
+    if (!code) {
+
+      return null;
+
+    }
+
+    const snapshot = await getDocs(
+      query(
+        collection(this.firestore, 'products'),
+        where('barcode', '==', code),
+        limit(1)
+      )
+    );
+
+    const first = snapshot.docs[0];
+
+    return first
+      ? { id: first.id, ...first.data() }
+      : null;
 
   }
 
@@ -404,12 +821,25 @@ export class ProductService {
     // permanently associated with the product.
     // ---------------------------------------------------------
 
+    await this.assertProductNotDuplicate(
+      product,
+      productId
+    );
+
+    this.supplierProductsCache.clear();
+
     await updateDoc(
       productRef,
       {
 
         name:
           product.name,
+
+        nameLower:
+          normalizeProductName(product.name),
+
+        searchPrefixes:
+          buildSearchPrefixes(product.name),
 
         category:
           product.category,
@@ -499,6 +929,8 @@ export class ProductService {
         productId
       );
 
+
+    this.supplierProductsCache.clear();
 
     await deleteDoc(
       productRef

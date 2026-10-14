@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject} from '@angular/core';
+import { DuplicateError } from '../../../../services/unique-key';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppDialogService } from '../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 
@@ -29,6 +31,9 @@ import {
   styleUrl: './warehouses.component.css'
 })
 export class WarehousesComponent implements OnInit {
+
+  private destroyRef = inject(DestroyRef);
+
 
   private readonly dialog = inject(AppDialogService);
 
@@ -75,6 +80,7 @@ export class WarehousesComponent implements OnInit {
 
     this.warehouseService
       .getWarehouses()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (warehouses) => {
@@ -82,11 +88,6 @@ export class WarehousesComponent implements OnInit {
           this.warehouses = warehouses;
 
           this.isLoading = false;
-
-          console.log(
-            'Warehouses loaded:',
-            warehouses
-          );
 
         },
 
@@ -258,7 +259,9 @@ export class WarehousesComponent implements OnInit {
 
 
       await this.dialog.alert(
-        'Failed to update warehouse. Please try again.'
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to update warehouse. Please try again.')
       );
 
     }
@@ -335,7 +338,9 @@ export class WarehousesComponent implements OnInit {
 
 
       await this.dialog.alert(
-        'Failed to update warehouse status. Please try again.'
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to update warehouse status. Please try again.')
       );
 
     }

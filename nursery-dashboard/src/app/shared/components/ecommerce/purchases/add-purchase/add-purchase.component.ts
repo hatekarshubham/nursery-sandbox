@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject} from '@angular/core';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppDialogService } from '../../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -23,6 +24,8 @@ import {
 } from '../../../../../services/purchase.service';
 
 import { upperInput } from '../../../../utils/form-validation';
+
+import { ProductPickerComponent } from '../../product-picker/product-picker.component';
 
 
 // =========================================================
@@ -82,7 +85,8 @@ interface ProductOption {
 
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    ProductPickerComponent
   ],
 
   templateUrl: './add-purchase.component.html',
@@ -90,6 +94,9 @@ interface ProductOption {
   styleUrl: './add-purchase.component.css'
 })
 export class AddPurchaseComponent implements OnInit {
+
+  private destroyRef = inject(DestroyRef);
+
 
   private readonly dialog = inject(AppDialogService);
 
@@ -123,7 +130,8 @@ export class AddPurchaseComponent implements OnInit {
 
   isLoadingWarehouses = true;
 
-  isLoadingProducts = true;
+  // Products are searched on demand by the product picker, not loaded.
+  isLoadingProducts = false;
 
   isSaving = false;
 
@@ -203,8 +211,6 @@ export class AddPurchaseComponent implements OnInit {
 
     this.loadWarehouses();
 
-    this.loadProducts();
-
     this.addItem();
 
   }
@@ -218,6 +224,7 @@ export class AddPurchaseComponent implements OnInit {
 
     this.supplierService
       .getSuppliers()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (suppliers) => {
@@ -264,6 +271,7 @@ export class AddPurchaseComponent implements OnInit {
 
     this.warehouseService
       .getActiveWarehouses()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (warehouses) => {
@@ -290,83 +298,6 @@ export class AddPurchaseComponent implements OnInit {
 
 
           this.isLoadingWarehouses =
-            false;
-
-        }
-
-      });
-
-  }
-
-
-  // =======================================================
-  // LOAD PRODUCTS
-  // =======================================================
-
-  private loadProducts() {
-
-    this.productService
-      .getProducts()
-      .subscribe({
-
-        next: (products: any[]) => {
-
-          this.products =
-            products
-
-              .filter(
-                product =>
-                  product.isActive !== false &&
-                  !!product.id
-              )
-
-              .map(
-                product => ({
-
-                  id:
-                    product.id,
-
-                  name:
-                    product.name,
-
-                  supplierId:
-                    product.supplierId ?? '',
-
-                  unitPrice:
-                    Number(
-                      product.unitPrice ?? 0
-                    ),
-
-                  gst:
-                    Number(
-                      product.gst ?? 0
-                    ),
-
-                  isActive:
-                    product.isActive !== false
-
-                })
-              );
-
-
-          this.isLoadingProducts =
-            false;
-
-        },
-
-
-        error: (error) => {
-
-          console.error(
-            'Error loading products:',
-            error
-          );
-
-
-          this.products = [];
-
-
-          this.isLoadingProducts =
             false;
 
         }
@@ -526,6 +457,57 @@ export class AddPurchaseComponent implements OnInit {
 
 
     this.calculateTotals();
+
+  }
+
+
+  // =======================================================
+  // PRODUCT PICKED (from the product picker)
+  // =======================================================
+  //
+  // The picker searches Firestore. The chosen product is kept
+  // in `products` so the price and GST lookups below keep working.
+  //
+  // =======================================================
+
+  onProductPicked(
+    item: PurchaseProduct,
+    product: any | null
+  ) {
+
+    if (!product) {
+
+      item.productId = '';
+
+      this.onProductChange(item);
+
+      return;
+
+    }
+
+    if (!this.products.some(entry => entry.id === product.id)) {
+
+      this.products.push({
+
+        id: product.id,
+
+        name: product.name ?? '',
+
+        supplierId: product.supplierId ?? '',
+
+        unitPrice: Number(product.unitPrice ?? 0),
+
+        gst: Number(product.gst ?? 0),
+
+        isActive: product.isActive !== false
+
+      });
+
+    }
+
+    item.productId = product.id;
+
+    this.onProductChange(item);
 
   }
 
@@ -1224,6 +1206,12 @@ export class AddPurchaseComponent implements OnInit {
         'Purchase saved successfully as pending.'
       );
 
+
+      // Empty the form so the same purchase cannot be saved twice.
+      // (resetForm does nothing while isSaving is true, so the
+      // saving flag is switched off first.)
+      this.isSaving =
+        false;
 
       this.resetForm();
 

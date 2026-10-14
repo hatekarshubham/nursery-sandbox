@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject} from '@angular/core';
+import { DuplicateError } from '../../../../services/unique-key';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppDialogService } from '../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 
@@ -26,10 +28,16 @@ import {
 })
 export class CategoriesComponent implements OnInit {
 
+  private destroyRef = inject(DestroyRef);
+
+
   private readonly dialog = inject(AppDialogService);
 
 
   categories: Category[] = [];
+
+  // Search box text
+  searchText = '';
 
   isLoading = true;
 
@@ -56,16 +64,38 @@ export class CategoriesComponent implements OnInit {
   ) {}
 
   // =========================
+  // SEARCH
+  // =========================
+  //
+  // Filters the list that is already loaded (name or code),
+  // so searching costs no extra reads.
+
+  get filteredCategories(): Category[] {
+
+    const term = this.searchText.trim().toLowerCase();
+
+    if (!term) {
+      return this.categories;
+    }
+
+    return this.categories.filter(category =>
+      [category.name, category.code].some(value =>
+        String(value ?? '').toLowerCase().includes(term)
+      )
+    );
+
+  }
+
+  // =========================
   // LOAD CATEGORIES
   // =========================
 
   ngOnInit() {
-    this.categoryService.getCategories().subscribe({
+    this.categoryService.getCategories().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (categories) => {
         this.categories = categories;
         this.isLoading = false;
 
-        console.log('Categories loaded:', categories);
       },
 
       error: (error) => {
@@ -170,7 +200,9 @@ export class CategoriesComponent implements OnInit {
       );
 
       await this.dialog.alert(
-        'Failed to update category. Please try again.'
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to update category. Please try again.')
       );
     }
   }
@@ -211,7 +243,9 @@ export class CategoriesComponent implements OnInit {
       );
 
       await this.dialog.alert(
-        'Failed to update category status. Please try again.'
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to update category status. Please try again.')
       );
     }
   }

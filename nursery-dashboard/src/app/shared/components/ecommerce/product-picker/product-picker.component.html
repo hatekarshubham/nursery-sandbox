@@ -1,0 +1,105 @@
+<div class="relative">
+
+  <input
+    #box
+    type="text"
+    autocomplete="off"
+    [ngModel]="text"
+    (ngModelChange)="onInput($event)"
+    (focus)="onFocus($event)"
+    (keydown)="onKeydown($event)"
+    [disabled]="disabled"
+    [placeholder]="placeholder"
+    class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-9 text-sm text-gray-800 outline-none transition focus:border-brand-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400"
+  />
+
+  @if (selectedName && !disabled) {
+
+    <button
+      type="button"
+      (click)="clear()"
+      aria-label="Clear product"
+      class="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+    >
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+      </svg>
+    </button>
+
+  }
+
+  @if (isOpen) {
+
+    <div
+      class="fixed z-[99999] max-h-64 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
+      [style.left.px]="dropdownLeft"
+      [style.width.px]="dropdownWidth"
+      [style.top.px]="dropdownTop"
+      [style.bottom.px]="dropdownBottom"
+    >
+
+      @if (isSearching && results.length === 0) {
+
+        <p class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+          Searching...
+        </p>
+
+      } @else if (results.length === 0) {
+
+        <p class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+          {{ message }}
+        </p>
+
+      } @else {
+
+        @if (hint) {
+
+          <p
+            class="border-b border-gray-100 px-4 py-2 text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500"
+          >
+            {{ hint }}
+          </p>
+
+        }
+
+        @for (product of results; track product.id; let i = $index) {
+
+          <button
+            type="button"
+            (mousedown)="$event.preventDefault(); choose(product)"
+            class="block w-full px-4 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-700"
+            [class.bg-gray-50]="i === activeIndex"
+            [class.dark:bg-gray-700]="i === activeIndex"
+          >
+
+            <span
+              class="block text-sm font-medium text-gray-800 dark:text-white"
+            >
+              {{ product.name }}
+            </span>
+
+            <span
+              class="block text-xs text-gray-500 dark:text-gray-400"
+            >
+              {{ product.barcode }}
+              @if (product.category) {
+                &middot; {{ product.category }}
+              }
+              @if (product.stockHere !== undefined) {
+                &middot; Stock: {{ product.stockHere }}
+              } @else if (product.unitPrice !== undefined) {
+                &middot; ₹{{ product.unitPrice }}
+              }
+            </span>
+
+          </button>
+
+        }
+
+      }
+
+    </div>
+
+  }
+
+</div>

@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject} from '@angular/core';
+import { DuplicateError } from '../../../../../services/unique-key';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Auth } from '@angular/fire/auth';
 import { AppDialogService } from '../../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
@@ -47,6 +49,9 @@ import {
   styleUrl: './add-product.component.css'
 })
 export class AddProductComponent implements OnInit {
+
+  private destroyRef = inject(DestroyRef);
+
 
   private readonly dialog = inject(AppDialogService);
 
@@ -169,6 +174,7 @@ export class AddProductComponent implements OnInit {
 
     this.categoryService
       .getActiveCategories()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (categories) => {
@@ -176,11 +182,6 @@ export class AddProductComponent implements OnInit {
           this.categories = categories;
 
           this.isLoadingCategories = false;
-
-          console.log(
-            'Active categories loaded:',
-            categories
-          );
 
         },
 
@@ -216,6 +217,7 @@ export class AddProductComponent implements OnInit {
 
     this.supplierService
       .getSuppliers()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (suppliers) => {
@@ -227,11 +229,6 @@ export class AddProductComponent implements OnInit {
             );
 
           this.isLoadingSuppliers = false;
-
-          console.log(
-            'Active suppliers loaded:',
-            this.suppliers
-          );
 
         },
 
@@ -540,7 +537,7 @@ export class AddProductComponent implements OnInit {
 
 
       await this.dialog.alert(
-        `Product added successfully!\nProduct ID: ${result.id}`
+        'Product added successfully!'
       );
 
 
@@ -557,7 +554,9 @@ export class AddProductComponent implements OnInit {
 
 
       await this.dialog.alert(
-        'Failed to add product. Please try again.'
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to add product. Please try again.')
       );
 
 

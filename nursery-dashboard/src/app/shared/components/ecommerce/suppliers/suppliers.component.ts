@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject} from '@angular/core';
+import { DuplicateError } from '../../../../services/unique-key';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppDialogService } from '../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 
@@ -29,6 +31,9 @@ import {
 })
 export class SuppliersComponent implements OnInit {
 
+  private destroyRef = inject(DestroyRef);
+
+
   private readonly dialog = inject(AppDialogService);
 
 
@@ -39,6 +44,9 @@ export class SuppliersComponent implements OnInit {
   suppliers: Supplier[] = [];
 
   isLoading = true;
+
+  // Search box text
+  searchText = '';
 
   // Edit state
   editingSupplierId: string | null = null;
@@ -62,10 +70,38 @@ export class SuppliersComponent implements OnInit {
   isUpdatingStatus = false;
 
 
+  // Suppliers matching the search box (name first, also mobile,
+  // email and GST number). Done in the browser on the list that is
+  // already loaded, so searching costs no extra reads.
+  get filteredSuppliers(): Supplier[] {
+
+    const term = this.searchText.trim().toLowerCase();
+
+    if (!term) {
+
+      return this.suppliers;
+
+    }
+
+    return this.suppliers.filter(supplier =>
+      [
+        supplier.name,
+        supplier.mobile,
+        supplier.email,
+        supplier.gstNumber
+      ].some(value =>
+        String(value ?? '').toLowerCase().includes(term)
+      )
+    );
+
+  }
+
+
   ngOnInit() {
 
     this.supplierService
       .getSuppliers()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (suppliers) => {
@@ -73,11 +109,6 @@ export class SuppliersComponent implements OnInit {
           this.suppliers = suppliers;
 
           this.isLoading = false;
-
-          console.log(
-            'Suppliers loaded:',
-            suppliers
-          );
 
         },
 
@@ -211,7 +242,9 @@ export class SuppliersComponent implements OnInit {
       this.isSaving = false;
 
       await this.dialog.alert(
-        'Failed to update supplier. Please try again.'
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to update supplier. Please try again.')
       );
 
     }
@@ -272,7 +305,9 @@ export class SuppliersComponent implements OnInit {
       this.isUpdatingStatus = false;
 
       await this.dialog.alert(
-        'Failed to update supplier status. Please try again.'
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to update supplier status. Please try again.')
       );
 
     }

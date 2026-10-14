@@ -8,12 +8,16 @@ import {
   getDocs,
   query,
   where,
+  orderBy,
+  limit,
   runTransaction,
   CollectionReference,
   DocumentData
 } from '@angular/fire/firestore';
 
 import { Observable } from 'rxjs';
+
+import { LIST_PAGE_SIZE } from './list-page';
 
 
 // =========================================================
@@ -171,11 +175,17 @@ export class StockAdjustmentService {
   // GET ALL STOCK ADJUSTMENTS
   // =======================================================
 
-  getStockAdjustments():
-    Observable<StockAdjustment[]> {
+  // Loads only the newest `limitCount` records.
+  getStockAdjustments(
+    limitCount = LIST_PAGE_SIZE
+  ): Observable<StockAdjustment[]> {
 
     return collectionData(
-      this.stockAdjustmentsCollection,
+      query(
+        this.stockAdjustmentsCollection,
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+      ),
       {
         idField: 'id'
       }

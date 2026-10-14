@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject} from '@angular/core';
+import { DuplicateError } from '../../../../services/unique-key';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppDialogService } from '../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 
@@ -162,6 +164,9 @@ interface Product {
   styleUrl: './products.component.css'
 })
 export class ProductsComponent implements OnInit {
+
+  private destroyRef = inject(DestroyRef);
+
 
   private readonly dialog = inject(AppDialogService);
 
@@ -675,6 +680,7 @@ export class ProductsComponent implements OnInit {
 
     this.categoryService
       .getCategories()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (categories) => {
@@ -724,6 +730,7 @@ export class ProductsComponent implements OnInit {
 
     this.supplierService
       .getSuppliers()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (suppliers) => {
@@ -739,11 +746,6 @@ export class ProductsComponent implements OnInit {
           this.suppliersLoaded =
             true;
 
-
-          console.log(
-            'Suppliers loaded:',
-            this.suppliers
-          );
 
 
           this.tryLoadProducts();
@@ -787,6 +789,7 @@ export class ProductsComponent implements OnInit {
 
     this.warehouseService
       .getActiveWarehouses()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (warehouses) => {
@@ -798,11 +801,6 @@ export class ProductsComponent implements OnInit {
           this.warehousesLoaded =
             true;
 
-
-          console.log(
-            'Warehouses loaded:',
-            this.warehouses
-          );
 
 
           this.tryLoadProducts();
@@ -842,6 +840,7 @@ export class ProductsComponent implements OnInit {
 
     this.inventoryService
       .getInventory()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (inventory) => {
@@ -853,11 +852,6 @@ export class ProductsComponent implements OnInit {
           this.inventoryLoaded =
             true;
 
-
-          console.log(
-            'Inventory loaded:',
-            this.inventory
-          );
 
 
           if (
@@ -952,6 +946,7 @@ export class ProductsComponent implements OnInit {
 
     this.productService
       .getProducts()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (products: any[]) => {
@@ -1083,11 +1078,6 @@ export class ProductsComponent implements OnInit {
           this.isLoading =
             false;
 
-
-          console.log(
-            'Products loaded:',
-            this.tableData
-          );
 
         },
 
@@ -1757,7 +1747,9 @@ export class ProductsComponent implements OnInit {
 
 
       await this.dialog.alert(
-        'Failed to update product. Please try again.'
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to update product. Please try again.')
       );
 
     }

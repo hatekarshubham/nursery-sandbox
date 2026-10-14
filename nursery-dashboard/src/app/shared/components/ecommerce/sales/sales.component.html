@@ -129,6 +129,23 @@
 
         </div>
 
+        <div class="mb-4">
+
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Search Sales
+          </label>
+
+          <input
+            type="text"
+            [(ngModel)]="searchText"
+            placeholder="Invoice number or product name..."
+            class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 md:max-w-md"
+          />
+
+        </div>
+
         <div
           class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
         >
@@ -645,269 +662,189 @@
           <!-- TABLE -->
           <!-- ============================================= -->
   
-          <div
-            class="overflow-x-auto"
-          >
-  
+          <div>
+
             <table
-              class="w-full text-left"
+              class="w-full table-fixed text-left"
             >
-  
+
               <thead
                 class="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50"
               >
-  
+
                 <tr>
-  
+
                   <th
-                    class="whitespace-nowrap px-5 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                    class="w-[22%] px-4 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
                   >
                     Invoice
                   </th>
-  
+
                   <th
-                    class="whitespace-nowrap px-5 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
-                  >
-                    Date
-                  </th>
-  
-                  <th
-                    class="whitespace-nowrap px-5 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                    class="w-[17%] px-4 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
                   >
                     Warehouse
                   </th>
 
                   <th
-                    class="whitespace-nowrap px-5 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
-                  >
-                    Created by
-                  </th>
-  
-                  <th
-                    class="px-5 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                    class="px-4 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
                   >
                     Products
                   </th>
-  
+
                   <th
-                    class="whitespace-nowrap px-5 py-4 text-center text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
-                  >
-                    Qty
-                  </th>
-  
-                  <th
-                    class="whitespace-nowrap px-5 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                    class="w-[11%] px-4 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
                   >
                     Payment
                   </th>
-  
+
                   <th
-                    class="whitespace-nowrap px-5 py-4 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
-                  >
-                    GST
-                  </th>
-  
-                  <th
-                    class="whitespace-nowrap px-5 py-4 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
-                  >
-                    Discount
-                  </th>
-  
-                  <th
-                    class="whitespace-nowrap px-5 py-4 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                    class="w-[18%] px-4 py-4 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
                   >
                     Total
                   </th>
-  
+
                 </tr>
-  
+
               </thead>
-  
-  
+
+
               <tbody
                 class="divide-y divide-gray-100 dark:divide-gray-800"
               >
-  
+
                 @for (
                   sale of filteredSales;
                   track sale.id
                 ) {
-  
+
                   <tr
                     class="transition hover:bg-gray-50 dark:hover:bg-white/[0.02]"
                   >
-  
-                    <!-- INVOICE -->
-  
-                    <td
-                      class="whitespace-nowrap px-5 py-4"
-                    >
-  
-                      <span
-                        class="font-mono text-sm font-medium text-brand-500"
+
+                    <!-- INVOICE (+ date) -->
+
+                    <td class="px-4 py-4 align-top">
+
+                      <p
+                        class="break-all font-mono text-sm font-medium text-brand-500"
                       >
                         {{ sale.invoiceNumber }}
-                      </span>
-  
-                    </td>
-  
-  
-                    <!-- DATE -->
-  
-                    <td
-                      class="whitespace-nowrap px-5 py-4 text-sm text-gray-600 dark:text-gray-300"
-                    >
-                      {{ formatDate(sale.createdAt) }}
-                    </td>
-  
-  
-                    <!-- WAREHOUSE -->
-  
-                    <td
-                      class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300"
-                    >
-                      {{ sale.warehouseName || '-' }}
+                      </p>
+
+                      <p
+                        class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                      >
+                        {{ formatDate(sale.createdAt) }}
+                      </p>
+
                     </td>
 
 
-                    <!-- CREATED BY -->
+                    <!-- WAREHOUSE (+ created by) -->
 
-                    <td
-                      class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300"
-                    >
-                      {{ createdByLabel(sale) }}
+                    <td class="px-4 py-4 align-top">
+
+                      <p
+                        class="break-words text-sm text-gray-700 dark:text-gray-300"
+                      >
+                        {{ sale.warehouseName || '-' }}
+                      </p>
+
+                      <p
+                        class="mt-1 break-words text-xs text-gray-500 dark:text-gray-400"
+                      >
+                        {{ createdByLabel(sale) }}
+                      </p>
+
                     </td>
 
 
-                    <!-- PRODUCTS -->
+                    <!-- PRODUCTS (name and quantity on one line) -->
 
-                    <td
-                    class="min-w-[220px] px-5 py-4"
-                    >
-                    <div class="space-y-2">
-                    
-                      @for (
-                        item of sale.items;
-                        track item.productId
-                      ) {
-                    
-                        <div
-                          class="flex min-h-[24px] items-center"
-                        >
-                          <span
-                            class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    <td class="px-4 py-4 align-top">
+
+                      <div class="space-y-1.5">
+
+                        @for (
+                          item of sale.items;
+                          track item.productId
+                        ) {
+
+                          <div
+                            class="flex items-start justify-between gap-3"
                           >
-                            {{ item.productName }}
-                          </span>
-                        </div>
-                    
-                      }
-                  
-                    </div>
+
+                            <span
+                              class="break-words text-sm font-medium text-gray-700 dark:text-gray-300"
+                            >
+                              {{ item.productName }}
+                            </span>
+
+                            <span
+                              class="shrink-0 text-sm font-semibold text-gray-700 dark:text-gray-300"
+                            >
+                              &times; {{ item.quantity }}
+                            </span>
+
+                          </div>
+
+                        }
+
+                      </div>
+
                     </td>
-                    
-                    
-                    <!-- QUANTITY -->
-                    
-                    <td
-                    class="whitespace-nowrap px-5 py-4 text-center"
-                    >
-                    <div class="space-y-2">
-                    
-                      @for (
-                        item of sale.items;
-                        track item.productId
-                      ) {
-                    
-                        <div
-                          class="flex min-h-[24px] items-center justify-center"
-                        >
-                          <span
-                            class="text-sm font-semibold text-gray-700 dark:text-gray-300"
-                          >
-                            {{ item.quantity }}
-                          </span>
-                        </div>
-                    
-                      }
-                  
-                    </div>
-                    </td>
-  
-  
+
+
                     <!-- PAYMENT -->
-  
-                    <td
-                      class="whitespace-nowrap px-5 py-4"
-                    >
-  
+
+                    <td class="px-4 py-4 align-top">
+
                       <span
-                        class="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                        class="inline-block rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300"
                       >
                         {{ sale.paymentMode }}
                       </span>
-  
+
                     </td>
-  
-  
-                    <!-- GST -->
-  
-                    <td
-                      class="whitespace-nowrap px-5 py-4 text-right text-sm text-gray-600 dark:text-gray-300"
-                    >
-                      ₹{{ sale.gstAmount | number:'1.2-2' }}
-                    </td>
-  
-  
-                    <!-- DISCOUNT -->
-  
-                    <td
-                      class="whitespace-nowrap px-5 py-4 text-right text-sm"
-                    >
-  
-                      @if (sale.discount > 0) {
-  
-                        <span
-                          class="text-red-500"
-                        >
-                          - ₹{{ sale.discount | number:'1.2-2' }}
-                        </span>
-  
-                      } @else {
-  
-                        <span
-                          class="text-gray-400"
-                        >
-                          ₹0.00
-                        </span>
-  
-                      }
-  
-                    </td>
-  
-  
-                    <!-- TOTAL -->
-  
-                    <td
-                      class="whitespace-nowrap px-5 py-4 text-right"
-                    >
-  
-                      <span
-                        class="text-sm font-semibold text-gray-900 dark:text-white"
+
+
+                    <!-- TOTAL (+ GST and discount) -->
+
+                    <td class="px-4 py-4 text-right align-top">
+
+                      <p
+                        class="whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white"
                       >
                         ₹{{ sale.grandTotal | number:'1.2-2' }}
-                      </span>
-  
+                      </p>
+
+                      <p
+                        class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                      >
+                        GST ₹{{ sale.gstAmount | number:'1.2-2' }}
+                      </p>
+
+                      @if (sale.discount > 0) {
+
+                        <p
+                          class="mt-0.5 text-xs text-red-500"
+                        >
+                          Discount - ₹{{ sale.discount | number:'1.2-2' }}
+                        </p>
+
+                      }
+
                     </td>
-  
+
                   </tr>
-  
+
                 }
-  
+
               </tbody>
-  
+
             </table>
-  
+
           </div>
   
         }

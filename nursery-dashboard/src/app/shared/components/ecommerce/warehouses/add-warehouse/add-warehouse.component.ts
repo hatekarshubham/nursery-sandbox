@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject} from '@angular/core';
+import { DuplicateError } from '../../../../../services/unique-key';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppDialogService } from '../../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -30,6 +32,9 @@ import {
 })
 export class AddWarehouseComponent implements OnInit {
 
+  private destroyRef = inject(DestroyRef);
+
+
   private readonly dialog = inject(AppDialogService);
 
 
@@ -53,6 +58,7 @@ export class AddWarehouseComponent implements OnInit {
 
     this.warehouseService
       .getWarehouses()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(warehouses => {
 
         this.warehouses = warehouses ?? [];
@@ -183,7 +189,7 @@ export class AddWarehouseComponent implements OnInit {
 
 
       await this.dialog.alert(
-        `Warehouse added successfully!\nWarehouse ID: ${result.id}`
+        'Warehouse added successfully!'
       );
 
 
@@ -200,7 +206,9 @@ export class AddWarehouseComponent implements OnInit {
 
 
       await this.dialog.alert(
-        'Failed to add warehouse. Please try again.'
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to add warehouse. Please try again.')
       );
 
 

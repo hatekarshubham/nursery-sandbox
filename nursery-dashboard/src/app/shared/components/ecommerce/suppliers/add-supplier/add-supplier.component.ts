@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { DuplicateError } from '../../../../../services/unique-key';
 import { Component, inject} from '@angular/core';
 import { AppDialogService } from '../../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
@@ -183,7 +184,7 @@ export class AddSupplierComponent {
 
 
       await this.dialog.alert(
-        `Supplier added successfully!\nSupplier ID: ${result.id}`
+        'Supplier added successfully!'
       );
 
 
@@ -200,7 +201,9 @@ export class AddSupplierComponent {
 
 
       await this.dialog.alert(
-        'Failed to add supplier. Please try again.'
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to add supplier. Please try again.')
       );
 
 

@@ -20,6 +20,29 @@
   </div>
 
 
+  <!-- Search -->
+  @if (!isLoading && suppliers.length > 0) {
+
+    <div class="mb-5">
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Search Suppliers
+      </label>
+
+      <input
+        type="text"
+        [(ngModel)]="searchText"
+        placeholder="Supplier name, mobile, GST..."
+        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 md:max-w-md"
+      />
+
+    </div>
+
+  }
+
+
   <!-- Loading -->
   @if (isLoading) {
 
@@ -56,12 +79,30 @@
   }
 
 
+  <!-- No search match -->
+  @else if (filteredSuppliers.length === 0) {
+
+    <div
+      class="rounded-lg border border-dashed border-gray-300 py-10 text-center dark:border-gray-700"
+    >
+
+      <p
+        class="text-sm text-gray-500 dark:text-gray-400"
+      >
+        No suppliers match "{{ searchText }}".
+      </p>
+
+    </div>
+
+  }
+
+
   <!-- Suppliers Table -->
   @else {
 
-    <div class="max-w-full overflow-x-auto">
+    <div class="max-w-full">
 
-      <table class="w-full min-w-[1100px] text-left">
+      <table class="w-full table-fixed text-left">
 
         <!-- Table Header -->
         <thead
@@ -72,42 +113,42 @@
 
             <!-- Supplier -->
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[24%] px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Supplier
             </th>
 
             <!-- Mobile -->
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[13%] px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Mobile
             </th>
 
             <!-- Email -->
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[18%] px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Email
             </th>
 
             <!-- GST -->
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[15%] px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               GST Number
             </th>
 
             <!-- Status -->
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[10%] px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Status
             </th>
 
             <!-- Action -->
             <th
-              class="px-3 py-3 text-right font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[20%] px-3 py-3 text-right font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Action
             </th>
@@ -123,7 +164,7 @@
         >
 
           @for (
-            supplier of suppliers;
+            supplier of filteredSuppliers;
             track supplier.id
           ) {
 
@@ -131,7 +172,7 @@
 
               <!-- Supplier -->
               <td
-                class="px-3 py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90"
+                class="break-words px-3 py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90"
               >
 
                 @if (
@@ -167,7 +208,7 @@
 
               <!-- Mobile -->
               <td
-                class="px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+                class="break-words px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
               >
 
                 @if (
@@ -181,7 +222,7 @@
                   <input
                     type="tel"
                     [(ngModel)]="editingSupplierMobile"
-                    class="w-40 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                   />
 
                 }
@@ -191,7 +232,7 @@
 
               <!-- Email -->
               <td
-                class="px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+                class="break-words px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
               >
 
                 @if (
@@ -205,7 +246,7 @@
                   <input
                     type="email"
                     [(ngModel)]="editingSupplierEmail"
-                    class="w-56 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                   />
 
                 }
@@ -215,7 +256,7 @@
 
               <!-- GST -->
               <td
-                class="px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+                class="break-words px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
               >
 
                 @if (
@@ -231,7 +272,7 @@
                     [ngModel]="editingSupplierGstNumber"
                     (ngModelChange)="editingSupplierGstNumber = upperGst($event)"
                     maxlength="15"
-                    class="w-44 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm uppercase text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm uppercase text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                   />
 
                 }
@@ -267,7 +308,7 @@
               <td class="px-3 py-4">
 
                 <div
-                  class="flex items-center justify-end gap-2"
+                  class="flex flex-wrap items-center justify-end gap-2"
                 >
 
                   <!-- Normal Actions -->

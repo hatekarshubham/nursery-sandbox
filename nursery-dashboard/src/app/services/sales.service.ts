@@ -138,6 +138,9 @@ export interface Sale {
 
   updatedAt?: any;
 
+  // When the Firestore TTL policy deletes this sale (3 years).
+  expiresAt?: any;
+
 }
 
 
@@ -179,6 +182,9 @@ export interface CompleteSaleResult {
 // =======================================================
 // SERVICE
 // =======================================================
+
+// Sales are kept this long, then removed by the Firestore TTL policy.
+export const SALES_RETENTION_YEARS = 3;
 
 @Injectable({
   providedIn: 'root'
@@ -347,6 +353,8 @@ export class SalesService {
     // ===================================================
     // GENERATE INVOICE NUMBER
     // ===================================================
+
+    const saleDate = new Date();
 
     const invoiceNumber =
       this.generateInvoiceNumber();
@@ -754,10 +762,15 @@ export class SalesService {
             // =============================================
 
             createdAt:
-              new Date(),
+              saleDate,
 
             updatedAt:
-              new Date()
+              saleDate,
+
+            // Firestore TTL deletes the sale after this date.
+            // Keep in sync with SALES_RETENTION_YEARS.
+            expiresAt:
+              this.salesExpiryDate(saleDate)
 
           }
         );
@@ -804,6 +817,18 @@ export class SalesService {
   //  -> random 3-digit suffix
   //
   // =====================================================
+
+  private salesExpiryDate(from: Date): Date {
+
+    const expiry = new Date(from);
+    expiry.setFullYear(
+      expiry.getFullYear() + SALES_RETENTION_YEARS
+    );
+
+    return expiry;
+
+  }
+
 
   private generateInvoiceNumber(): string {
 

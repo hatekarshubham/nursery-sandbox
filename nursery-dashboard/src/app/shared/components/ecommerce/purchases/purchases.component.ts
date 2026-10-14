@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
 
+import { FormsModule } from '@angular/forms';
+
 import {
   Component,
   OnDestroy,
@@ -10,6 +12,8 @@ import { AppDialogService } from '../../../services/app-dialog.service';
 import { RouterModule } from '@angular/router';
 
 import { Subscription } from 'rxjs';
+
+import { LIST_PAGE_SIZE } from '../../../../services/list-page';
 
 import {
   Purchase,
@@ -24,6 +28,7 @@ import {
 
   imports: [
     CommonModule,
+    FormsModule,
     RouterModule
   ],
 
@@ -50,6 +55,16 @@ export class PurchasesComponent
   // =======================================================
 
   isLoading = true;
+
+  // How many newest records are loaded; "Load older" raises it.
+  limitCount = LIST_PAGE_SIZE;
+
+  hasMore = false;
+
+  // Search box text
+  searchText = '';
+
+  private listSubscription?: Subscription;
 
   errorMessage = '';
 
@@ -91,6 +106,8 @@ export class PurchasesComponent
 
   private loadPurchases() {
 
+    this.listSubscription?.unsubscribe();
+
     this.isLoading = true;
 
     this.errorMessage = '';
@@ -98,7 +115,7 @@ export class PurchasesComponent
 
     const purchaseSubscription =
       this.purchaseService
-        .getPurchases()
+        .getPurchases(this.limitCount)
         .subscribe({
 
           next: (purchases) => {
@@ -116,6 +133,9 @@ export class PurchasesComponent
                   )
               );
 
+
+            this.hasMore =
+              this.purchases.length >= this.limitCount;
 
             this.isLoading = false;
 
@@ -142,6 +162,8 @@ export class PurchasesComponent
 
         });
 
+
+    this.listSubscription = purchaseSubscription;
 
     this.subscription.add(
       purchaseSubscription
@@ -619,6 +641,43 @@ export class PurchasesComponent
   // =======================================================
   // DESTROY
   // =======================================================
+
+
+  // Searches the records already loaded (the newest ones), so it
+  // costs no extra reads. "Load older" brings more into the search.
+  get filteredPurchases(): Purchase[] {
+
+    const term = this.searchText.trim().toLowerCase();
+
+    if (!term) {
+
+      return this.purchases;
+
+    }
+
+    return this.purchases.filter(purchase =>
+      [
+        purchase.supplierName,
+        purchase.invoiceNumber,
+        purchase.warehouseName,
+        purchase.notes,
+        ...(purchase.items ?? []).map(item => item.productName)
+      ].some(value =>
+        String(value ?? '').toLowerCase().includes(term)
+      )
+    );
+
+  }
+
+
+  loadMore(): void {
+
+    this.limitCount += LIST_PAGE_SIZE;
+
+    this.loadPurchases();
+
+  }
+
 
   ngOnDestroy() {
 

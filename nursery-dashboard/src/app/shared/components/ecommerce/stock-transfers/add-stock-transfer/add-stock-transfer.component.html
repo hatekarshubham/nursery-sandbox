@@ -32,7 +32,7 @@
     <div
       class="py-12 text-center text-sm text-gray-500 dark:text-gray-400"
     >
-      Loading warehouses, products and inventory...
+      Loading warehouses...
     </div>
 
   }
@@ -170,54 +170,21 @@
           <span class="text-red-500">*</span>
         </label>
 
-        <select
-          [(ngModel)]="transfer.productId"
-          (ngModelChange)="onProductChange()"
+        <app-product-picker
+          [selectedName]="getSelectedProduct()?.name ?? ''"
+          [placeholder]="
+            transfer.fromWarehouseId
+              ? 'Search by name or scan barcode...'
+              : 'Select source warehouse first'
+          "
+          [warehouseId]="transfer.fromWarehouseId"
+          [onlyInStock]="true"
           [disabled]="
             isSaving ||
             !transfer.fromWarehouseId
           "
-          class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-        >
-
-          <option value="">
-            @if (transfer.fromWarehouseId) {
-              Select Product
-            } @else {
-              Select source warehouse first
-            }
-          </option>
-
-
-          @for (
-            product of getAvailableProducts();
-            track product.id
-          ) {
-
-            <option
-              [value]="product.id"
-            >
-              {{ product.name }}
-            </option>
-
-          }
-
-        </select>
-
-
-        @if (
-          transfer.fromWarehouseId &&
-          getAvailableProducts().length === 0
-        ) {
-
-          <p
-            class="mt-2 text-xs text-yellow-600 dark:text-yellow-400"
-          >
-            No products with available stock were found
-            in this warehouse.
-          </p>
-
-        }
+          (productSelected)="onProductPicked($event)"
+        />
 
       </div>
 

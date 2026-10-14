@@ -1,11 +1,14 @@
 import {
+
   Component,
   DestroyRef,
   ElementRef,
   OnInit,
   ViewChild,
-  inject} from '@angular/core';
+  inject
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subscription } from 'rxjs';
 import { AppDialogService } from '../../../../services/app-dialog.service';
 
 import { CommonModule } from '@angular/common';
@@ -258,7 +261,14 @@ export class CreateSaleComponent implements OnInit {
 
   private productsLoaded = false;
 
-  private inventoryLoaded = false;
+  // Stock is only loaded for the selected warehouse, so there is
+  // nothing to wait for until a warehouse is chosen.
+  private inventoryLoaded = true;
+
+  // Warehouse whose stock is currently loaded (and live).
+  private inventoryWarehouseId = '';
+
+  private inventorySubscription?: Subscription;
 
   private warehousesLoaded = false;
 
@@ -291,9 +301,11 @@ export class CreateSaleComponent implements OnInit {
         this.creatorName = this.authService.getCreator().name;
       });
 
-    this.loadProducts();
+    this.destroyRef.onDestroy(() => {
+      this.inventorySubscription?.unsubscribe();
+    });
 
-    this.loadInventory();
+    this.loadProducts();
 
     this.loadWarehouses();
 
@@ -308,6 +320,7 @@ export class CreateSaleComponent implements OnInit {
 
     this.productService
       .getProducts()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (products: any[]) => {
@@ -349,51 +362,89 @@ export class CreateSaleComponent implements OnInit {
   // LOAD INVENTORY
   // =====================================================
 
-  private loadInventory(): void {
+  //
+  // Only the selected warehouse's stock is loaded (and kept
+  // live), not every warehouse. Switching warehouse switches
+  // the listener.
+  //
+  // =====================================================
 
-    this.inventoryService
-      .getInventory()
-      .subscribe({
+  private loadInventoryForWarehouse(
+    warehouseId: string
+  ): void {
 
-        next: (inventory) => {
+    if (
+      warehouseId === this.inventoryWarehouseId
+    ) {
 
-          this.inventory =
-            inventory ?? [];
+      return;
 
-          this.inventoryLoaded =
-            true;
+    }
 
-          if (
-            this.productsLoaded
-          ) {
+    this.inventorySubscription?.unsubscribe();
 
-            this.refreshAvailableQuantities();
+    this.inventoryWarehouseId = warehouseId;
+
+    if (!warehouseId) {
+
+      this.inventory = [];
+
+      this.inventoryLoaded = true;
+
+      this.refreshAvailableQuantities();
+
+      return;
+
+    }
+
+    // Wait for the new warehouse's stock before showing quantities,
+    // so the screen never shows the old warehouse's numbers.
+    this.inventoryLoaded = false;
+
+    this.inventorySubscription =
+      this.inventoryService
+        .getInventoryByWarehouse(warehouseId)
+        .subscribe({
+
+          next: (inventory) => {
+
+            this.inventory =
+              inventory ?? [];
+
+            this.inventoryLoaded =
+              true;
+
+            if (
+              this.productsLoaded
+            ) {
+
+              this.refreshAvailableQuantities();
+
+            }
+
+            this.buildProductList();
+
+          },
+
+          error: (error) => {
+
+            console.error(
+              'Error loading inventory:',
+              error
+            );
+
+            this.inventory = [];
+
+            this.inventoryLoaded = true;
+
+            this.errorMessage =
+              'Unable to load inventory.';
+
+            this.buildProductList();
 
           }
 
-          this.buildProductList();
-
-        },
-
-        error: (error) => {
-
-          console.error(
-            'Error loading inventory:',
-            error
-          );
-
-          this.inventory = [];
-
-          this.inventoryLoaded = true;
-
-          this.errorMessage =
-            'Unable to load inventory.';
-
-          this.buildProductList();
-
-        }
-
-      });
+        });
 
   }
 
@@ -406,6 +457,7 @@ export class CreateSaleComponent implements OnInit {
 
     this.warehouseService
       .getActiveWarehouses()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (warehouses) => {
@@ -425,6 +477,10 @@ export class CreateSaleComponent implements OnInit {
               this.warehouses[0].id;
 
           }
+
+          this.loadInventoryForWarehouse(
+            this.selectedWarehouseId
+          );
 
           this.buildProductList();
 
@@ -588,6 +644,12 @@ export class CreateSaleComponent implements OnInit {
 
       if (!confirmed) {
 
+        // Put the dropdown back on the warehouse whose stock is
+        // still loaded, so the screen never shows one warehouse's
+        // name next to another warehouse's quantities.
+        this.selectedWarehouseId =
+          this.inventoryWarehouseId;
+
         return;
 
       }
@@ -596,7 +658,9 @@ export class CreateSaleComponent implements OnInit {
 
     }
 
-    this.refreshAvailableQuantities();
+    this.loadInventoryForWarehouse(
+      this.selectedWarehouseId
+    );
 
     this.focusBarcodeInput();
 
