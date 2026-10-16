@@ -169,7 +169,6 @@ export class CreateSaleComponent implements OnInit {
   private readonly dialog = inject(AppDialogService);
 
 
-
   // =====================================================
   // BARCODE
   // =====================================================
@@ -207,6 +206,14 @@ export class CreateSaleComponent implements OnInit {
   private rawProducts: any[] = [];
 
   searchText = '';
+
+  hasMoreProducts = false;
+
+  private saleCursor: any = null;
+
+  private saleSerial = 0;
+
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
 
   // =====================================================
@@ -318,42 +325,8 @@ export class CreateSaleComponent implements OnInit {
 
   private loadProducts(): void {
 
-    this.productService
-      .getProducts()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-
-        next: (products: any[]) => {
-
-          this.rawProducts =
-            products ?? [];
-
-          this.productsLoaded =
-            true;
-
-          this.buildProductList();
-
-        },
-
-        error: (error) => {
-
-          console.error(
-            'Error loading products:',
-            error
-          );
-
-          this.rawProducts = [];
-
-          this.productsLoaded = true;
-
-          this.errorMessage =
-            'Unable to load products.';
-
-          this.buildProductList();
-
-        }
-
-      });
+    // Products are loaded a page at a time once a warehouse
+    // is chosen (see reloadSaleProducts). Nothing is read here.
 
   }
 
@@ -478,11 +451,15 @@ export class CreateSaleComponent implements OnInit {
 
           }
 
-          this.loadInventoryForWarehouse(
-            this.selectedWarehouseId
-          );
+          if (this.selectedWarehouseId) {
 
-          this.buildProductList();
+            void this.reloadSaleProducts();
+
+          } else {
+
+            this.isLoading = false;
+
+          }
 
         },
 
@@ -500,7 +477,7 @@ export class CreateSaleComponent implements OnInit {
           this.errorMessage =
             'Unable to load warehouses.';
 
-          this.buildProductList();
+          this.isLoading = false;
 
         }
 
@@ -593,36 +570,205 @@ export class CreateSaleComponent implements OnInit {
 
   get filteredProducts(): SaleProduct[] {
 
-    const search =
-      this.searchText
-        .trim()
-        .toLowerCase();
+    return this.products;
 
-    if (!search) {
+  }
 
-      return this.products;
+  get visibleProducts(): SaleProduct[] {
+
+    return this.products;
+
+  }
+
+  onSearchInput(value: string) {
+
+    this.searchText = value;
+
+    if (this.searchTimer) {
+
+      clearTimeout(this.searchTimer);
 
     }
 
-    return this.products.filter(
-      product =>
-
-        product.name
-          .toLowerCase()
-          .includes(search)
-
-        ||
-
-        product.category
-          .toLowerCase()
-          .includes(search)
-
-        ||
-
-        product.barcode
-          .toLowerCase()
-          .includes(search)
+    this.searchTimer = setTimeout(
+      () => void this.reloadSaleProducts(),
+      300
     );
+
+  }
+
+  showMoreProducts(): void {
+
+    void this.reloadSaleProducts(true);
+
+  }
+
+
+  private async reloadSaleProducts(
+    more = false
+  ) {
+
+    const warehouseId = this.selectedWarehouseId;
+
+    if (!warehouseId) {
+
+      this.products = [];
+
+      this.hasMoreProducts = false;
+
+      return;
+
+    }
+
+    const serial = ++this.saleSerial;
+
+    if (!more) {
+
+      this.saleCursor = null;
+
+      this.isLoading = true;
+
+    }
+
+    const search = this.searchText.trim();
+
+    try {
+
+      let rows: any[] = [];
+
+      let moreAvailable = false;
+
+      if (search) {
+
+        rows = await this.productService.searchProducts(
+          search,
+          { maxResults: 50, fetchLimit: 80 }
+        );
+
+        const byBarcode =
+          await this.productService.findProductByBarcode(search);
+
+        if (byBarcode && !rows.some(row => row.id === byBarcode.id)) {
+
+          rows = [byBarcode, ...rows];
+
+        }
+
+      } else {
+
+        const page = await this.productService.pageProducts({
+          order: 'name',
+          pageSize: 50,
+          direction: more && this.saleCursor ? 'next' : 'first',
+          cursor: more ? this.saleCursor : null,
+          knownCount: more ? 1 : null
+        });
+
+        if (serial !== this.saleSerial) {
+
+          return;
+
+        }
+
+        rows = page.products;
+
+        this.saleCursor = page.last;
+
+        moreAvailable = rows.length === 50;
+
+      }
+
+      if (serial !== this.saleSerial) {
+
+        return;
+
+      }
+
+      const stock =
+        await this.inventoryService.getInventoryForProducts(
+          rows.map(row => row.id)
+        );
+
+      if (serial !== this.saleSerial) {
+
+        return;
+
+      }
+
+      this.inventory = more
+        ? [...this.inventory, ...stock]
+        : stock;
+
+      const quantities = new Map<string, number>();
+
+      for (const item of stock) {
+
+        if (item.warehouseId !== warehouseId) {
+
+          continue;
+
+        }
+
+        quantities.set(
+          item.productId,
+          (quantities.get(item.productId) ?? 0) +
+            Number(item.quantity ?? 0)
+        );
+
+      }
+
+      const mapped = rows
+        .filter(row => row.id && row.isActive !== false)
+        .map(row => this.toSaleProduct(row, quantities));
+
+      this.products = more ? [...this.products, ...mapped] : mapped;
+
+      this.hasMoreProducts = !search && moreAvailable;
+
+      this.productsLoaded = true;
+
+      this.inventoryLoaded = true;
+
+      this.isLoading = false;
+
+    } catch (error) {
+
+      if (serial !== this.saleSerial) {
+
+        return;
+
+      }
+
+      console.error('Error loading products:', error);
+
+      this.errorMessage = 'Unable to load products.';
+
+      this.isLoading = false;
+
+    }
+
+  }
+
+
+  private toSaleProduct(
+    product: any,
+    quantities: Map<string, number>
+  ): SaleProduct {
+
+    return {
+      id: product.id,
+      name: product.name ?? '',
+      category: product.category ?? '',
+      categoryId: product.categoryId ?? '',
+      supplierId: product.supplierId ?? '',
+      supplierName: product.supplier ?? '',
+      barcode: product.barcode ?? '',
+      unitPrice: Number(product.unitPrice ?? 0),
+      gst: Number(product.gst ?? 0),
+      image: product.image ?? '',
+      isActive: product.isActive !== false,
+      availableQuantity: quantities.get(product.id) ?? 0
+    };
 
   }
 
@@ -658,9 +804,7 @@ export class CreateSaleComponent implements OnInit {
 
     }
 
-    this.loadInventoryForWarehouse(
-      this.selectedWarehouseId
-    );
+    void this.reloadSaleProducts();
 
     this.focusBarcodeInput();
 
@@ -707,33 +851,87 @@ export class CreateSaleComponent implements OnInit {
 
     }
 
-    return this.inventory
+    return this.stockIndex().get(productId) ?? 0;
 
-      .filter(
-        inventoryItem =>
+  }
 
-          inventoryItem.productId ===
-            productId
 
-          &&
+  // Stock per product for the selected warehouse, built once per
+  // inventory update instead of scanning the list for every product.
+  private stockIndexInventory: Inventory[] | null = null;
 
-          inventoryItem.warehouseId ===
-            this.selectedWarehouseId
-      )
+  private stockIndexWarehouseId = '';
 
-      .reduce(
-        (
-          total,
-          inventoryItem
-        ) =>
+  private stockIndexMap = new Map<string, number>();
 
-          total +
-          Number(
-            inventoryItem.quantity ?? 0
-          ),
+  private stockIndex(): Map<string, number> {
 
-        0
+    if (
+      this.stockIndexInventory !== this.inventory ||
+      this.stockIndexWarehouseId !== this.selectedWarehouseId
+    ) {
+
+      const map = new Map<string, number>();
+
+      for (const item of this.inventory) {
+
+        if (item.warehouseId !== this.selectedWarehouseId) {
+
+          continue;
+
+        }
+
+        map.set(
+          item.productId,
+          (map.get(item.productId) ?? 0) +
+            Number(item.quantity ?? 0)
+        );
+
+      }
+
+      this.stockIndexMap = map;
+
+      this.stockIndexInventory = this.inventory;
+
+      this.stockIndexWarehouseId = this.selectedWarehouseId;
+
+    }
+
+    return this.stockIndexMap;
+
+  }
+
+
+  private async stockFor(
+    productIds: string[]
+  ): Promise<Map<string, number>> {
+
+    const stock =
+      await this.inventoryService.getInventoryForProducts(
+        productIds
       );
+
+    this.inventory = [...this.inventory, ...stock];
+
+    const quantities = new Map<string, number>();
+
+    for (const item of stock) {
+
+      if (item.warehouseId !== this.selectedWarehouseId) {
+
+        continue;
+
+      }
+
+      quantities.set(
+        item.productId,
+        (quantities.get(item.productId) ?? 0) +
+          Number(item.quantity ?? 0)
+      );
+
+    }
+
+    return quantities;
 
   }
 
@@ -767,11 +965,16 @@ export class CreateSaleComponent implements OnInit {
 
     }
 
+    const found =
+      await this.productService.findProductByBarcode(barcode);
+
     const product =
-      this.products.find(
-        item =>
-          item.barcode === barcode
-      );
+      found
+        ? this.toSaleProduct(
+            found,
+            await this.stockFor([found.id])
+          )
+        : this.products.find(item => item.barcode === barcode);
 
     if (!product) {
 
@@ -1517,12 +1720,6 @@ export class CreateSaleComponent implements OnInit {
           .completeSale(
             saleData
           );
-
-
-      console.log(
-        'Sale completed successfully:',
-        result
-      );
 
 
       // =================================================

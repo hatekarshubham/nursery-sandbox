@@ -22,6 +22,8 @@ import { shareLiveStream } from './shared-stream';
 
 import { assertFieldsUnique } from './unique-key';
 
+import { stockStateFor } from './stock-total';
+
 export interface Category {
   id?: string;
   name: string;
@@ -177,12 +179,61 @@ export class CategoryService {
         id
       );
 
-    return updateDoc(
+    await updateDoc(
       categoryRef,
       {
         isActive
       }
     );
+
+    // Products keep a copy so the Products screen can filter
+    // "inactive" without reading every product.
+    const productsSnapshot = await getDocs(
+      query(
+        collection(this.firestore, 'products'),
+        where('categoryId', '==', id)
+      )
+    );
+
+    let batch = writeBatch(this.firestore);
+
+    let pending = 0;
+
+    for (const product of productsSnapshot.docs) {
+
+      const data = product.data();
+
+      const totalQuantity = Number(data['totalQuantity'] ?? 0);
+
+      batch.update(product.ref, {
+        categoryIsActive: isActive,
+        stockState: stockStateFor(
+          data['isActive'] !== false,
+          isActive,
+          totalQuantity
+        )
+      });
+
+      pending++;
+
+      if (pending >= 400) {
+
+        await batch.commit();
+
+        batch = writeBatch(this.firestore);
+
+        pending = 0;
+
+      }
+
+    }
+
+    if (pending > 0) {
+
+      await batch.commit();
+
+    }
+
   }
 
   // =========================
@@ -285,9 +336,6 @@ export class CategoryService {
 
       await batch.commit();
 
-      console.log(
-        `Deleted ${batchDocuments.length} product(s).`
-      );
     }
 
     // Delete category after products.
@@ -307,9 +355,6 @@ export class CategoryService {
 
     await categoryBatch.commit();
 
-    console.log(
-      `Category "${categoryName}" deleted successfully.`
-    );
 
     return {
       productsDeleted

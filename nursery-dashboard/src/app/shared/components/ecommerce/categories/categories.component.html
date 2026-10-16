@@ -78,25 +78,26 @@
           class="border-b border-gray-200 dark:border-gray-700"
         >
           <th
-            class="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400"
+            class="px-2 sm:px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400"
           >
             Category Name
           </th>
 
           <th
-            class="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400"
+            class="px-2 sm:px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400"
           >
             Code
           </th>
 
           <th
-            class="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400"
+            class="px-2 sm:px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400"
           >
             Status
           </th>
 
           <th
-            class="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400"
+            *ngIf="roles.canModify"
+            class="px-2 sm:px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400"
           >
             Actions
           </th>
@@ -112,7 +113,7 @@
 
           <!-- Category Name -->
           <td
-            class="px-4 py-4 text-sm font-medium text-gray-800 dark:text-white"
+            class="px-2 sm:px-4 py-4 text-sm font-medium text-gray-800 dark:text-white"
           >
 
             <!-- Normal View -->
@@ -136,7 +137,7 @@
 
           <!-- Category Code -->
           <td
-            class="px-4 py-4 text-sm text-gray-600 dark:text-gray-400"
+            class="px-2 sm:px-4 py-4 text-sm text-gray-600 dark:text-gray-400"
           >
 
             <!-- Normal View -->
@@ -159,7 +160,7 @@
           </td>
 
           <!-- Status -->
-          <td class="px-4 py-4">
+          <td class="px-2 sm:px-4 py-4">
 
             <!-- Active -->
             <span
@@ -180,8 +181,8 @@
           </td>
 
           <!-- Actions -->
-          <td class="px-4 py-4">
-            <div class="flex items-center gap-2">
+          <td *ngIf="roles.canModify" class="px-2 sm:px-4 py-4">
+            <div class="flex flex-wrap items-center gap-2">
 
               <!-- Normal Actions -->
               <ng-container

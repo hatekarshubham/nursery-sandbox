@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './services/auth.guard';
+import { authGuard, adminGuard } from './services/auth.guard';
 
 import { NotFoundComponent } from './pages/other-page/not-found/not-found.component';
 import { AppLayoutComponent } from './shared/layout/app-layout/app-layout.component';
@@ -70,6 +70,7 @@ export const routes: Routes = [
       {
         path: 'categories/add-category',
         component: AddCategoryComponent,
+        canActivate: [adminGuard],
       },
 
 
@@ -85,6 +86,7 @@ export const routes: Routes = [
       {
         path: 'products/add-product',
         component: AddProductComponent,
+        canActivate: [adminGuard],
       },
 
       {
@@ -105,6 +107,7 @@ export const routes: Routes = [
       {
         path: 'suppliers/add-supplier',
         component: AddSupplierComponent,
+        canActivate: [adminGuard],
       },
 
 
@@ -120,6 +123,7 @@ export const routes: Routes = [
       {
         path: 'warehouses/add-warehouse',
         component: AddWarehouseComponent,
+        canActivate: [adminGuard],
       },
 
 
@@ -135,6 +139,7 @@ export const routes: Routes = [
       {
         path: 'purchases/add-purchase',
         component: AddPurchaseComponent,
+        canActivate: [adminGuard],
       },
 
 
@@ -150,6 +155,7 @@ export const routes: Routes = [
       {
         path: 'stock-transfers/add-stock-transfer',
         component: AddStockTransferComponent,
+        canActivate: [adminGuard],
       },
 
 
@@ -165,6 +171,7 @@ export const routes: Routes = [
       {
         path: 'stock-adjustments/add-stock-adjustment',
         component: AddStockAdjustmentComponent,
+        canActivate: [adminGuard],
       },
 
       // ===================================================

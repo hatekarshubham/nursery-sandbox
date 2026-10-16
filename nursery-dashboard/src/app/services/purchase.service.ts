@@ -22,6 +22,12 @@ import { Observable, combineLatest, map } from 'rxjs';
 import { LIST_PAGE_SIZE } from './list-page';
 
 import {
+  addStockDelta,
+  readProductTotals,
+  writeProductTotals
+} from './stock-total';
+
+import {
   DuplicateError,
   buildUniqueKey,
   reserveUniqueKey
@@ -1112,9 +1118,45 @@ export class PurchaseService {
         }
 
 
+        // Receiving stock raises each product's stored total.
+        const stockDeltas = new Map<string, number>();
+
+        for (const inventoryInfo of existingInventory) {
+
+          addStockDelta(
+            stockDeltas,
+            inventoryInfo.item.productId,
+            inventoryInfo.item.quantity
+          );
+
+        }
+
+        for (const inventoryInfo of newInventory) {
+
+          addStockDelta(
+            stockDeltas,
+            inventoryInfo.item.productId,
+            inventoryInfo.item.quantity
+          );
+
+        }
+
+        const productTotals =
+          await readProductTotals(
+            this.firestore,
+            transaction,
+            stockDeltas
+          );
+
+
         // =================================================
         // UPDATE EXISTING INVENTORY
         // =================================================
+
+        writeProductTotals(
+          transaction,
+          productTotals
+        );
 
         for (
           const inventoryInfo of

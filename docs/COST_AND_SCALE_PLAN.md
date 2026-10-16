@@ -48,31 +48,44 @@ These protect data quality and consistency. Every phase keeps them.
 
 ## Implementation status (update as work lands)
 
-Built and compiling (`ng build` passes). Not yet exercised against the emulator or production data.
+Built and compiling (`ng build` passes). Exercised against the local emulator (see the test list below); not yet run against production data.
 
 | Task | Status | Notes |
 |---|---|---|
 | 0.1 | You | Budget alert is set in Google Cloud, not code |
-| 0.2 | Not started | Needs the real role names (or custom claims) before rules can be written safely |
+| 0.2 | Done | Roles `Admin` and `SalesPerson` read from `users/{uid}`. Rules in `firestore.rules`, 109 checks in `scripts/test-rules.mjs`. Sales people view everything, create sales, see only their own sales; only an admin adds, edits or deletes. Needs the `sales` index on `createdById` + `createdAt` (in `firestore.indexes.json`) |
 | 0.3 | Done | `localStorage.setItem('debugReads','1')` and reload: the console logs each listener start and snapshot size (`shared-stream.ts`) |
 | 1.1, 1.2 | Done | Shared listeners with a 10 minute grace period after the last screen leaves |
 | 1.3 | Done | All service subscriptions end with the screen (`takeUntilDestroyed`) |
-| 1.4 | Done | Persistent multi-tab cache in `app.config.ts`. Data stays in the browser after logout (IndexedDB) |
+| 1.4 | Done | Persistent multi-tab cache in `app.config.ts`. Logout now terminates Firestore, clears the IndexedDB cache and reloads, so the next user on the same browser never sees the previous user's data (verified in the browser) |
 | 1.5 | Done | Create Sale listens to the selected warehouse only |
 | 1.6 | Done | Sales History loads only the chosen range (today by default; wider ranges fetch just the missing days). Products are loaded only if an old sale lacks stored names |
 | 1.7 | Done | Full-array console logs removed |
 | 2.1 | Code done, backfill needed | New and edited products get `nameLower` and `searchPrefixes`. Run `scripts/backfill.mjs` for existing products (already applied to the local emulator). Without it, picker search finds nothing for old products |
-| 2.2, 2.7 | Partly done | Reusable `app-product-picker` built (word-prefix name search, exact barcode lookup, optional supplier filter, at most about 60 reads per search). Used on Add Purchase, Add Stock Transfer and Add Stock Adjustment, which no longer load the product list. Add Purchase no longer loads all products; Transfer and Adjustment read one inventory record per chosen product. **Not yet moved:** Create Sale and Print Barcodes (they are browse-a-grid screens and need a design decision) |
-| 2.3 | Not started | Products paging and server search (same design question as Print Barcodes) |
+| 2.2, 2.7 | Partly done | Reusable `app-product-picker` built (word-prefix name search, exact barcode lookup, optional supplier filter, at most about 60 reads per search). Used on Add Purchase, Add Stock Transfer and Add Stock Adjustment, which no longer load the product list. Add Purchase no longer loads all products; Transfer and Adjustment read one inventory record per chosen product. Create Sale and Print Barcodes keep the shared product list (loaded once, cached) but now draw only 50 rows or cards at a time (see 2.3). Moving them to server search would only save reads past about 15,000 products |
+| 2.3 | Done | Products pages 50 at a time from the server, lowest `totalQuantity` first, and reads inventory only for that page. Create Sale does the same (50 at a time, name order) and its search is a server query. `totalQuantity` and `stockState` are updated inside the sale, purchase and adjustment transactions. Run `scripts/backfill.mjs` so existing products get a total. New indexes for these queries are in `firestore.indexes.json` |
 | 2.4 | Done | Newest 100 per list, with a "Load older" button. Purchases also always include every PENDING purchase |
 | 2.5 | Done | Category product count uses `count()` (it is only used by the delete dialog) |
-| 2.6 | Not started | `sum()` and `count()` totals for long ranges |
+| 2.6 | Done | Sales History ranges longer than about three months show invoices, total sales and GST from `sum()` and `count()` on the server (one read per 1,000 sales) instead of downloading every sale. Quantity sold, the invoice list and the category and supplier tables need individual sales, so they show only for ranges of about three months or less |
 | 3.1 | Done | `expiresAt` is written on every new sale |
 | 3.2 | Script ready | `scripts/backfill.mjs` (dry run by default) |
 | 3.3 | Not yet | Enable only after the backfill: `gcloud firestore fields ttls update expiresAt --collection-group=sales --enable-ttl --project <id>` |
 | 3.4 | Done | `items` on sales is no longer indexed (`firestore.indexes.json`) |
-| 3.6 | Waiting | Invoice format needs the accountant's confirmation |
-| 3.7 | Not started | No screen reads summaries yet, so it is better built together with 2.6 |
+| 3.6 | Done, confirm format | Consecutive invoice numbers `<prefix>/<FY>/<6 digits>` (for example `WH3/26-27/000001`), one series per warehouse per financial year (April to March), at most 16 characters. The counter `invoiceCounters/<prefix>_<FY>` is read and increased inside the sale transaction, so numbers have no gaps and two sales never share a number. Set the prefix (up to 3 letters or digits, unique) on each warehouse. Deploy the `invoiceCounters` rules. Show the format to the accountant |
+| 3.7 | Done | One `dailySummaries` document per seller, warehouse and day, written in the same transaction as the sale (so it cannot disagree with it). Sales History uses these for quantity and the category and supplier breakdown on ranges longer than about three months. `functions/index.js` fills a summary only when a sale was created without one (`summaryApplied` is not set). Deploy with `firebase deploy --only functions` |
+
+Also done: duplicate protection (products, categories, suppliers, warehouses, purchases) with lock documents in `uniqueKeys`; sales people do not see purchase amounts; the add screens are blocked for sales people (routes, menu and rules); phone and tablet layouts checked at 768 px and 390 px (Products, Print Barcodes, Categories, Suppliers, Warehouses, Sales History).
+
+Tested in the emulator (browser, real services):
+
+- Two sales of the last unit at the same moment: one succeeds, one is refused, stock ends at 0.
+- Five sales of 1 unit against 3 in stock: exactly 3 succeed.
+- Selling more than is in stock, transferring more than the source holds, decreasing below 0, and a transfer to the same warehouse are all refused. Two transfers of 5 against 6 in stock: one succeeds.
+- Purchase then complete adds the stock; the same supplier invoice cannot be added twice.
+- Invoice numbers came out `000001` to `000006` with no gaps and no repeats.
+- Sales person: no add menu or add routes, own-sales-only totals, products view-only.
+
+Tested in the emulator: two browser tabs sold the last unit 77 ms apart and only one succeeded. Purchases, Stock Transfers and Stock Adjustments were checked at phone width (390 px) with a real row each; each table scrolls sideways inside the page so the columns stay readable. Sales History over a long range showed 2 invoices, quantity 2 and the category and supplier breakdown from the daily summary. A sales person sees the purchase but not the Amount column. Rules tests: 117 passed.
 
 Search boxes added (in the browser, on data already loaded, no extra reads): Suppliers, Categories, Sales History (invoice or product), Purchases, Stock Transfers, Stock Adjustments.
 

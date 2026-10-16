@@ -27,6 +27,226 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "sales",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdById",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "totalQuantity",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nameLower",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "totalQuantity",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nameLower",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "supplierId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "totalQuantity",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nameLower",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "supplierId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "totalQuantity",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nameLower",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "stockState",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "totalQuantity",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nameLower",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "stockState",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "totalQuantity",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nameLower",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "supplierId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "stockState",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "totalQuantity",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nameLower",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "supplierId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "stockState",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "totalQuantity",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nameLower",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "dailySummaries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "warehouseId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "day",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "dailySummaries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdById",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "day",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "dailySummaries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdById",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "warehouseId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "day",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [

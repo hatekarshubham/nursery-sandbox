@@ -63,7 +63,6 @@ export class SignupFormComponent {
 
     try {
       await this.authService.signUp(this.email, this.password);
-      console.log('Sign up successful');
       // Automatically login after signup
       await this.authService.login(this.email, this.password);
       this.router.navigate(['/products']);

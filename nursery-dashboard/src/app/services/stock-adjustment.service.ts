@@ -19,6 +19,12 @@ import { Observable } from 'rxjs';
 
 import { LIST_PAGE_SIZE } from './list-page';
 
+import {
+  addStockDelta,
+  readProductTotals,
+  writeProductTotals
+} from './stock-total';
+
 
 // =========================================================
 // STOCK ADJUSTMENT TYPE
@@ -565,9 +571,31 @@ export class StockAdjustmentService {
         }
 
 
+        // Same change, applied to the product's stored total.
+        const stockDeltas = new Map<string, number>();
+
+        addStockDelta(
+          stockDeltas,
+          adjustment.productId,
+          newQuantity - currentQuantity
+        );
+
+        const productTotals =
+          await readProductTotals(
+            this.firestore,
+            transaction,
+            stockDeltas
+          );
+
+
         // =================================================
         // UPDATE EXISTING INVENTORY
         // =================================================
+
+        writeProductTotals(
+          transaction,
+          productTotals
+        );
 
         if (
           inventoryExists

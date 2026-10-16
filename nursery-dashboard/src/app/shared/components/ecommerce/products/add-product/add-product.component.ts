@@ -484,11 +484,6 @@ export class AddProductComponent implements OnInit {
 
     try {
 
-      console.log(
-        'Product before Firestore:',
-        this.product
-      );
-
 
       // -------------------------
       // SAVE PRODUCT
@@ -528,12 +523,6 @@ export class AddProductComponent implements OnInit {
 
       this.productId =
         result.id;
-
-
-      console.log(
-        'Product added to Firestore:',
-        result.id
-      );
 
 
       await this.dialog.alert(

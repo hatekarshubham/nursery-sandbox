@@ -5,5 +5,8 @@
   "description": "One-off maintenance scripts (backfills) for the nursery Firestore database.",
   "dependencies": {
     "firebase-admin": "^13.0.0"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0"
   }
 }

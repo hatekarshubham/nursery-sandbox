@@ -101,7 +101,6 @@ export class AddPurchaseComponent implements OnInit {
   private readonly dialog = inject(AppDialogService);
 
 
-
   constructor(
     private supplierService: SupplierService,
     private warehouseService: WarehouseService,
@@ -1196,12 +1195,6 @@ export class AddPurchaseComponent implements OnInit {
           );
 
 
-      console.log(
-        'Pending purchase created:',
-        purchaseId
-      );
-
-
       await this.dialog.alert(
         'Purchase saved successfully as pending.'
       );
@@ -1288,12 +1281,6 @@ export class AddPurchaseComponent implements OnInit {
           .createPurchase(
             purchaseData
           );
-
-
-      console.log(
-        'Pending purchase created:',
-        purchaseId
-      );
 
 
       await this.dialog.alert(

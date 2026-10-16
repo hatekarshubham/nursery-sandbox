@@ -9,13 +9,22 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  getDoc,
   getDocs,
+  getCountFromServer,
   query,
   where,
   documentId,
   limit,
+  limitToLast,
+  orderBy,
+  startAfter,
+  endBefore,
+  QueryDocumentSnapshot,
   runTransaction
 } from '@angular/fire/firestore';
+
+import { stockStateFor } from './stock-total';
 
 import { Observable } from 'rxjs';
 
@@ -262,11 +271,6 @@ export class ProductService {
     product: any
   ) {
 
-    console.log(
-      '1. ProductService called:',
-      product
-    );
-
 
     // ---------------------------------------------------------
     // Create a Firestore reference for the new product.
@@ -290,12 +294,6 @@ export class ProductService {
       );
 
 
-    console.log(
-      '2. Generated product document ID:',
-      productRef.id
-    );
-
-
     // ---------------------------------------------------------
     // Try multiple times in the extremely unlikely event
     // that a randomly generated barcode already exists.
@@ -316,12 +314,6 @@ export class ProductService {
 
       const barcode =
         this.generateBarcode();
-
-
-      console.log(
-        `Barcode attempt ${attempt}:`,
-        barcode
-      );
 
 
       // -------------------------------------------------------
@@ -427,6 +419,17 @@ export class ProductService {
                 searchPrefixes:
                   buildSearchPrefixes(product.name),
 
+                // Stock total starts at 0 and is maintained by
+                // every purchase, sale and adjustment.
+                totalQuantity: 0,
+
+                categoryIsActive: true,
+
+                stockState:
+                  product.isActive === false
+                    ? 'inactive'
+                    : 'out',
+
                 barcode,
 
                 createdAt:
@@ -463,18 +466,6 @@ export class ProductService {
             );
 
           }
-        );
-
-
-        console.log(
-          '3. Product created successfully:',
-          productRef.id
-        );
-
-
-        console.log(
-          '4. Barcode assigned:',
-          barcode
         );
 
 
@@ -788,6 +779,134 @@ export class ProductService {
   }
 
 
+  // One page of products, already ordered. `stock` order is lowest
+  // total first (the Products screen). `name` order is A to Z
+  // (Create Sale). Filters are applied on the server, so a page
+  // costs about `pageSize` reads plus one count.
+  async pageProducts(
+    options: {
+      order?: 'stock' | 'name';
+      category?: string;
+      supplierId?: string;
+      stockState?: string;
+      pageSize?: number;
+      direction?: 'first' | 'next' | 'previous' | 'last';
+      cursor?: QueryDocumentSnapshot | null;
+      knownCount?: number | null;
+    } = {}
+  ): Promise<{
+    products: any[];
+    first: QueryDocumentSnapshot | null;
+    last: QueryDocumentSnapshot | null;
+    count: number;
+  }> {
+
+    const pageSize = options.pageSize ?? 50;
+
+    const direction = options.direction ?? 'first';
+
+    const filters: any[] = [];
+
+    if (options.category) {
+
+      filters.push(where('category', '==', options.category));
+
+    }
+
+    if (options.supplierId) {
+
+      filters.push(where('supplierId', '==', options.supplierId));
+
+    }
+
+    if (options.stockState) {
+
+      filters.push(where('stockState', '==', options.stockState));
+
+    }
+
+    const ordering =
+      options.order === 'name'
+        ? [orderBy('nameLower', 'asc')]
+        : [
+            orderBy('totalQuantity', 'asc'),
+            orderBy('nameLower', 'asc')
+          ];
+
+    const productsRef = collection(this.firestore, 'products');
+
+    let count = options.knownCount ?? -1;
+
+    if (count < 0 || direction === 'first') {
+
+      const counted = await getCountFromServer(
+        query(productsRef, ...filters)
+      );
+
+      count = counted.data().count;
+
+    }
+
+    let pageQuery;
+
+    if (direction === 'last') {
+
+      const remainder = count % pageSize;
+
+      pageQuery = query(
+        productsRef,
+        ...filters,
+        ...ordering,
+        limitToLast(remainder === 0 ? pageSize : remainder)
+      );
+
+    } else if (direction === 'next' && options.cursor) {
+
+      pageQuery = query(
+        productsRef,
+        ...filters,
+        ...ordering,
+        startAfter(options.cursor),
+        limit(pageSize)
+      );
+
+    } else if (direction === 'previous' && options.cursor) {
+
+      pageQuery = query(
+        productsRef,
+        ...filters,
+        ...ordering,
+        endBefore(options.cursor),
+        limitToLast(pageSize)
+      );
+
+    } else {
+
+      pageQuery = query(
+        productsRef,
+        ...filters,
+        ...ordering,
+        limit(pageSize)
+      );
+
+    }
+
+    const snapshot = await getDocs(pageQuery);
+
+    const products = snapshot.docs.map(
+      entry => ({ id: entry.id, ...entry.data() } as any)
+    );
+
+    return {
+      products,
+      first: snapshot.docs[0] ?? null,
+      last: snapshot.docs[snapshot.docs.length - 1] ?? null,
+      count
+    };
+
+  }
+
+
   // =========================================================
   // UPDATE PRODUCT
   // =========================================================
@@ -796,12 +915,6 @@ export class ProductService {
     productId: string,
     product: any
   ) {
-
-    console.log(
-      'Updating product:',
-      productId,
-      product
-    );
 
 
     const productRef =
@@ -827,6 +940,33 @@ export class ProductService {
     );
 
     this.supplierProductsCache.clear();
+
+    const currentProduct = await getDoc(productRef);
+
+    const currentData = currentProduct.data() ?? {};
+
+    let categoryIsActive =
+      currentData['categoryIsActive'] !== false;
+
+    if (
+      product.categoryId &&
+      product.categoryId !== currentData['categoryId']
+    ) {
+
+      const categorySnapshot = await getDoc(
+        doc(this.firestore, 'categories', product.categoryId)
+      );
+
+      categoryIsActive =
+        categorySnapshot.exists() &&
+        categorySnapshot.data()['isActive'] !== false;
+
+    }
+
+    const totalQuantity =
+      Number(currentData['totalQuantity'] ?? 0);
+
+    const isActive = product.isActive !== false;
 
     await updateDoc(
       productRef,
@@ -885,8 +1025,15 @@ export class ProductService {
         image:
           product.image ?? '',
 
-        isActive:
-          product.isActive !== false,
+        isActive,
+
+        categoryIsActive,
+
+        stockState: stockStateFor(
+          isActive,
+          categoryIsActive,
+          totalQuantity
+        ),
 
 
         // =====================================================
@@ -900,11 +1047,6 @@ export class ProductService {
     );
 
 
-    console.log(
-      'Product updated successfully:',
-      productId
-    );
-
   }
 
 
@@ -915,11 +1057,6 @@ export class ProductService {
   async deleteProduct(
     productId: string
   ) {
-
-    console.log(
-      'Deleting product:',
-      productId
-    );
 
 
     const productRef =
@@ -936,11 +1073,6 @@ export class ProductService {
       productRef
     );
 
-
-    console.log(
-      'Product deleted successfully:',
-      productId
-    );
 
   }
 

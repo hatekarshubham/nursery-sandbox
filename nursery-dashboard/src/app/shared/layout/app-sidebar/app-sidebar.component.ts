@@ -10,6 +10,8 @@ import {
 
 import { SidebarService } from '../../services/sidebar.service';
 
+import { RoleService } from '../../../services/role.service';
+
 import {
   NavigationEnd,
   Router,
@@ -65,7 +67,7 @@ export class AppSidebarComponent {
   // MAIN NAV ITEMS
   // =========================================================
 
-  navItems: NavItem[] = [
+  private readonly allNavItems: NavItem[] = [
 
     // =========================================================
     // PRODUCTS
@@ -625,7 +627,9 @@ export class AppSidebarComponent {
 
     private router: Router,
 
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+
+    private roles: RoleService
 
   ) {
 
@@ -717,6 +721,49 @@ export class AppSidebarComponent {
   ngOnDestroy() {
 
     this.subscription.unsubscribe();
+
+  }
+
+
+  // =========================================================
+  // MENU FOR THE SIGNED-IN ROLE
+  // =========================================================
+  //
+  // Only an admin sees the "Add ..." entries. Everyone sees
+  // the lists, Print Barcodes and Create Sale.
+  //
+  // =========================================================
+
+  private visibleNavItems: NavItem[] | null = null;
+
+  private visibleForAdmin: boolean | null = null;
+
+  get navItems(): NavItem[] {
+
+    const isAdmin = this.roles.isAdmin;
+
+    if (
+      this.visibleNavItems &&
+      this.visibleForAdmin === isAdmin
+    ) {
+
+      return this.visibleNavItems;
+
+    }
+
+    this.visibleForAdmin = isAdmin;
+
+    this.visibleNavItems = isAdmin
+      ? this.allNavItems
+      : this.allNavItems.map(item => ({
+          ...item,
+          subItems: item.subItems?.filter(
+            subItem =>
+              !subItem.path.includes('/add-')
+          )
+        }));
+
+    return this.visibleNavItems;
 
   }
 
@@ -922,10 +969,6 @@ export class AppSidebarComponent {
   // =========================================================
 
   onSubmenuClick() {
-
-    console.log(
-      'click submenu'
-    );
 
 
     this.isMobileOpen$

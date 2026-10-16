@@ -166,6 +166,46 @@ export class InventoryService {
   }
 
 
+  // Inventory rows for a handful of products (the visible page),
+  // not the whole collection. 30 ids per query, which is Firestore's
+  // limit for `in`.
+  async getInventoryForProducts(
+    productIds: string[]
+  ): Promise<Inventory[]> {
+
+    const unique = [...new Set(productIds.filter(Boolean))];
+
+    const chunks: string[][] = [];
+
+    for (let index = 0; index < unique.length; index += 30) {
+
+      chunks.push(unique.slice(index, index + 30));
+
+    }
+
+    const snapshots = await Promise.all(
+      chunks.map(chunk =>
+        getDocs(
+          query(
+            this.inventoryCollection,
+            where('productId', 'in', chunk)
+          )
+        )
+      )
+    );
+
+    return snapshots.flatMap(snapshot =>
+      snapshot.docs.map(
+        entry => ({
+          id: entry.id,
+          ...entry.data()
+        }) as Inventory
+      )
+    );
+
+  }
+
+
   // =========================
   // PREVIEW OF A WAREHOUSE'S STOCK
   // =========================

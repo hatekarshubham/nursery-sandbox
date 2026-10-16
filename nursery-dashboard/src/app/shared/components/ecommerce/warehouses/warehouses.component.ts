@@ -1,4 +1,6 @@
 import { CommonModule } from '@angular/common';
+import { invoicePrefixFor, sanitizeInvoicePrefix } from '../../../../services/invoice-number';
+import { RoleService } from '../../../../services/role.service';
 import { DuplicateError } from '../../../../services/unique-key';
 import { Component, OnInit, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -35,6 +37,12 @@ export class WarehousesComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
 
 
+  readonly roles = inject(RoleService);
+
+  readonly sanitizePrefix = sanitizeInvoicePrefix;
+
+  readonly invoicePrefixOf = invoicePrefixFor;
+
   private readonly dialog = inject(AppDialogService);
 
 
@@ -61,6 +69,8 @@ export class WarehousesComponent implements OnInit {
   editingWarehouseName = '';
 
   editingWarehouseCode = '';
+
+  editingInvoicePrefix = '';
 
   isSaving = false;
 
@@ -137,6 +147,9 @@ export class WarehousesComponent implements OnInit {
     this.editingWarehouseCode =
       upperInput(warehouse.code);
 
+    this.editingInvoicePrefix =
+      invoicePrefixFor(warehouse);
+
   }
 
 
@@ -156,6 +169,8 @@ export class WarehousesComponent implements OnInit {
     this.editingWarehouseName = '';
 
     this.editingWarehouseCode = '';
+
+    this.editingInvoicePrefix = '';
 
   }
 
@@ -230,7 +245,10 @@ export class WarehousesComponent implements OnInit {
             name,
 
             code:
-              normalizedCode
+              normalizedCode,
+
+            invoicePrefix:
+              this.editingInvoicePrefix
           }
         );
 
@@ -311,15 +329,6 @@ export class WarehousesComponent implements OnInit {
 
       warehouse.isActive =
         newStatus;
-
-
-      console.log(
-        `Warehouse "${warehouse.name}" is now ${
-          newStatus
-            ? 'Active'
-            : 'Inactive'
-        }.`
-      );
 
 
       this.isUpdatingStatus = false;

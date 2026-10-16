@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { sanitizeInvoicePrefix } from '../../../../../services/invoice-number';
 import { DuplicateError } from '../../../../../services/unique-key';
 import { Component, OnInit, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -42,6 +43,8 @@ export class AddWarehouseComponent implements OnInit {
 
   warehouseCode = '';
 
+  invoicePrefix = '';
+
   isActive = true;
 
   isSaving = false;
@@ -77,6 +80,24 @@ export class AddWarehouseComponent implements OnInit {
   onCodeInput(value: string) {
 
     this.warehouseCode = upperInput(value);
+
+  }
+
+
+  get invoicePreviewPrefix(): string {
+
+    return (
+      this.invoicePrefix ||
+      sanitizeInvoicePrefix(this.warehouseCode) ||
+      'W1'
+    );
+
+  }
+
+
+  onInvoicePrefixInput(value: string) {
+
+    this.invoicePrefix = sanitizeInvoicePrefix(value);
 
   }
 
@@ -176,16 +197,13 @@ export class AddWarehouseComponent implements OnInit {
             code:
               normalizedCode,
 
+            invoicePrefix:
+              this.invoicePrefix,
+
             isActive:
               this.isActive
 
           });
-
-
-      console.log(
-        'Warehouse added successfully:',
-        result.id
-      );
 
 
       await this.dialog.alert(
@@ -239,6 +257,8 @@ export class AddWarehouseComponent implements OnInit {
     this.warehouseName = '';
 
     this.warehouseCode = '';
+
+    this.invoicePrefix = '';
 
     this.isActive = true;
 

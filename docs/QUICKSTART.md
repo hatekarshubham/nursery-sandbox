@@ -178,6 +178,20 @@ If the emulators started empty:
 
 Production users are not copied into the emulator.
 
+### Roles
+
+The `role` field must be exactly `Admin` or `SalesPerson`. Any other value, or a missing profile, is refused at login and by the database rules.
+
+| | Admin | SalesPerson |
+|---|---|---|
+| Products, categories, suppliers, warehouses, purchases, stock transfers, stock adjustments | View, add, edit, delete | View only |
+| Print Barcodes | Yes | Yes |
+| Create Sale | Yes | Yes |
+| Sales History | All sales | Own sales only |
+| `users` profiles | Read and change all | Read own, cannot change |
+
+The rules live in `firestore.rules` (they read the role from `users/{uid}`). To test them: `firebase emulators:exec --only firestore --project rules-test "node scripts/test-rules.mjs"` (run `npm install` in `scripts/` once). Deploy them with `firebase deploy --only firestore:rules`, and the new sales index with `firebase deploy --only firestore:indexes`.
+
 ## 6. Deploy
 
 This needs Editor access on the Firebase project.

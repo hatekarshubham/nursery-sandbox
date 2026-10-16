@@ -77,7 +77,6 @@ export class AddStockAdjustmentComponent
   private readonly dialog = inject(AppDialogService);
 
 
-
   // =======================================================
   // MASTER DATA
   // =======================================================
@@ -961,12 +960,6 @@ export class AddStockAdjustmentComponent
                 .trim()
 
           });
-
-
-      console.log(
-        'Stock adjustment completed:',
-        adjustmentId
-      );
 
 
       await this.dialog.alert(

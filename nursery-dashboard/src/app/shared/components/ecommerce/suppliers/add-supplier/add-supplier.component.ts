@@ -141,11 +141,6 @@ export class AddSupplierComponent {
 
     try {
 
-      console.log(
-        'Supplier before Firestore:',
-        this.supplier
-      );
-
 
       const result =
         await this.supplierService.addSupplier({
@@ -175,12 +170,6 @@ export class AddSupplierComponent {
 
 
       this.supplierId = result.id;
-
-
-      console.log(
-        'Supplier added to Firestore:',
-        result.id
-      );
 
 
       await this.dialog.alert(

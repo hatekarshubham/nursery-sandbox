@@ -1,18 +1,219 @@
 rules_version = '2';
 
+// =============================================================
+// ROLES
+// =============================================================
+//
+// Each user has a document at users/{uid} with a `role` field:
+//
+//   Admin        full access
+//   SalesPerson  view everything, create sales, view own sales
+//
+// A signed-in user with no users/{uid} document, or with any
+// other role, gets no access at all.
+//
+// Reading the role costs one extra document read per request
+// (Firestore counts it once per request, not once per document).
+//
+// =============================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper: is the caller signed in?
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // All app data (products, categories, sales, purchases, users, ...)
-    // is only accessible to authenticated users. Accounts are created
-    // manually by the admin, so there is no public/anonymous access.
-    match /{document=**} {
-      allow read, write: if isSignedIn();
+    function userPath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
     }
+
+    function roleName() {
+      return isSignedIn() && exists(userPath())
+        ? get(userPath()).data.role
+        : '';
+    }
+
+    function isAdmin() {
+      return roleName() == 'Admin';
+    }
+
+    function isSalesPerson() {
+      return roleName() == 'SalesPerson';
+    }
+
+    function hasRole() {
+      return isAdmin() || isSalesPerson();
+    }
+
+
+    // -------------------------------------------------------------
+    // USERS
+    // Everybody can read their own profile (the app needs the role).
+    // Only an admin can create or change profiles, so nobody can
+    // promote themselves.
+    // -------------------------------------------------------------
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+    }
+
+
+    // -------------------------------------------------------------
+    // MASTER DATA AND STOCK DOCUMENTS
+    // Admin and sales person can view. Only an admin can add, edit
+    // or delete.
+    // -------------------------------------------------------------
+    match /products/{id} {
+      allow read: if hasRole();
+      allow create, delete: if isAdmin();
+
+      // A sale lowers the stored total. A sales person may only
+      // decrease it, and may not change anything else on the product.
+      allow update: if isAdmin()
+        || (
+          isSalesPerson()
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['totalQuantity', 'stockState', 'updatedAt'])
+          && request.resource.data.totalQuantity is int
+          && request.resource.data.totalQuantity >= 0
+          && request.resource.data.totalQuantity < resource.data.totalQuantity
+          && request.resource.data.stockState is string
+        );
+    }
+
+    match /categories/{id} {
+      allow read: if hasRole();
+      allow write: if isAdmin();
+    }
+
+    match /suppliers/{id} {
+      allow read: if hasRole();
+      allow write: if isAdmin();
+    }
+
+    match /warehouses/{id} {
+      allow read: if hasRole();
+      allow write: if isAdmin();
+    }
+
+    match /purchases/{id} {
+      allow read: if hasRole();
+      allow write: if isAdmin();
+    }
+
+    match /stockTransfers/{id} {
+      allow read: if hasRole();
+      allow write: if isAdmin();
+    }
+
+    match /stockAdjustments/{id} {
+      allow read: if hasRole();
+      allow write: if isAdmin();
+    }
+
+
+    // -------------------------------------------------------------
+    // INVENTORY
+    // A sales person can only LOWER a quantity (that is what a sale
+    // does), never below 0, and can change nothing but the quantity
+    // and the updated time. Admin can do everything.
+    // -------------------------------------------------------------
+    match /inventory/{id} {
+      allow read: if hasRole();
+
+      allow create, delete: if isAdmin();
+
+      allow update: if isAdmin()
+        || (
+          isSalesPerson()
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['quantity', 'updatedAt'])
+          && request.resource.data.quantity is int
+          && request.resource.data.quantity >= 0
+          && request.resource.data.quantity < resource.data.quantity
+        );
+    }
+
+
+    // -------------------------------------------------------------
+    // SALES
+    // A sales person can create a sale under their own ID and read
+    // only their own sales. Nobody but an admin can change or delete
+    // a sale.
+    // -------------------------------------------------------------
+    match /sales/{id} {
+      allow read: if isAdmin()
+        || (isSalesPerson() && resource.data.createdById == request.auth.uid);
+
+      allow create: if isAdmin()
+        || (isSalesPerson() && request.resource.data.createdById == request.auth.uid);
+
+      allow update: if isAdmin();
+
+      // Invoice numbers must stay consecutive, so a sale record can
+      // never be deleted (not even by an admin).
+      allow delete: if false;
+    }
+
+
+    // -------------------------------------------------------------
+    // INVOICE COUNTERS
+    // One document per warehouse series and financial year. A sale
+    // (admin or sales person) may start a series at 1 or move it up by
+    // exactly 1. Only an admin can set any other value.
+    // -------------------------------------------------------------
+    match /invoiceCounters/{id} {
+      allow read: if hasRole();
+
+      allow create: if isAdmin()
+        || (hasRole() && request.resource.data.lastNumber == 1);
+
+      allow update: if isAdmin()
+        || (
+          hasRole()
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['lastNumber', 'updatedAt'])
+          && request.resource.data.lastNumber == resource.data.lastNumber + 1
+        );
+
+      allow delete: if isAdmin();
+    }
+
+
+    // -------------------------------------------------------------
+    // BARCODE AND UNIQUE-KEY REGISTRIES
+    // Written only while an admin adds a product or purchase.
+    // -------------------------------------------------------------
+    match /barcodes/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    match /uniqueKeys/{id} {
+      allow read, write: if isAdmin();
+    }
+
+
+    // -------------------------------------------------------------
+    // DAILY SUMMARIES
+    // One document per seller, warehouse and day. Written in the
+    // same transaction as the sale. A sales person reads and writes
+    // only their own. The summary function (admin SDK) bypasses these
+    // rules when it fills a sale the app did not summarise.
+    // -------------------------------------------------------------
+    match /dailySummaries/{id} {
+      allow read: if isAdmin()
+        || (isSalesPerson() && resource.data.createdById == request.auth.uid);
+
+      allow create, update: if isAdmin()
+        || (
+          isSalesPerson()
+          && request.resource.data.createdById == request.auth.uid
+        );
+
+      allow delete: if isAdmin();
+    }
+
+    // Anything not listed above is denied.
   }
 }

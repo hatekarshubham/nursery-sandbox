@@ -153,6 +153,19 @@ export class SalesComponent implements OnInit {
 
   private rangeRequestId = 0;
 
+  // Ranges longer than the cache window are not downloaded sale by
+  // sale. Their totals are added up on the server instead.
+  private longRangeTotals: {
+    from: number;
+    to: number;
+    count: number;
+    total: number;
+    gst: number;
+    quantity: number;
+    categories: BreakdownRow[];
+    suppliers: BreakdownRow[];
+  } | null = null;
+
   private initialLoad: Promise<void> | null = null;
 
 
@@ -226,6 +239,13 @@ export class SalesComponent implements OnInit {
     this.fromDate = (event.target as HTMLInputElement).value;
 
     this.datePreset = 'custom';
+
+    void this.ensureCoverage();
+
+  }
+
+
+  onWarehouseFilter(): void {
 
     void this.ensureCoverage();
 
@@ -417,14 +437,62 @@ export class SalesComponent implements OnInit {
   }
 
 
+  // True when the chosen dates are longer than about three months.
+  // Only totals are shown then (see getSalesTotals).
+  get longRangeActive(): boolean {
+
+    const totals = this.longRangeTotals;
+
+    if (!totals || this.dateRangeInvalid) {
+
+      return false;
+
+    }
+
+    const from = this.parseInputDate(this.fromDate);
+
+    const to = this.parseInputDate(this.toDate);
+
+    if (!from || !to) {
+
+      return false;
+
+    }
+
+    to.setHours(23, 59, 59, 999);
+
+    const todayEnd = this.endOfDay(new Date());
+
+    const end =
+      to.getTime() > todayEnd.getTime() ? todayEnd : to;
+
+    return (
+      totals.from === from.getTime() &&
+      totals.to === end.getTime()
+    );
+
+  }
+
   get invoiceCount(): number {
+
+    if (this.longRangeActive) {
+
+      return this.longRangeTotals!.count;
+
+    }
 
     return this.filteredSales.length;
 
   }
 
 
-  get quantitySold(): number {
+  get quantitySold(): number | null {
+
+    if (this.longRangeActive) {
+
+      return this.summaryFigure('quantity');
+
+    }
 
     return this.filteredSales.reduce(
       (total, sale) =>
@@ -441,6 +509,12 @@ export class SalesComponent implements OnInit {
 
 
   get gstCollected(): number {
+
+    if (this.longRangeActive) {
+
+      return this.longRangeTotals!.gst;
+
+    }
 
     if (!this.usesLineTotals) {
 
@@ -461,6 +535,12 @@ export class SalesComponent implements OnInit {
 
   get totalSales(): number {
 
+    if (this.longRangeActive) {
+
+      return this.summaryFigure('amount');
+
+    }
+
     if (!this.usesLineTotals) {
 
       return this.filteredSales.reduce(
@@ -480,6 +560,16 @@ export class SalesComponent implements OnInit {
 
   get categoryBreakdown(): BreakdownRow[] {
 
+    if (this.longRangeActive) {
+
+      return this.filterSummary(
+        this.longRangeTotals!.categories,
+        this.selectedCategory,
+        this.categories
+      );
+
+    }
+
     return this.buildBreakdown(
       line => line.categoryName || 'Uncategorised'
     );
@@ -489,9 +579,137 @@ export class SalesComponent implements OnInit {
 
   get supplierBreakdown(): BreakdownRow[] {
 
+    if (this.longRangeActive) {
+
+      return this.filterSummary(
+        this.longRangeTotals!.suppliers,
+        this.selectedSupplier,
+        this.suppliers
+      );
+
+    }
+
     return this.buildBreakdown(
       line => line.supplierName || 'No supplier'
     );
+
+  }
+
+
+  // One filter (category or supplier) narrows the long-range
+  // cards to that breakdown. Both filters together have no
+  // combined figure, so the cards stay on the whole range.
+  private summaryFigure(
+    field: 'quantity' | 'amount'
+  ): number {
+
+    const totals = this.longRangeTotals!;
+
+    const rows =
+      this.selectedCategory && !this.selectedSupplier
+        ? this.categoryBreakdown
+        : this.selectedSupplier && !this.selectedCategory
+          ? this.supplierBreakdown
+          : null;
+
+    if (!rows) {
+
+      return field === 'quantity'
+        ? totals.quantity
+        : totals.total;
+
+    }
+
+    return rows.reduce(
+      (sum, row) => sum + row[field],
+      0
+    );
+
+  }
+
+
+  private combineSummaries(
+    summaries: Array<Record<string, any>>
+  ): {
+    quantity: number;
+    categories: BreakdownRow[];
+    suppliers: BreakdownRow[];
+  } {
+
+    let quantity = 0;
+
+    const categories = new Map<string, BreakdownRow>();
+
+    const suppliers = new Map<string, BreakdownRow>();
+
+    const add = (
+      target: Map<string, BreakdownRow>,
+      buckets: Record<string, { name?: string; quantity?: number; amount?: number }> | undefined
+    ) => {
+
+      for (const bucket of Object.values(buckets ?? {})) {
+
+        const name = bucket?.name || 'Unknown';
+
+        const current = target.get(name) ?? {
+          name,
+          quantity: 0,
+          amount: 0
+        };
+
+        current.quantity += Number(bucket?.quantity ?? 0);
+
+        current.amount += Number(bucket?.amount ?? 0);
+
+        target.set(name, current);
+
+      }
+
+    };
+
+    for (const summary of summaries) {
+
+      quantity += Number(summary['quantitySold'] ?? 0);
+
+      add(categories, summary['categories']);
+
+      add(suppliers, summary['suppliers']);
+
+    }
+
+    const sortRows = (rows: BreakdownRow[]) =>
+      rows.sort((a, b) => b.amount - a.amount);
+
+    return {
+      quantity,
+      categories: sortRows([...categories.values()]),
+      suppliers: sortRows([...suppliers.values()])
+    };
+
+  }
+
+
+  private filterSummary(
+    rows: BreakdownRow[],
+    selectedId: string,
+    options: Array<{ id?: string; name: string }>
+  ): BreakdownRow[] {
+
+    if (!selectedId) {
+
+      return rows;
+
+    }
+
+    const selected = options.find(option => option.id === selectedId);
+
+    if (!selected) {
+
+      return rows;
+
+    }
+
+    return rows.filter(row => row.name === selected.name);
 
   }
 
@@ -655,6 +873,37 @@ export class SalesComponent implements OnInit {
         this.extraFrom = null;
 
         this.extraTo = null;
+
+      } else if (
+        this.spanDays(requestedStart, fetchEnd) >
+        this.maxCacheDays
+      ) {
+
+        const totals =
+          await this.salesService.getSalesTotals(
+            requestedStart,
+            fetchEnd
+          );
+
+        const summaries =
+          await this.salesService.getDailySummaries(
+            requestedStart,
+            fetchEnd,
+            this.selectedWarehouse
+          );
+
+        if (requestId !== this.rangeRequestId) {
+
+          return;
+
+        }
+
+        this.longRangeTotals = {
+          from: requestedStart.getTime(),
+          to: fetchEnd.getTime(),
+          ...totals,
+          ...this.combineSummaries(summaries)
+        };
 
       } else {
 

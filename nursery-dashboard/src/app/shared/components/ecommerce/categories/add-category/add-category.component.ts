@@ -152,14 +152,6 @@ export class AddCategoryComponent implements OnInit {
 
       this.isSaving = true;
 
-      console.log(
-        'Adding category:',
-        {
-          name,
-          code
-        }
-      );
-
 
       const result =
         await this.categoryService
@@ -167,12 +159,6 @@ export class AddCategoryComponent implements OnInit {
             name,
             code
           );
-
-
-      console.log(
-        'Category added successfully:',
-        result.id
-      );
 
 
       await this.dialog.alert(

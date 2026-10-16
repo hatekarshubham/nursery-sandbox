@@ -1,7 +1,12 @@
 import { inject, Injectable } from '@angular/core';
 import { Auth, User, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, authState } from '@angular/fire/auth';
-import { Router } from '@angular/router';
-import { Firestore,doc,getDoc } from '@angular/fire/firestore';
+import {
+  Firestore,
+  doc,
+  getDoc,
+  terminate,
+  clearIndexedDbPersistence
+} from '@angular/fire/firestore';
 import { BehaviorSubject } from 'rxjs';
 import { AppDialogService } from '../shared/services/app-dialog.service';
 
@@ -12,7 +17,6 @@ import { AppDialogService } from '../shared/services/app-dialog.service';
 export class AuthService {
   private auth = inject(Auth);
   private firestore = inject(Firestore);
-  private router = inject(Router);
   private dialog = inject(AppDialogService);
   private currentProfile: any = null;
 
@@ -42,7 +46,31 @@ export class AuthService {
       pass
     );
 
-    const profile = await this.loadProfile(credential.user, true);
+    let profile: any;
+
+    try {
+
+      profile = await this.loadProfile(credential.user, true);
+
+      if (
+        profile?.role !== 'Admin' &&
+        profile?.role !== 'SalesPerson'
+      ) {
+
+        throw new Error(
+          'Your account has no role assigned. Please contact the administrator.'
+        );
+
+      }
+
+    } catch (error) {
+
+      // Never leave a half signed-in account behind.
+      await this.signOutQuietly();
+
+      throw error;
+
+    }
 
     return {
       user: credential.user,
@@ -63,12 +91,52 @@ export class AuthService {
     this.dialog.dismiss();
     await signOut(this.auth);
     this.dialog.dismiss();
-    await this.router.navigate(['/login'], { replaceUrl: true });
-    this.dialog.dismiss();
+
+    // Firestore keeps a copy of the data in the browser so refreshes
+    // are cheap. On a shared computer the next person must not be
+    // able to see it, so wipe it on logout and reload clean.
+    try {
+      await terminate(this.firestore);
+      await clearIndexedDbPersistence(this.firestore);
+    } catch {
+      // Another open tab may still be using the cache; the data is
+      // then cleared the next time every tab is closed.
+    }
+
+    window.location.replace('/login');
+  }
+
+  // Signs out without navigating (used when an account is
+  // rejected, so the login page does not bounce back).
+  async signOutQuietly() {
+    this.currentProfile = null;
+    this.profile$.next(null);
+    await signOut(this.auth);
   }
 
   getProfile() {
     return this.currentProfile;
+  }
+
+  // Resolves with the signed-in user's profile (loading it if
+  // needed), or null when nobody is signed in or the profile
+  // document does not exist.
+  async ensureProfile() {
+
+    if (this.currentProfile) {
+      return this.currentProfile;
+    }
+
+    await this.auth.authStateReady();
+
+    const user = this.auth.currentUser;
+
+    if (!user) {
+      return null;
+    }
+
+    return this.loadProfile(user);
+
   }
 
   getCreator(): { id: string; name: string } {

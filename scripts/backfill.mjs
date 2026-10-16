@@ -86,7 +86,7 @@ async function backfill(collectionName, buildUpdate) {
 
     for (const doc of snap.docs) {
       scanned++;
-      const update = buildUpdate(doc.data());
+      const update = buildUpdate(doc.data(), doc.id);
       if (!update) continue;
       changed++;
       if (apply) {
@@ -115,11 +115,135 @@ await backfill('sales', (data) => {
   return { expiresAt: expiry };
 });
 
-await backfill('products', (data) => {
+const stockByProduct = new Map();
+const inventorySnapshot = await db.collection('inventory').get();
+for (const entry of inventorySnapshot.docs) {
+  const data = entry.data();
+  const productId = data.productId;
+  if (!productId) continue;
+  stockByProduct.set(
+    productId,
+    (stockByProduct.get(productId) ?? 0) + Number(data.quantity ?? 0)
+  );
+}
+
+const categoryActive = new Map();
+const categorySnapshot = await db.collection('categories').get();
+for (const entry of categorySnapshot.docs) {
+  categoryActive.set(entry.id, entry.data().isActive !== false);
+}
+
+function stockState(data, totalQuantity) {
+  const categoryIsActive = data.categoryId
+    ? categoryActive.get(data.categoryId) !== false
+    : data.categoryIsActive !== false;
+  if (data.isActive === false || !categoryIsActive) return 'inactive';
+  return totalQuantity > 0 ? 'active' : 'out';
+}
+
+await backfill('products', (data, id) => {
   const nameLower = normalizeName(data.name);
   const searchPrefixes = buildSearchPrefixes(data.name);
-  if (data.nameLower === nameLower && sameList(data.searchPrefixes, searchPrefixes)) return null;
-  return { nameLower, searchPrefixes };
+  const totalQuantity = stockByProduct.get(id) ?? 0;
+  const categoryIsActive = data.categoryId
+    ? categoryActive.get(data.categoryId) !== false
+    : true;
+  const state = stockState(data, totalQuantity);
+  if (
+    data.nameLower === nameLower &&
+    sameList(data.searchPrefixes, searchPrefixes) &&
+    data.totalQuantity === totalQuantity &&
+    data.categoryIsActive === categoryIsActive &&
+    data.stockState === state
+  ) {
+    return null;
+  }
+  return {
+    nameLower,
+    searchPrefixes,
+    totalQuantity,
+    categoryIsActive,
+    stockState: state
+  };
 });
+
+// Rebuild daily summaries from every sale. Safe to re-run:
+// each document is rewritten to the total of its sales.
+function businessDay(date) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(date);
+}
+
+const summaries = new Map();
+const salesSnapshot = await db.collection('sales').get();
+for (const entry of salesSnapshot.docs) {
+  const sale = entry.data();
+  if (!sale.createdById || !sale.warehouseId) continue;
+  const created = toDate(sale.createdAt);
+  if (!created) continue;
+  const day = businessDay(created);
+  const id = `${sale.createdById}_${sale.warehouseId}_${day}`;
+  const current = summaries.get(id) ?? {
+    createdById: sale.createdById,
+    warehouseId: sale.warehouseId,
+    day,
+    invoiceCount: 0,
+    grandTotal: 0,
+    gstAmount: 0,
+    quantitySold: 0,
+    categories: {},
+    suppliers: {}
+  };
+  current.invoiceCount += 1;
+  current.grandTotal += Number(sale.grandTotal ?? 0);
+  current.gstAmount += Number(sale.gstAmount ?? 0);
+  for (const item of sale.items ?? []) {
+    const quantity = Number(item.quantity ?? 0);
+    const amount = Number(item.total ?? 0);
+    current.quantitySold += quantity;
+    const categoryKey = String(item.categoryId || item.categoryName || 'uncategorised');
+    const category = current.categories[categoryKey] ?? {
+      name: String(item.categoryName || 'Uncategorised'),
+      quantity: 0,
+      amount: 0
+    };
+    category.quantity += quantity;
+    category.amount += amount;
+    current.categories[categoryKey] = category;
+    const supplierKey = String(item.supplierId || item.supplierName || 'none');
+    const supplier = current.suppliers[supplierKey] ?? {
+      name: String(item.supplierName || 'No supplier'),
+      quantity: 0,
+      amount: 0
+    };
+    supplier.quantity += quantity;
+    supplier.amount += amount;
+    current.suppliers[supplierKey] = supplier;
+  }
+  summaries.set(id, current);
+}
+
+console.log(`dailySummaries: ${summaries.size} document(s) from ${salesSnapshot.size} sale(s)`);
+if (apply) {
+  let batch = db.batch();
+  let pending = 0;
+  for (const [id, summary] of summaries) {
+    batch.set(db.collection('dailySummaries').doc(id), {
+      ...summary,
+      updatedAt: new Date()
+    });
+    pending++;
+    if (pending >= BATCH_SIZE) {
+      await batch.commit();
+      batch = db.batch();
+      pending = 0;
+    }
+  }
+  if (pending > 0) await batch.commit();
+}
 
 console.log('Done.');

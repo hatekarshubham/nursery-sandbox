@@ -118,6 +118,50 @@
 
 
     <!-- =================================================== -->
+    <!-- INVOICE PREFIX -->
+    <!-- =================================================== -->
+
+    <div>
+
+      <label
+        for="invoicePrefix"
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Invoice Prefix
+      </label>
+
+
+      <input
+        id="invoicePrefix"
+        name="invoicePrefix"
+        type="text"
+
+        [ngModel]="invoicePrefix"
+        (ngModelChange)="onInvoicePrefixInput($event)"
+        maxlength="3"
+
+        placeholder="Example: W1"
+
+        autocomplete="off"
+
+        [disabled]="isSaving"
+
+        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm uppercase text-gray-800 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
+      />
+
+
+      <p
+        class="mt-1 text-xs text-gray-400 dark:text-gray-500"
+      >
+        Up to 3 letters or digits. Invoices look like
+        {{ invoicePreviewPrefix }}/26-27/000001.
+        Leave blank to use the start of the code.
+      </p>
+
+    </div>
+
+
+    <!-- =================================================== -->
     <!-- STATUS -->
     <!-- =================================================== -->
 

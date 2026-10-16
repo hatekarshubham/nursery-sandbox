@@ -76,7 +76,6 @@ export class AddStockTransferComponent
   private readonly dialog = inject(AppDialogService);
 
 
-
   // =======================================================
   // MASTER DATA
   // =======================================================
@@ -935,12 +934,6 @@ export class AddStockTransferComponent
           );
 
 
-      console.log(
-        'Stock transfer completed:',
-        transferId
-      );
-
-
       await this.dialog.alert(
         'Stock transferred successfully.'
       );
@@ -1038,12 +1031,6 @@ export class AddStockTransferComponent
           .createStockTransfer(
             transferData
           );
-
-
-      console.log(
-        'Stock transfer completed:',
-        transferId
-      );
 
 
       await this.dialog.alert(

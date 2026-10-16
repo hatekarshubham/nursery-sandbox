@@ -47,7 +47,8 @@
 
         <input
           type="text"
-          [(ngModel)]="searchText"
+          [ngModel]="searchText"
+          (ngModelChange)="onSearchInput($event)"
           placeholder="Product, category, supplier, barcode..."
           class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400"
         />
@@ -67,6 +68,7 @@
 
         <select
           [(ngModel)]="selectedCategory"
+          (ngModelChange)="onFilterChange()"
           class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
         >
 
@@ -104,6 +106,7 @@
 
         <select
           [(ngModel)]="selectedSupplier"
+          (ngModelChange)="onFilterChange()"
           class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
         >
 
@@ -141,6 +144,7 @@
 
         <select
           [(ngModel)]="selectedStatus"
+          (ngModelChange)="onFilterChange()"
           class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
         >
 
@@ -190,7 +194,7 @@
         <span
           class="font-semibold text-gray-800 dark:text-white"
         >
-          {{ tableData.length }}
+          {{ matchCount }}
         </span>
 
         products
@@ -299,7 +303,7 @@
     filteredProducts.length > 0
   ) {
 
-    <div class="min-w-0 max-w-full overflow-x-hidden">
+    <div class="min-w-0 max-w-full overflow-x-auto">
 
       <table class="w-full text-left text-theme-sm">
 
@@ -310,25 +314,25 @@
           <tr>
 
             <th
-              class="w-16 px-3 py-3 font-medium text-gray-500 dark:text-gray-400"
+              class="w-16 px-2 py-3 font-medium text-gray-500 dark:text-gray-400"
             >
               Image
             </th>
 
             <th
-              class="px-3 py-3 font-medium text-gray-500 dark:text-gray-400"
+              class="px-2 py-3 font-medium text-gray-500 dark:text-gray-400"
             >
               Product Name
             </th>
 
             <th
-              class="px-3 py-3 font-medium text-gray-500 dark:text-gray-400"
+              class="px-2 py-3 font-medium text-gray-500 dark:text-gray-400"
             >
               Category
             </th>
 
             <th
-              class="px-3 py-3 font-medium text-gray-500 dark:text-gray-400"
+              class="px-2 py-3 font-medium text-gray-500 dark:text-gray-400"
             >
               Unit Price
             </th>
@@ -342,7 +346,7 @@
             ) {
 
               <th
-                class="w-24 px-3 py-3 font-medium text-gray-500 dark:text-gray-400"
+                class="w-[72px] px-2 py-3 font-medium text-gray-500 dark:text-gray-400"
               >
                 {{ getWarehouseCode(warehouse) }} Qty
               </th>
@@ -351,19 +355,20 @@
 
 
             <th
-              class="px-3 py-3 font-medium text-gray-500 dark:text-gray-400"
+              class="px-2 py-3 font-medium text-gray-500 dark:text-gray-400"
             >
               Total
             </th>
 
             <th
-              class="px-3 py-3 font-medium text-gray-500 dark:text-gray-400"
+              class="px-2 py-3 font-medium text-gray-500 dark:text-gray-400"
             >
               Status
             </th>
 
             <th
-              class="px-3 py-3 text-right font-medium text-gray-500 dark:text-gray-400"
+              *ngIf="roles.canModify"
+              class="px-2 py-3 text-right font-medium text-gray-500 dark:text-gray-400"
             >
               Action
             </th>
@@ -378,7 +383,7 @@
         >
 
           @for (
-            product of filteredProducts;
+            product of pagedProducts;
             track product.id
           ) {
 
@@ -391,7 +396,7 @@
 
               <!-- IMAGE -->
 
-              <td class="px-3 py-4">
+              <td class="px-2 py-4">
 
                 <div
                   class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50"
@@ -426,7 +431,7 @@
               <!-- PRODUCT NAME -->
 
               <td
-                class="cursor-pointer whitespace-normal px-3 py-4"
+                class="cursor-pointer whitespace-normal px-2 py-4"
                 (click)="openProductDetails(product)"
               >
                 <div class="font-medium text-gray-800 dark:text-white/90">
@@ -452,7 +457,7 @@
               <!-- CATEGORY -->
 
               <td
-                class="whitespace-nowrap px-3 py-4 text-gray-500 dark:text-gray-400"
+                class="break-words px-2 py-4 text-gray-500 dark:text-gray-400"
               >
                 {{ product.category }}
               </td>
@@ -461,7 +466,7 @@
               <!-- UNIT PRICE -->
 
               <td
-                class="whitespace-nowrap px-3 py-4 text-gray-500 dark:text-gray-400"
+                class="whitespace-nowrap px-2 py-4 text-gray-500 dark:text-gray-400"
               >
                 ₹{{ product.unitPrice | number:'1.2-2' }}
               </td>
@@ -475,7 +480,7 @@
               ) {
 
                 <td
-                  class="px-3 py-4"
+                  class="px-2 py-4"
                 >
 
                   @if (
@@ -521,7 +526,7 @@
               -->
 
               <td
-                class="px-3 py-4"
+                class="px-2 py-4"
               >
 
                 @if (
@@ -560,7 +565,7 @@
 
               <!-- STATUS -->
 
-              <td class="whitespace-nowrap px-3 py-4">
+              <td class="whitespace-nowrap px-2 py-4">
 
                 @if (product.isAvailable) {
 
@@ -620,7 +625,8 @@
               <!-- ACTIONS -->
 
               <td
-                class="px-3 py-4"
+                *ngIf="roles.canModify"
+                class="px-2 py-4"
               >
 
                 <div
@@ -678,6 +684,70 @@
       </table>
 
     </div>
+
+    <!-- ================================================= -->
+    <!-- PAGER -->
+    <!-- ================================================= -->
+
+    @if (totalPages > 1) {
+
+      <div
+        class="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-600 dark:text-gray-400"
+      >
+
+        <span>
+          Rows {{ firstRowNumber }} to {{ lastRowNumber }}
+          of {{ matchCount }}
+        </span>
+
+        <div class="flex items-center gap-2">
+
+          <button
+            type="button"
+            (click)="goToPage(1)"
+            [disabled]="currentPage <= 1"
+            class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:hover:bg-white/[0.03]"
+          >
+            First
+          </button>
+
+          <button
+            type="button"
+            (click)="goToPage(currentPage - 1)"
+            [disabled]="currentPage <= 1"
+            class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:hover:bg-white/[0.03]"
+          >
+            Previous
+          </button>
+
+          <span class="px-2">
+            Page {{ currentPage }} of {{ totalPages }}
+          </span>
+
+          <button
+            type="button"
+            (click)="goToPage(currentPage + 1)"
+            [disabled]="currentPage >= totalPages"
+            class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:hover:bg-white/[0.03]"
+          >
+            Next
+          </button>
+
+          <button
+            type="button"
+            (click)="goToPage(totalPages)"
+            [disabled]="currentPage >= totalPages"
+            class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:hover:bg-white/[0.03]"
+          >
+            Last
+          </button>
+
+        </div>
+
+      </div>
+
+    }
+
 
   }
 

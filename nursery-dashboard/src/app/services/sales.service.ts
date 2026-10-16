@@ -1,5 +1,29 @@
 import { Injectable, inject } from '@angular/core';
 
+import { RoleService } from './role.service';
+
+import { WarehouseService } from './warehouse.service';
+
+import {
+  addStockDelta,
+  readProductTotals,
+  writeProductTotals
+} from './stock-total';
+
+import {
+  DAILY_SUMMARIES_COLLECTION,
+  addSaleToSummary,
+  businessDay,
+  summaryDocId
+} from './daily-summary';
+
+import {
+  INVOICE_COUNTERS_COLLECTION,
+  financialYearLabel,
+  formatInvoiceNumber,
+  invoicePrefixFor,
+  invoiceSeriesId
+} from './invoice-number';
 import {
   Firestore,
   collection,
@@ -11,10 +35,13 @@ import {
   where,
   orderBy,
   getDocs,
+  getAggregateFromServer,
+  count,
+  sum,
   runTransaction
 } from '@angular/fire/firestore';
 
-import { Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 
 
 // =======================================================
@@ -195,6 +222,10 @@ export class SalesService {
     inject(Firestore);
 
 
+  private roles = inject(RoleService);
+
+  private warehouseService = inject(WarehouseService);
+
   private salesCollection =
     collection(
       this.firestore,
@@ -209,7 +240,16 @@ export class SalesService {
   getSales(): Observable<Sale[]> {
 
     return collectionData(
-      this.salesCollection,
+      this.roles.isAdmin
+        ? this.salesCollection
+        : query(
+            this.salesCollection,
+            where(
+              'createdById',
+              '==',
+              this.roles.userId
+            )
+          ),
       {
         idField: 'id'
       }
@@ -232,8 +272,24 @@ export class SalesService {
     end: Date
   ): Promise<Sale[]> {
 
+    // A sales person may only read their own sales (the
+    // security rules enforce it, and a query that could return
+    // anyone else's sale is rejected), so the query is limited
+    // to their user ID. An admin reads every sale.
+    const ownSalesOnly =
+      this.roles.isAdmin
+        ? []
+        : [
+            where(
+              'createdById',
+              '==',
+              this.roles.userId
+            )
+          ];
+
     const salesQuery = query(
       this.salesCollection,
+      ...ownSalesOnly,
       where('createdAt', '>=', start),
       where('createdAt', '<=', end),
       orderBy('createdAt', 'desc')
@@ -247,6 +303,110 @@ export class SalesService {
         ...document.data()
       })
     ) as Sale[];
+
+  }
+
+
+  // =====================================================
+  // SALES TOTALS FOR A DATE RANGE
+  // =====================================================
+  //
+  // Counts and adds up sales on the server. Firestore bills this
+  // as one read per 1,000 matching sales instead of one read per
+  // sale, so a year of sales costs hundreds of reads, not
+  // hundreds of thousands.
+  //
+  // =====================================================
+
+  async getSalesTotals(
+    start: Date,
+    end: Date
+  ): Promise<{
+    count: number;
+    total: number;
+    gst: number;
+  }> {
+
+    const ownSalesOnly =
+      this.roles.isAdmin
+        ? []
+        : [
+            where(
+              'createdById',
+              '==',
+              this.roles.userId
+            )
+          ];
+
+    const totalsQuery = query(
+      this.salesCollection,
+      ...ownSalesOnly,
+      where('createdAt', '>=', start),
+      where('createdAt', '<=', end)
+    );
+
+    const result = await getAggregateFromServer(
+      totalsQuery,
+      {
+        count: count(),
+        total: sum('grandTotal'),
+        gst: sum('gstAmount')
+      }
+    );
+
+    const data = result.data();
+
+    return {
+      count: data.count,
+      total: Number(data.total ?? 0),
+      gst: Number(data.gst ?? 0)
+    };
+
+  }
+
+
+  // Daily summaries for a date range. One document per seller,
+  // warehouse and day, so a year is a few hundred reads rather
+  // than one read per sale. A sales person only gets their own.
+  async getDailySummaries(
+    start: Date,
+    end: Date,
+    warehouseId = ''
+  ): Promise<Array<Record<string, any>>> {
+
+    const constraints = [];
+
+    if (!this.roles.isAdmin) {
+
+      constraints.push(
+        where('createdById', '==', this.roles.userId)
+      );
+
+    }
+
+    if (warehouseId) {
+
+      constraints.push(
+        where('warehouseId', '==', warehouseId)
+      );
+
+    }
+
+    constraints.push(
+      where('day', '>=', businessDay(start)),
+      where('day', '<=', businessDay(end))
+    );
+
+    const snapshot = await getDocs(
+      query(
+        collection(this.firestore, DAILY_SUMMARIES_COLLECTION),
+        ...constraints
+      )
+    );
+
+    return snapshot.docs.map(
+      entry => ({ id: entry.id, ...entry.data() })
+    );
 
   }
 
@@ -356,8 +516,37 @@ export class SalesService {
 
     const saleDate = new Date();
 
-    const invoiceNumber =
-      this.generateInvoiceNumber();
+    // The invoice number is taken from the warehouse's own
+    // counter inside the transaction below (consecutive, no
+    // gaps). The warehouse list is already cached, so this
+    // lookup costs no extra reads.
+    const warehouses =
+      await firstValueFrom(
+        this.warehouseService.getWarehouses()
+      );
+
+    const invoicePrefix =
+      invoicePrefixFor(
+        warehouses.find(
+          warehouse =>
+            warehouse.id === sale.warehouseId
+        )
+      );
+
+    const financialYear =
+      financialYearLabel(saleDate);
+
+    const counterRef =
+      doc(
+        this.firestore,
+        INVOICE_COUNTERS_COLLECTION,
+        invoiceSeriesId(
+          invoicePrefix,
+          financialYear
+        )
+      );
+
+    let invoiceNumber = '';
 
 
     // ===================================================
@@ -622,12 +811,123 @@ export class SalesService {
 
 
         // =================================================
+        // NEXT INVOICE NUMBER
+        // =================================================
+
+        const counterSnapshot =
+          await transaction.get(counterRef);
+
+        const nextSerial =
+          Number(
+            counterSnapshot.exists()
+              ? counterSnapshot.data()['lastNumber']
+              : 0
+          ) + 1;
+
+        invoiceNumber =
+          formatInvoiceNumber(
+            invoicePrefix,
+            financialYear,
+            nextSerial
+          );
+
+
+        // The product's stored total drops by what this sale
+        // takes. Read before any write (transaction rule).
+        const stockDeltas = new Map<string, number>();
+
+        for (const item of sale.items) {
+
+          addStockDelta(
+            stockDeltas,
+            item.productId,
+            -item.quantity
+          );
+
+        }
+
+        const productTotals =
+          await readProductTotals(
+            this.firestore,
+            transaction,
+            stockDeltas
+          );
+
+
+        // Daily summary for this seller, warehouse and day.
+        // Written in this same transaction, so it cannot
+        // disagree with the sale. The Cloud Function skips
+        // a sale that already has summaryApplied set.
+        const summaryDay = businessDay(saleDate);
+
+        const summaryRef =
+          sale.createdById
+            ? doc(
+                this.firestore,
+                DAILY_SUMMARIES_COLLECTION,
+                summaryDocId(
+                  sale.createdById,
+                  sale.warehouseId,
+                  summaryDay
+                )
+              )
+            : null;
+
+        const summarySnapshot =
+          summaryRef
+            ? await transaction.get(summaryRef)
+            : null;
+
+        const summaryWrite =
+          summaryRef
+            ? addSaleToSummary(
+                summarySnapshot!.exists()
+                  ? summarySnapshot!.data()
+                  : null,
+                {
+                  createdById: sale.createdById ?? '',
+                  warehouseId: sale.warehouseId,
+                  grandTotal: sale.grandTotal,
+                  gstAmount: sale.gstAmount,
+                  items: sale.items
+                },
+                summaryDay
+              )
+            : null;
+
+
+        // =================================================
         // ALL READS COMPLETE
         // =================================================
         //
         // From this point we can start writing.
         //
         // =================================================
+
+
+        transaction.set(
+          counterRef,
+          {
+            prefix: invoicePrefix,
+            financialYear,
+            lastNumber: nextSerial,
+            updatedAt: new Date()
+          }
+        );
+
+        writeProductTotals(
+          transaction,
+          productTotals
+        );
+
+        if (summaryRef && summaryWrite) {
+
+          transaction.set(
+            summaryRef,
+            summaryWrite
+          );
+
+        }
 
 
         // =================================================
@@ -761,6 +1061,10 @@ export class SalesService {
             // TIMESTAMPS
             // =============================================
 
+            // The daily-summary function does nothing when
+            // this is set, because the summary was written above.
+            summaryApplied: true,
+
             createdAt:
               saleDate,
 
@@ -796,28 +1100,6 @@ export class SalesService {
   }
 
 
-  // =====================================================
-  // GENERATE INVOICE NUMBER
-  // =====================================================
-  //
-  // Example:
-  //
-  // INV-20260928-224240-962
-  //
-  // INV
-  //  -> Invoice
-  //
-  // 20260928
-  //  -> YYYYMMDD
-  //
-  // 224240
-  //  -> HHMMSS
-  //
-  // 962
-  //  -> random 3-digit suffix
-  //
-  // =====================================================
-
   private salesExpiryDate(from: Date): Date {
 
     const expiry = new Date(from);
@@ -826,79 +1108,6 @@ export class SalesService {
     );
 
     return expiry;
-
-  }
-
-
-  private generateInvoiceNumber(): string {
-
-    const now =
-      new Date();
-
-
-    const year =
-      now
-        .getFullYear()
-        .toString();
-
-
-    const month =
-      String(
-        now.getMonth() + 1
-      ).padStart(
-        2,
-        '0'
-      );
-
-
-    const day =
-      String(
-        now.getDate()
-      ).padStart(
-        2,
-        '0'
-      );
-
-
-    const hours =
-      String(
-        now.getHours()
-      ).padStart(
-        2,
-        '0'
-      );
-
-
-    const minutes =
-      String(
-        now.getMinutes()
-      ).padStart(
-        2,
-        '0'
-      );
-
-
-    const seconds =
-      String(
-        now.getSeconds()
-      ).padStart(
-        2,
-        '0'
-      );
-
-
-    const random =
-      Math.floor(
-        100 +
-        Math.random() * 900
-      );
-
-
-    return (
-      `INV-${year}${month}${day}-` +
-      `${hours}${minutes}${seconds}-` +
-      `${random}`
-    );
 
   }
 

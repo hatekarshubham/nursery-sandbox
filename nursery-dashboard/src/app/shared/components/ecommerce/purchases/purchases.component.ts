@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 
+import { RoleService } from '../../../../services/role.service';
 import { FormsModule } from '@angular/forms';
 
 import {
@@ -38,6 +39,8 @@ import {
 })
 export class PurchasesComponent
   implements OnInit, OnDestroy {
+
+  readonly roles = inject(RoleService);
 
   private readonly dialog = inject(AppDialogService);
 

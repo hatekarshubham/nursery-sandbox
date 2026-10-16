@@ -128,7 +128,6 @@ export class PrintBarcodesComponent
   private readonly dialog = inject(AppDialogService);
 
 
-
   // =======================================================
   // PRODUCTS
   // =======================================================
@@ -397,6 +396,12 @@ export class PrintBarcodesComponent
   // FILTERED PRODUCTS
   // =======================================================
 
+  private filteredCache: BarcodeProduct[] = [];
+
+  private filteredCacheProducts: BarcodeProduct[] | null = null;
+
+  private filteredCacheSearch: string | null = null;
+
   get filteredProducts():
     BarcodeProduct[] {
 
@@ -405,6 +410,93 @@ export class PrintBarcodesComponent
         .trim()
         .toLowerCase();
 
+    if (
+      this.filteredCacheProducts === this.products &&
+      this.filteredCacheSearch === search
+    ) {
+
+      return this.filteredCache;
+
+    }
+
+    if (this.filteredCacheSearch !== search) {
+
+      // A new search always starts on the first page.
+      this.currentPage = 1;
+
+    }
+
+    this.filteredCache = this.computeFilteredProducts(search);
+
+    this.filteredCacheProducts = this.products;
+
+    this.filteredCacheSearch = search;
+
+    return this.filteredCache;
+
+  }
+
+
+  // =======================================================
+  // PAGING
+  // =======================================================
+
+  readonly pageSize = 50;
+
+  currentPage = 1;
+
+  get lastPage(): number {
+
+    return Math.max(
+      1,
+      Math.ceil(
+        this.filteredProducts.length / this.pageSize
+      )
+    );
+
+  }
+
+  get pagedProducts(): BarcodeProduct[] {
+
+    const page = Math.min(this.currentPage, this.lastPage);
+
+    return this.filteredProducts.slice(
+      (page - 1) * this.pageSize,
+      page * this.pageSize
+    );
+
+  }
+
+  get firstRowNumber(): number {
+
+    return this.filteredProducts.length === 0
+      ? 0
+      : (Math.min(this.currentPage, this.lastPage) - 1) *
+          this.pageSize + 1;
+
+  }
+
+  get lastRowNumber(): number {
+
+    return Math.min(
+      Math.min(this.currentPage, this.lastPage) *
+        this.pageSize,
+      this.filteredProducts.length
+    );
+
+  }
+
+  goToPage(page: number) {
+
+    this.currentPage =
+      Math.min(Math.max(1, page), this.lastPage);
+
+  }
+
+
+  private computeFilteredProducts(
+    search: string
+  ): BarcodeProduct[] {
 
     if (!search) {
 
@@ -1675,18 +1767,6 @@ export class PrintBarcodesComponent
 
     this.shouldRenderBarcodes =
       true;
-
-
-    console.log(
-      'Generated barcode labels:',
-      this.printLabels
-    );
-
-
-    console.log(
-      'Label settings:',
-      this.labelSettings
-    );
 
 
     if (

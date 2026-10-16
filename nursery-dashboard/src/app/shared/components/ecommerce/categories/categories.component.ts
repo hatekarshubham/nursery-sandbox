@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { RoleService } from '../../../../services/role.service';
 import { DuplicateError } from '../../../../services/unique-key';
 import { Component, OnInit, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -30,6 +31,8 @@ export class CategoriesComponent implements OnInit {
 
   private destroyRef = inject(DestroyRef);
 
+
+  readonly roles = inject(RoleService);
 
   private readonly dialog = inject(AppDialogService);
 

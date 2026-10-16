@@ -161,10 +161,10 @@
     filteredPurchases.length > 0
   ) {
 
-    <div>
+    <div class="max-w-full overflow-x-auto">
 
       <table
-        class="w-full table-fixed text-left"
+        class="w-full min-w-[720px] table-fixed text-left"
       >
 
         <!-- ================================================= -->
@@ -196,6 +196,7 @@
             </th>
 
             <th
+              *ngIf="roles.isAdmin"
               class="w-[17%]  px-3 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
             >
               Amount
@@ -208,6 +209,7 @@
             </th>
 
             <th
+              *ngIf="roles.canModify"
               class="w-[18%]  px-3 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
             >
               Action
@@ -308,9 +310,10 @@
 
               <!-- ============================================= -->
               <!-- AMOUNT (total, with subtotal and GST below) -->
+              <!-- Purchase prices are for admins only. -->
               <!-- ============================================= -->
 
-              <td class="px-3 py-4 text-right align-top">
+              <td *ngIf="roles.isAdmin" class="px-3 py-4 text-right align-top">
 
                 <p
                   class="whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white"
@@ -391,6 +394,7 @@
               <!-- ============================================= -->
 
               <td
+                *ngIf="roles.canModify"
                 class="px-3 py-4 align-top"
               >
 

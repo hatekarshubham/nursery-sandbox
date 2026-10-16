@@ -252,6 +252,7 @@
 
             <select
               [(ngModel)]="selectedWarehouse"
+              (ngModelChange)="onWarehouseFilter()"
               class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             >
 
@@ -414,7 +415,7 @@
           </p>
 
           <p class="mt-2 text-2xl font-semibold text-gray-800 dark:text-white">
-            {{ quantitySold }}
+            {{ quantitySold ?? '-' }}
           </p>
 
         </div>
@@ -434,6 +435,15 @@
         </div>
 
       </div>
+
+      @if (longRangeActive) {
+
+        <p class="text-sm text-amber-600 dark:text-amber-400">
+          This range is longer than about three months. Totals and the category and supplier
+          breakdown come from the daily summaries. Choose a shorter range to see each invoice.
+        </p>
+
+      }
 
       @if (usesLineTotals) {
 
@@ -629,6 +639,16 @@
 
           </div>
 
+        } @else if (longRangeActive) {
+
+          <div class="px-6 py-16 text-center">
+
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              Choose a range of about three months or less to see the invoice list.
+            </p>
+
+          </div>
+
         } @else if (filteredSales.length === 0) {
   
           <div
@@ -675,31 +695,31 @@
                 <tr>
 
                   <th
-                    class="w-[22%] px-4 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                    class="w-[22%] px-2 sm:px-4 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
                   >
                     Invoice
                   </th>
 
                   <th
-                    class="w-[17%] px-4 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                    class="hidden w-[17%] px-2 sm:px-4 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400 sm:table-cell"
                   >
                     Warehouse
                   </th>
 
                   <th
-                    class="px-4 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                    class="px-2 sm:px-4 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
                   >
                     Products
                   </th>
 
                   <th
-                    class="w-[11%] px-4 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                    class="hidden w-[11%] px-2 sm:px-4 py-4 text-xs font-medium uppercase text-gray-500 dark:text-gray-400 sm:table-cell"
                   >
                     Payment
                   </th>
 
                   <th
-                    class="w-[18%] px-4 py-4 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
+                    class="w-[18%] px-2 sm:px-4 py-4 text-right text-xs font-medium uppercase text-gray-500 dark:text-gray-400"
                   >
                     Total
                   </th>
@@ -724,7 +744,7 @@
 
                     <!-- INVOICE (+ date) -->
 
-                    <td class="px-4 py-4 align-top">
+                    <td class="px-2 sm:px-4 py-4 align-top">
 
                       <p
                         class="break-all font-mono text-sm font-medium text-brand-500"
@@ -743,7 +763,7 @@
 
                     <!-- WAREHOUSE (+ created by) -->
 
-                    <td class="px-4 py-4 align-top">
+                    <td class="hidden px-2 sm:px-4 py-4 align-top sm:table-cell">
 
                       <p
                         class="break-words text-sm text-gray-700 dark:text-gray-300"
@@ -762,7 +782,7 @@
 
                     <!-- PRODUCTS (name and quantity on one line) -->
 
-                    <td class="px-4 py-4 align-top">
+                    <td class="px-2 sm:px-4 py-4 align-top">
 
                       <div class="space-y-1.5">
 
@@ -798,7 +818,7 @@
 
                     <!-- PAYMENT -->
 
-                    <td class="px-4 py-4 align-top">
+                    <td class="hidden px-2 sm:px-4 py-4 align-top sm:table-cell">
 
                       <span
                         class="inline-block rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300"
@@ -811,7 +831,7 @@
 
                     <!-- TOTAL (+ GST and discount) -->
 
-                    <td class="px-4 py-4 text-right align-top">
+                    <td class="px-2 sm:px-4 py-4 text-right align-top">
 
                       <p
                         class="whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white"

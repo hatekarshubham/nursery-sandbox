@@ -113,41 +113,42 @@
 
             <!-- Supplier -->
             <th
-              class="w-[24%] px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[34%] px-3 py-3 font-medium sm:w-[24%] text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Supplier
             </th>
 
             <!-- Mobile -->
             <th
-              class="w-[13%] px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[30%] px-3 py-3 font-medium sm:w-[13%] text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Mobile
             </th>
 
             <!-- Email -->
             <th
-              class="w-[18%] px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="hidden w-[18%] px-3 py-3 font-medium sm:table-cell text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Email
             </th>
 
             <!-- GST -->
             <th
-              class="w-[15%] px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="hidden w-[15%] px-3 py-3 font-medium sm:table-cell text-gray-500 text-theme-xs dark:text-gray-400"
             >
               GST Number
             </th>
 
             <!-- Status -->
             <th
-              class="w-[10%] px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-24 px-3 py-3 font-medium sm:w-[10%] text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Status
             </th>
 
             <!-- Action -->
             <th
+              *ngIf="roles.canModify"
               class="w-[20%] px-3 py-3 text-right font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Action
@@ -232,7 +233,7 @@
 
               <!-- Email -->
               <td
-                class="break-words px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+                class="hidden sm:table-cell break-words px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
               >
 
                 @if (
@@ -256,7 +257,7 @@
 
               <!-- GST -->
               <td
-                class="break-words px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+                class="hidden sm:table-cell break-words px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
               >
 
                 @if (
@@ -305,7 +306,7 @@
 
 
               <!-- Actions -->
-              <td class="px-3 py-4">
+              <td *ngIf="roles.canModify" class="px-3 py-4">
 
                 <div
                   class="flex flex-wrap items-center justify-end gap-2"
