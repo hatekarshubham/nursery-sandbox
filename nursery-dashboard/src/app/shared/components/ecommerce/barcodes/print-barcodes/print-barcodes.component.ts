@@ -4,8 +4,9 @@ import {
   AfterViewChecked,
   Component,
   OnDestroy,
-  OnInit
-} from '@angular/core';
+  OnInit,
+  inject} from '@angular/core';
+import { AppDialogService } from '../../../../services/app-dialog.service';
 
 import { FormsModule } from '@angular/forms';
 
@@ -123,6 +124,8 @@ interface LabelSheetSettings {
 })
 export class PrintBarcodesComponent
   implements OnInit, OnDestroy, AfterViewChecked {
+
+  private readonly dialog = inject(AppDialogService);
 
 
   // =======================================================
@@ -356,11 +359,6 @@ export class PrintBarcodesComponent
               false;
 
 
-            console.log(
-              'Barcode products loaded:',
-              this.products
-            );
-
           },
 
 
@@ -398,6 +396,12 @@ export class PrintBarcodesComponent
   // FILTERED PRODUCTS
   // =======================================================
 
+  private filteredCache: BarcodeProduct[] = [];
+
+  private filteredCacheProducts: BarcodeProduct[] | null = null;
+
+  private filteredCacheSearch: string | null = null;
+
   get filteredProducts():
     BarcodeProduct[] {
 
@@ -406,6 +410,93 @@ export class PrintBarcodesComponent
         .trim()
         .toLowerCase();
 
+    if (
+      this.filteredCacheProducts === this.products &&
+      this.filteredCacheSearch === search
+    ) {
+
+      return this.filteredCache;
+
+    }
+
+    if (this.filteredCacheSearch !== search) {
+
+      // A new search always starts on the first page.
+      this.currentPage = 1;
+
+    }
+
+    this.filteredCache = this.computeFilteredProducts(search);
+
+    this.filteredCacheProducts = this.products;
+
+    this.filteredCacheSearch = search;
+
+    return this.filteredCache;
+
+  }
+
+
+  // =======================================================
+  // PAGING
+  // =======================================================
+
+  readonly pageSize = 50;
+
+  currentPage = 1;
+
+  get lastPage(): number {
+
+    return Math.max(
+      1,
+      Math.ceil(
+        this.filteredProducts.length / this.pageSize
+      )
+    );
+
+  }
+
+  get pagedProducts(): BarcodeProduct[] {
+
+    const page = Math.min(this.currentPage, this.lastPage);
+
+    return this.filteredProducts.slice(
+      (page - 1) * this.pageSize,
+      page * this.pageSize
+    );
+
+  }
+
+  get firstRowNumber(): number {
+
+    return this.filteredProducts.length === 0
+      ? 0
+      : (Math.min(this.currentPage, this.lastPage) - 1) *
+          this.pageSize + 1;
+
+  }
+
+  get lastRowNumber(): number {
+
+    return Math.min(
+      Math.min(this.currentPage, this.lastPage) *
+        this.pageSize,
+      this.filteredProducts.length
+    );
+
+  }
+
+  goToPage(page: number) {
+
+    this.currentPage =
+      Math.min(Math.max(1, page), this.lastPage);
+
+  }
+
+
+  private computeFilteredProducts(
+    search: string
+  ): BarcodeProduct[] {
 
     if (!search) {
 
@@ -1552,13 +1643,13 @@ export class PrintBarcodesComponent
   // PREVIEW BARCODES
   // =======================================================
 
-  previewBarcodes() {
+  async previewBarcodes() {
 
     if (
       this.selectedProducts.length === 0
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select at least one product.'
       );
 
@@ -1587,7 +1678,7 @@ export class PrintBarcodesComponent
 
     if (invalidQuantity) {
 
-      alert(
+      await this.dialog.alert(
         `Please enter a valid label quantity for ${invalidQuantity.name}.`
       );
 
@@ -1676,18 +1767,6 @@ export class PrintBarcodesComponent
 
     this.shouldRenderBarcodes =
       true;
-
-
-    console.log(
-      'Generated barcode labels:',
-      this.printLabels
-    );
-
-
-    console.log(
-      'Label settings:',
-      this.labelSettings
-    );
 
 
     if (
@@ -1856,7 +1935,7 @@ export class PrintBarcodesComponent
   // PRINT BARCODES
   // =======================================================
 
-  printBarcodes() {
+  async printBarcodes() {
 
     // =====================================================
     // LABEL CHECK
@@ -1866,7 +1945,7 @@ export class PrintBarcodesComponent
       this.printLabels.length === 0
     ) {
 
-      alert(
+      await this.dialog.alert(
         'There are no barcode labels to print.'
       );
 
@@ -1883,7 +1962,7 @@ export class PrintBarcodesComponent
       !this.validateLabelSettings()
     ) {
 
-      alert(
+      await this.dialog.alert(
         this.labelSettingsError
       );
 
@@ -1913,7 +1992,7 @@ export class PrintBarcodesComponent
 
     if (!printWindow) {
 
-      alert(
+      await this.dialog.alert(
         'Unable to open print window. Please allow pop-ups for this site.'
       );
 
@@ -2374,6 +2453,9 @@ export class PrintBarcodesComponent
               width:
                 100%;
 
+              max-height:
+                6.2mm;
+
               margin-top:
                 0.4mm;
 
@@ -2381,19 +2463,31 @@ export class PrintBarcodesComponent
                 7.5pt;
 
               line-height:
-                1.05;
+                1.15;
 
               font-weight:
                 700;
 
-              white-space:
-                nowrap;
+              display:
+                -webkit-box;
+
+              -webkit-box-orient:
+                vertical;
+
+              -webkit-line-clamp:
+                2;
+
+              line-clamp:
+                2;
 
               overflow:
                 hidden;
 
-              text-overflow:
-                ellipsis;
+              white-space:
+                normal;
+
+              overflow-wrap:
+                break-word;
 
             }
 

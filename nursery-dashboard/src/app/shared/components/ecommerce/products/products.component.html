@@ -1,5 +1,5 @@
 <div
-  class="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6"
+  class="min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6"
 >
 
   <!-- ===================================================== -->
@@ -47,7 +47,8 @@
 
         <input
           type="text"
-          [(ngModel)]="searchText"
+          [ngModel]="searchText"
+          (ngModelChange)="onSearchInput($event)"
           placeholder="Product, category, supplier, barcode..."
           class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400"
         />
@@ -67,6 +68,7 @@
 
         <select
           [(ngModel)]="selectedCategory"
+          (ngModelChange)="onFilterChange()"
           class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
         >
 
@@ -104,6 +106,7 @@
 
         <select
           [(ngModel)]="selectedSupplier"
+          (ngModelChange)="onFilterChange()"
           class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
         >
 
@@ -141,6 +144,7 @@
 
         <select
           [(ngModel)]="selectedStatus"
+          (ngModelChange)="onFilterChange()"
           class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
         >
 
@@ -190,7 +194,7 @@
         <span
           class="font-semibold text-gray-800 dark:text-white"
         >
-          {{ tableData.length }}
+          {{ matchCount }}
         </span>
 
         products
@@ -299,9 +303,9 @@
     filteredProducts.length > 0
   ) {
 
-    <div class="max-w-full overflow-x-auto">
+    <div class="min-w-0 max-w-full overflow-x-auto">
 
-      <table class="w-full text-left">
+      <table class="w-full text-left text-theme-sm">
 
         <thead
           class="border-y border-gray-100 dark:border-gray-800"
@@ -310,31 +314,25 @@
           <tr>
 
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-16 px-2 py-3 font-medium text-gray-500 dark:text-gray-400"
             >
               Image
             </th>
 
             <th
-              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="px-2 py-3 font-medium text-gray-500 dark:text-gray-400"
             >
               Product Name
             </th>
 
             <th
-              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="px-2 py-3 font-medium text-gray-500 dark:text-gray-400"
             >
               Category
             </th>
 
             <th
-              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-            >
-              Supplier
-            </th>
-
-            <th
-              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="px-2 py-3 font-medium text-gray-500 dark:text-gray-400"
             >
               Unit Price
             </th>
@@ -348,34 +346,29 @@
             ) {
 
               <th
-                class="whitespace-nowrap px-3 py-3 text-center font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+                class="w-[72px] px-2 py-3 font-medium text-gray-500 dark:text-gray-400"
               >
-                {{ getWarehouseCode(warehouse) }} - Qty
+                {{ getWarehouseCode(warehouse) }} Qty
               </th>
 
             }
 
 
             <th
-              class="whitespace-nowrap px-3 py-3 text-center font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="px-2 py-3 font-medium text-gray-500 dark:text-gray-400"
             >
-              Total Qty
+              Total
             </th>
 
             <th
-              class="whitespace-nowrap px-3 py-3 text-center font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-            >
-              Stock Level
-            </th>
-
-            <th
-              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="px-2 py-3 font-medium text-gray-500 dark:text-gray-400"
             >
               Status
             </th>
 
             <th
-              class="whitespace-nowrap px-3 py-3 text-right font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              *ngIf="roles.canModify"
+              class="px-2 py-3 text-right font-medium text-gray-500 dark:text-gray-400"
             >
               Action
             </th>
@@ -390,7 +383,7 @@
         >
 
           @for (
-            product of filteredProducts;
+            product of pagedProducts;
             track product.id
           ) {
 
@@ -403,17 +396,18 @@
 
               <!-- IMAGE -->
 
-              <td class="px-3 py-4">
+              <td class="px-2 py-4">
 
                 <div
-                  class="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50"
+                  class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50"
                 >
 
-                  @if (product.image) {
+                  @if (listImage(product)) {
 
                     <img
-                      [src]="product.image"
+                      [src]="listImage(product)"
                       [alt]="product.name"
+                      loading="lazy"
                       (click)="openProductDetails(product)"
                       class="h-full w-full cursor-pointer object-cover"
                     />
@@ -438,55 +432,42 @@
               <!-- PRODUCT NAME -->
 
               <td
-                class="whitespace-nowrap px-3 py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90"
+                class="cursor-pointer whitespace-normal px-2 py-4"
+                (click)="openProductDetails(product)"
               >
-                {{ product.name }}
+                <div class="font-medium text-gray-800 dark:text-white/90">
+                  {{ product.name }}
+                </div>
+
+                @if (colorTone(product).colorName) {
+
+                  <div
+                    class="mt-1 inline-flex items-center gap-1.5 text-xs font-normal text-gray-500 dark:text-gray-400"
+                  >
+                    <span
+                      class="h-3.5 w-3.5 shrink-0 rounded-full border border-gray-300 dark:border-gray-600"
+                      [style.background]="colorTone(product).swatch"
+                    ></span>
+                    {{ colorTone(product).colorName }}
+                  </div>
+
+                }
               </td>
 
 
               <!-- CATEGORY -->
 
               <td
-                class="whitespace-nowrap px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+                class="break-words px-2 py-4 text-gray-500 dark:text-gray-400"
               >
                 {{ product.category }}
-              </td>
-
-
-              <!-- SUPPLIER -->
-
-              <td
-                class="whitespace-nowrap px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
-              >
-
-                @if (
-                  getSupplierName(product) !==
-                  'No supplier'
-                ) {
-
-                  <span
-                    class="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
-                  >
-                    {{ getSupplierName(product) }}
-                  </span>
-
-                } @else {
-
-                  <span
-                    class="text-xs text-gray-400 dark:text-gray-500"
-                  >
-                    No supplier
-                  </span>
-
-                }
-
               </td>
 
 
               <!-- UNIT PRICE -->
 
               <td
-                class="whitespace-nowrap px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+                class="whitespace-nowrap px-2 py-4 text-gray-500 dark:text-gray-400"
               >
                 ₹{{ product.unitPrice | number:'1.2-2' }}
               </td>
@@ -500,7 +481,7 @@
               ) {
 
                 <td
-                  class="whitespace-nowrap px-3 py-4 text-center text-theme-sm"
+                  class="px-2 py-4"
                 >
 
                   @if (
@@ -546,7 +527,7 @@
               -->
 
               <td
-                class="whitespace-nowrap px-3 py-4 text-center"
+                class="px-2 py-4"
               >
 
                 @if (
@@ -583,65 +564,14 @@
               </td>
 
 
-              <!-- ================================================= -->
-              <!-- STOCK LEVEL -->
-              <!-- ================================================= -->
-
-              <td
-                class="whitespace-nowrap px-3 py-4 text-center"
-              >
-
-                @if (
-                  getStockLevel(product) === 'outOfStock'
-                ) {
-
-                  <span
-                    class="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
-                  >
-                    Out of Stock
-                  </span>
-
-                } @else if (
-                  getStockLevel(product) === 'low'
-                ) {
-
-                  <span
-                    class="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
-                  >
-                    Low Stock
-                  </span>
-
-                } @else if (
-                  getStockLevel(product) === 'medium'
-                ) {
-
-                  <span
-                    class="inline-flex rounded-full bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
-                  >
-                    Medium Stock
-                  </span>
-
-                } @else {
-
-                  <span
-                    class="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
-                  >
-                    Healthy Stock
-                  </span>
-
-                }
-
-              </td>
-
-
               <!-- STATUS -->
 
-              <td class="whitespace-nowrap px-3 py-4">
+              <td class="whitespace-nowrap px-2 py-4">
 
                 @if (product.isAvailable) {
 
                   <span
-                    class="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+                    class="inline-flex whitespace-nowrap rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
                   >
                     Active
                   </span>
@@ -653,7 +583,7 @@
                 ) {
 
                   <span
-                    class="inline-flex rounded-full bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
+                    class="inline-flex whitespace-nowrap rounded-full bg-yellow-50 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
                   >
                     Out of Stock
                   </span>
@@ -664,7 +594,7 @@
                 ) {
 
                   <span
-                    class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                    class="inline-flex whitespace-nowrap rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
                   >
                     Product Inactive
                   </span>
@@ -675,7 +605,7 @@
                 ) {
 
                   <span
-                    class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                    class="inline-flex whitespace-nowrap rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
                   >
                     Category Inactive
                   </span>
@@ -683,7 +613,7 @@
                 } @else {
 
                   <span
-                    class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                    class="inline-flex whitespace-nowrap rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
                   >
                     Inactive
                   </span>
@@ -696,34 +626,50 @@
               <!-- ACTIONS -->
 
               <td
-                class="whitespace-nowrap px-3 py-4 text-right"
+                *ngIf="roles.canModify"
+                class="px-2 py-4"
               >
 
                 <div
-                  class="flex items-center justify-end gap-2"
+                  class="flex items-center justify-end gap-1.5"
                 >
 
                   <button
                     type="button"
                     (click)="editProduct(product)"
                     [disabled]="!product.categoryIsActive"
-                    [title]="
+                    [attr.aria-label]="
                       !product.categoryIsActive
                         ? 'Cannot edit product because its category is inactive'
-                        : 'Edit product'
+                        : 'Edit'
                     "
-                    class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                    class="group relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                   >
-                    Edit
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                    </svg>
+                    <span class="pointer-events-none absolute bottom-full right-0 z-30 mb-1.5 invisible whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs font-medium text-white opacity-0 transition-opacity group-hover:visible group-hover:opacity-100 dark:bg-gray-600">
+                      {{
+                        !product.categoryIsActive
+                          ? 'Category inactive'
+                          : 'Edit'
+                      }}
+                    </span>
                   </button>
 
 
                   <button
                     type="button"
                     (click)="openDeleteModal(product)"
-                    class="inline-flex items-center rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-600 shadow-sm transition hover:bg-red-50 dark:border-red-800 dark:bg-gray-700 dark:text-red-400"
+                    aria-label="Delete"
+                    class="group relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-red-300 bg-white text-red-600 shadow-sm transition hover:bg-red-50 dark:border-red-800 dark:bg-gray-700 dark:text-red-400"
                   >
-                    Delete
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                    </svg>
+                    <span class="pointer-events-none absolute bottom-full right-0 z-30 mb-1.5 invisible whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs font-medium text-white opacity-0 transition-opacity group-hover:visible group-hover:opacity-100 dark:bg-gray-600">
+                      Delete
+                    </span>
                   </button>
 
                 </div>
@@ -739,6 +685,70 @@
       </table>
 
     </div>
+
+    <!-- ================================================= -->
+    <!-- PAGER -->
+    <!-- ================================================= -->
+
+    @if (totalPages > 1) {
+
+      <div
+        class="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-600 dark:text-gray-400"
+      >
+
+        <span>
+          Rows {{ firstRowNumber }} to {{ lastRowNumber }}
+          of {{ matchCount }}
+        </span>
+
+        <div class="flex items-center gap-2">
+
+          <button
+            type="button"
+            (click)="goToPage(1)"
+            [disabled]="currentPage <= 1"
+            class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:hover:bg-white/[0.03]"
+          >
+            First
+          </button>
+
+          <button
+            type="button"
+            (click)="goToPage(currentPage - 1)"
+            [disabled]="currentPage <= 1"
+            class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:hover:bg-white/[0.03]"
+          >
+            Previous
+          </button>
+
+          <span class="px-2">
+            Page {{ currentPage }} of {{ totalPages }}
+          </span>
+
+          <button
+            type="button"
+            (click)="goToPage(currentPage + 1)"
+            [disabled]="currentPage >= totalPages"
+            class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:hover:bg-white/[0.03]"
+          >
+            Next
+          </button>
+
+          <button
+            type="button"
+            (click)="goToPage(totalPages)"
+            [disabled]="currentPage >= totalPages"
+            class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:hover:bg-white/[0.03]"
+          >
+            Last
+          </button>
+
+        </div>
+
+      </div>
+
+    }
+
 
   }
 
@@ -794,10 +804,10 @@
           class="flex h-48 w-48 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50"
         >
 
-          @if (selectedProduct.image) {
+          @if (fullImage(selectedProduct)) {
 
             <img
-              [src]="selectedProduct.image"
+              [src]="fullImage(selectedProduct)"
               [alt]="selectedProduct.name"
               class="h-full w-full object-cover"
             />
@@ -822,6 +832,24 @@
       >
         {{ selectedProduct.name }}
       </h3>
+
+
+      @if (colorTone(selectedProduct).colorName) {
+
+        <div
+          class="mt-3 flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-gray-300"
+        >
+
+          <span
+            class="h-5 w-5 rounded-full border border-gray-300 dark:border-gray-600"
+            [style.background]="colorTone(selectedProduct).swatch"
+          ></span>
+
+          {{ colorTone(selectedProduct).colorName }}
+
+        </div>
+
+      }
 
 
       <!-- DESCRIPTION -->
@@ -1048,7 +1076,7 @@
           ) {
 
             <span
-              class="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
+              class="inline-flex whitespace-nowrap rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
             >
               Out of Stock
             </span>
@@ -1058,7 +1086,7 @@
           ) {
 
             <span
-              class="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
+              class="inline-flex whitespace-nowrap rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
             >
               Low Stock
             </span>
@@ -1068,7 +1096,7 @@
           ) {
 
             <span
-              class="inline-flex rounded-full bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
+              class="inline-flex whitespace-nowrap rounded-full bg-yellow-50 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
             >
               Medium Stock
             </span>
@@ -1076,7 +1104,7 @@
           } @else {
 
             <span
-              class="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+              class="inline-flex whitespace-nowrap rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
             >
               Healthy Stock
             </span>
@@ -1101,7 +1129,7 @@
           @if (selectedProduct.isAvailable) {
 
             <span
-              class="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+              class="inline-flex whitespace-nowrap rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
             >
               Active
             </span>
@@ -1113,7 +1141,7 @@
           ) {
 
             <span
-              class="inline-flex rounded-full bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
+              class="inline-flex whitespace-nowrap rounded-full bg-yellow-50 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
             >
               Out of Stock
             </span>
@@ -1124,7 +1152,7 @@
           ) {
 
             <span
-              class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+              class="inline-flex whitespace-nowrap rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
             >
               Product Inactive
             </span>
@@ -1135,7 +1163,7 @@
           ) {
 
             <span
-              class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+              class="inline-flex whitespace-nowrap rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
             >
               Category Inactive
             </span>
@@ -1143,7 +1171,7 @@
           } @else {
 
             <span
-              class="inline-flex rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+              class="inline-flex whitespace-nowrap rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400"
             >
               Inactive
             </span>
@@ -1235,8 +1263,10 @@
 
           <input
             type="text"
-            [(ngModel)]="editingProduct.name"
-            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            [ngModel]="editingProduct.name"
+            (ngModelChange)="onEditName($event)"
+            maxlength="80"
+            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm uppercase text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           />
 
         </div>
@@ -1352,6 +1382,26 @@
         </div>
 
 
+        <!-- COLOR -->
+
+        <div>
+
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Color
+          </label>
+
+          <app-product-color-field
+            [color]="editingProduct.color ?? ''"
+            [colorName]="editingProduct.colorName ?? ''"
+            (colorChange)="editingProduct.color = $event"
+            (colorNameChange)="editingProduct.colorName = $event"
+          />
+
+        </div>
+
+
         <!-- DESCRIPTION -->
 
         <div>
@@ -1364,6 +1414,7 @@
 
           <textarea
             [(ngModel)]="editingProduct.description"
+            maxlength="500"
             rows="3"
             class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           ></textarea>
@@ -1527,7 +1578,7 @@
           </label>
 
 
-          @if (editingProduct.image) {
+          @if (editImagePreview || (!removeImage && fullImage(editingProduct))) {
 
             <div
               class="mb-3 flex justify-center"
@@ -1538,7 +1589,7 @@
               >
 
                 <img
-                  [src]="editingProduct.image"
+                  [src]="editImagePreview || fullImage(editingProduct)"
                   [alt]="editingProduct.name"
                   class="h-full w-full object-cover"
                 />
@@ -1551,11 +1602,23 @@
 
 
           <input
-            type="text"
-            [(ngModel)]="editingProduct.image"
-            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            placeholder="Enter image URL or data"
+            type="file"
+            accept="image/*"
+            (change)="onEditImageSelected($event)"
+            class="block w-full rounded-lg border border-gray-300 bg-white text-sm text-gray-600 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
           />
+
+          @if (editImagePreview || (!removeImage && fullImage(editingProduct))) {
+
+            <button
+              type="button"
+              (click)="clearProductImage()"
+              class="mt-2 text-sm font-medium text-red-600 hover:text-red-700"
+            >
+              Remove image
+            </button>
+
+          }
 
         </div>
 

@@ -11,7 +11,13 @@ import {
   DocumentData
 } from '@angular/fire/firestore';
 
-import { Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
+
+import { shareLiveStream } from './shared-stream';
+
+import { assertFieldsUnique, DuplicateError } from './unique-key';
+
+import { invoicePrefixFor, sanitizeInvoicePrefix } from './invoice-number';
 
 
 export interface Warehouse {
@@ -20,6 +26,10 @@ export interface Warehouse {
   name: string;
 
   code: string;
+
+  // Up to 3 letters/digits used in invoice numbers (WH3/26-27/000001).
+  // When empty, the first letters of the code are used.
+  invoicePrefix?: string;
 
   isActive: boolean;
 
@@ -47,14 +57,58 @@ export class WarehouseService {
   // GET ALL WAREHOUSES
   // =========================
 
+  // Small collection: one shared listener for the whole
+  // session, kept open for the full default grace period.
+
+  private readonly warehouses$: Observable<Warehouse[]> =
+    shareLiveStream<Warehouse[]>(
+      'warehouses',
+      () =>
+        collectionData(
+          this.warehousesCollection,
+          {
+            idField: 'id'
+          }
+        ) as Observable<Warehouse[]>
+    );
+
+
+  private readonly uniqueRules = [
+    { field: 'name', label: 'Warehouse name' },
+    { field: 'code', label: 'Warehouse code' }
+  ];
+
+
+  // Each warehouse has its own invoice series, so two warehouses must
+  // not share a prefix. Warehouses without a stored prefix count as
+  // using the one derived from their code.
+  private assertInvoicePrefixFree(
+    existing: Warehouse[],
+    prefix: string,
+    excludeId?: string
+  ): void {
+
+    const clash =
+      existing.some(
+        item =>
+          item.id !== excludeId &&
+          invoicePrefixFor(item) === prefix
+      );
+
+    if (clash) {
+
+      throw new DuplicateError(
+        `Invoice prefix "${prefix}" is already used by another warehouse.`
+      );
+
+    }
+
+  }
+
+
   getWarehouses(): Observable<Warehouse[]> {
 
-    return collectionData(
-      this.warehousesCollection,
-      {
-        idField: 'id'
-      }
-    ) as Observable<Warehouse[]>;
+    return this.warehouses$;
 
   }
 
@@ -110,6 +164,25 @@ export class WarehouseService {
     >
   ) {
 
+    const invoicePrefix =
+      sanitizeInvoicePrefix(warehouse.invoicePrefix) ||
+      sanitizeInvoicePrefix(warehouse.code) ||
+      'W';
+
+    const current =
+      await firstValueFrom(this.warehouses$);
+
+    assertFieldsUnique(
+      current,
+      warehouse,
+      this.uniqueRules
+    );
+
+    this.assertInvoicePrefixFree(
+      current,
+      invoicePrefix
+    );
+
     return addDoc(
       this.warehousesCollection,
       {
@@ -120,6 +193,8 @@ export class WarehouseService {
           warehouse.code
             .trim()
             .toUpperCase(),
+
+        invoicePrefix,
 
         isActive:
           warehouse.isActive,
@@ -151,6 +226,46 @@ export class WarehouseService {
         warehouseId
       );
 
+    if (
+      warehouse.name !== undefined ||
+      warehouse.code !== undefined
+    ) {
+
+      const current =
+        await firstValueFrom(this.warehouses$);
+
+      const existing =
+        current.find(item => item.id === warehouseId);
+
+      assertFieldsUnique(
+        current,
+        {
+          name: warehouse.name ?? existing?.name,
+          code: warehouse.code ?? existing?.code
+        },
+        this.uniqueRules,
+        warehouseId
+      );
+
+    }
+
+
+    if (warehouse.invoicePrefix !== undefined) {
+
+      const prefix =
+        sanitizeInvoicePrefix(warehouse.invoicePrefix) ||
+        sanitizeInvoicePrefix(warehouse.code) ||
+        'W';
+
+      this.assertInvoicePrefixFree(
+        await firstValueFrom(this.warehouses$),
+        prefix,
+        warehouseId
+      );
+
+    }
+
+
     const updateData: any = {
       updatedAt: new Date()
     };
@@ -170,6 +285,20 @@ export class WarehouseService {
         warehouse.code
           .trim()
           .toUpperCase();
+
+    }
+
+
+    if (warehouse.invoicePrefix !== undefined) {
+
+      updateData.invoicePrefix =
+        sanitizeInvoicePrefix(warehouse.invoicePrefix) ||
+        sanitizeInvoicePrefix(
+          warehouse.code ??
+          (await firstValueFrom(this.warehouses$))
+            .find(item => item.id === warehouseId)?.code
+        ) ||
+        'W';
 
     }
 

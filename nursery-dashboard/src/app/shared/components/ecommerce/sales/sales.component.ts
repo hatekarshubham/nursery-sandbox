@@ -1,7 +1,11 @@
 import {
+
   Component,
-  OnInit
+  OnInit,
+  DestroyRef,
+  inject
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import {
   CommonModule
@@ -90,6 +94,9 @@ interface BreakdownRow {
 })
 export class SalesComponent implements OnInit {
 
+  private destroyRef = inject(DestroyRef);
+
+
 
   sales: Sale[] = [];
 
@@ -122,6 +129,11 @@ export class SalesComponent implements OnInit {
 
   selectedPayment = '';
 
+  // Search box: invoice number or product name.
+  searchText = '';
+
+  selectedCreatedBy = '';
+
 
   private productById = new Map<string, any>();
 
@@ -141,6 +153,19 @@ export class SalesComponent implements OnInit {
 
   private rangeRequestId = 0;
 
+  // Ranges longer than the cache window are not downloaded sale by
+  // sale. Their totals are added up on the server instead.
+  private longRangeTotals: {
+    from: number;
+    to: number;
+    count: number;
+    total: number;
+    gst: number;
+    quantity: number;
+    categories: BreakdownRow[];
+    suppliers: BreakdownRow[];
+  } | null = null;
+
   private initialLoad: Promise<void> | null = null;
 
 
@@ -156,8 +181,6 @@ export class SalesComponent implements OnInit {
   ngOnInit(): void {
 
     this.applyPreset('today');
-
-    this.loadProducts();
 
     this.loadCategories();
 
@@ -222,6 +245,13 @@ export class SalesComponent implements OnInit {
   }
 
 
+  onWarehouseFilter(): void {
+
+    void this.ensureCoverage();
+
+  }
+
+
   onToDateInput(event: Event): void {
 
     this.toDate = (event.target as HTMLInputElement).value;
@@ -264,6 +294,30 @@ export class SalesComponent implements OnInit {
     }
 
     return [...modes];
+
+  }
+
+
+  get createdByOptions(): string[] {
+
+    const names = new Set<string>();
+
+    for (const sale of this.salesForCurrentRange()) {
+
+      names.add(this.createdByLabel(sale));
+
+    }
+
+    return [...names].sort(
+      (a, b) => a.localeCompare(b)
+    );
+
+  }
+
+
+  createdByLabel(sale: Sale): string {
+
+    return sale.createdByName?.trim() || 'Unknown';
 
   }
 
@@ -320,9 +374,55 @@ export class SalesComponent implements OnInit {
 
       }
 
+      if (
+        this.selectedCreatedBy &&
+        this.createdByLabel(sale) !== this.selectedCreatedBy
+      ) {
+
+        return false;
+
+      }
+
+      if (!this.matchesSearch(sale)) {
+
+        return false;
+
+      }
+
       return this.visibleLines(sale).length > 0;
 
     });
+
+  }
+
+
+  // Searches only the sales already loaded for the chosen dates,
+  // so it costs no extra reads.
+  private matchesSearch(sale: Sale): boolean {
+
+    const term = this.searchText.trim().toLowerCase();
+
+    if (!term) {
+
+      return true;
+
+    }
+
+    if (
+      String(sale.invoiceNumber ?? '')
+        .toLowerCase()
+        .includes(term)
+    ) {
+
+      return true;
+
+    }
+
+    return (sale.items ?? []).some(item =>
+      String(item.productName ?? '')
+        .toLowerCase()
+        .includes(term)
+    );
 
   }
 
@@ -337,14 +437,62 @@ export class SalesComponent implements OnInit {
   }
 
 
+  // True when the chosen dates are longer than about three months.
+  // Only totals are shown then (see getSalesTotals).
+  get longRangeActive(): boolean {
+
+    const totals = this.longRangeTotals;
+
+    if (!totals || this.dateRangeInvalid) {
+
+      return false;
+
+    }
+
+    const from = this.parseInputDate(this.fromDate);
+
+    const to = this.parseInputDate(this.toDate);
+
+    if (!from || !to) {
+
+      return false;
+
+    }
+
+    to.setHours(23, 59, 59, 999);
+
+    const todayEnd = this.endOfDay(new Date());
+
+    const end =
+      to.getTime() > todayEnd.getTime() ? todayEnd : to;
+
+    return (
+      totals.from === from.getTime() &&
+      totals.to === end.getTime()
+    );
+
+  }
+
   get invoiceCount(): number {
+
+    if (this.longRangeActive) {
+
+      return this.longRangeTotals!.count;
+
+    }
 
     return this.filteredSales.length;
 
   }
 
 
-  get quantitySold(): number {
+  get quantitySold(): number | null {
+
+    if (this.longRangeActive) {
+
+      return this.summaryFigure('quantity');
+
+    }
 
     return this.filteredSales.reduce(
       (total, sale) =>
@@ -361,6 +509,12 @@ export class SalesComponent implements OnInit {
 
 
   get gstCollected(): number {
+
+    if (this.longRangeActive) {
+
+      return this.longRangeTotals!.gst;
+
+    }
 
     if (!this.usesLineTotals) {
 
@@ -381,6 +535,12 @@ export class SalesComponent implements OnInit {
 
   get totalSales(): number {
 
+    if (this.longRangeActive) {
+
+      return this.summaryFigure('amount');
+
+    }
+
     if (!this.usesLineTotals) {
 
       return this.filteredSales.reduce(
@@ -400,6 +560,16 @@ export class SalesComponent implements OnInit {
 
   get categoryBreakdown(): BreakdownRow[] {
 
+    if (this.longRangeActive) {
+
+      return this.filterSummary(
+        this.longRangeTotals!.categories,
+        this.selectedCategory,
+        this.categories
+      );
+
+    }
+
     return this.buildBreakdown(
       line => line.categoryName || 'Uncategorised'
     );
@@ -409,9 +579,137 @@ export class SalesComponent implements OnInit {
 
   get supplierBreakdown(): BreakdownRow[] {
 
+    if (this.longRangeActive) {
+
+      return this.filterSummary(
+        this.longRangeTotals!.suppliers,
+        this.selectedSupplier,
+        this.suppliers
+      );
+
+    }
+
     return this.buildBreakdown(
       line => line.supplierName || 'No supplier'
     );
+
+  }
+
+
+  // One filter (category or supplier) narrows the long-range
+  // cards to that breakdown. Both filters together have no
+  // combined figure, so the cards stay on the whole range.
+  private summaryFigure(
+    field: 'quantity' | 'amount'
+  ): number {
+
+    const totals = this.longRangeTotals!;
+
+    const rows =
+      this.selectedCategory && !this.selectedSupplier
+        ? this.categoryBreakdown
+        : this.selectedSupplier && !this.selectedCategory
+          ? this.supplierBreakdown
+          : null;
+
+    if (!rows) {
+
+      return field === 'quantity'
+        ? totals.quantity
+        : totals.total;
+
+    }
+
+    return rows.reduce(
+      (sum, row) => sum + row[field],
+      0
+    );
+
+  }
+
+
+  private combineSummaries(
+    summaries: Array<Record<string, any>>
+  ): {
+    quantity: number;
+    categories: BreakdownRow[];
+    suppliers: BreakdownRow[];
+  } {
+
+    let quantity = 0;
+
+    const categories = new Map<string, BreakdownRow>();
+
+    const suppliers = new Map<string, BreakdownRow>();
+
+    const add = (
+      target: Map<string, BreakdownRow>,
+      buckets: Record<string, { name?: string; quantity?: number; amount?: number }> | undefined
+    ) => {
+
+      for (const bucket of Object.values(buckets ?? {})) {
+
+        const name = bucket?.name || 'Unknown';
+
+        const current = target.get(name) ?? {
+          name,
+          quantity: 0,
+          amount: 0
+        };
+
+        current.quantity += Number(bucket?.quantity ?? 0);
+
+        current.amount += Number(bucket?.amount ?? 0);
+
+        target.set(name, current);
+
+      }
+
+    };
+
+    for (const summary of summaries) {
+
+      quantity += Number(summary['quantitySold'] ?? 0);
+
+      add(categories, summary['categories']);
+
+      add(suppliers, summary['suppliers']);
+
+    }
+
+    const sortRows = (rows: BreakdownRow[]) =>
+      rows.sort((a, b) => b.amount - a.amount);
+
+    return {
+      quantity,
+      categories: sortRows([...categories.values()]),
+      suppliers: sortRows([...suppliers.values()])
+    };
+
+  }
+
+
+  private filterSummary(
+    rows: BreakdownRow[],
+    selectedId: string,
+    options: Array<{ id?: string; name: string }>
+  ): BreakdownRow[] {
+
+    if (!selectedId) {
+
+      return rows;
+
+    }
+
+    const selected = options.find(option => option.id === selectedId);
+
+    if (!selected) {
+
+      return rows;
+
+    }
+
+    return rows.filter(row => row.name === selected.name);
 
   }
 
@@ -564,6 +862,8 @@ export class SalesComponent implements OnInit {
 
         this.sales = this.mergeSales(this.sales, gaps);
 
+        this.ensureProductFallback(gaps);
+
         this.cacheFrom = mergedStart;
 
         this.cacheTo = mergedEnd;
@@ -573,6 +873,37 @@ export class SalesComponent implements OnInit {
         this.extraFrom = null;
 
         this.extraTo = null;
+
+      } else if (
+        this.spanDays(requestedStart, fetchEnd) >
+        this.maxCacheDays
+      ) {
+
+        const totals =
+          await this.salesService.getSalesTotals(
+            requestedStart,
+            fetchEnd
+          );
+
+        const summaries =
+          await this.salesService.getDailySummaries(
+            requestedStart,
+            fetchEnd,
+            this.selectedWarehouse
+          );
+
+        if (requestId !== this.rangeRequestId) {
+
+          return;
+
+        }
+
+        this.longRangeTotals = {
+          from: requestedStart.getTime(),
+          to: fetchEnd.getTime(),
+          ...totals,
+          ...this.combineSummaries(summaries)
+        };
 
       } else {
 
@@ -589,6 +920,8 @@ export class SalesComponent implements OnInit {
         }
 
         this.extraSales = this.sortSales(loaded);
+
+        this.ensureProductFallback(loaded);
 
         this.extraFrom = requestedStart;
 
@@ -644,6 +977,8 @@ export class SalesComponent implements OnInit {
         );
 
       this.sales = this.sortSales(loaded);
+
+      this.ensureProductFallback(loaded);
 
       this.cacheFrom = start;
 
@@ -737,21 +1072,25 @@ export class SalesComponent implements OnInit {
 
   private initialWindowStart(): Date {
 
+    // Load only what the screen is showing (today by default).
+    // Wider ranges (last 7 days, this month) fetch just the
+    // missing earlier days when they are chosen, instead of
+    // reading about a month of sales every time the screen opens.
     const today = this.startOfDay(new Date());
 
-    const monthStart = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      1
-    );
+    const requestedStart =
+      this.parseInputDate(this.fromDate);
 
-    const last7Start = new Date(today);
+    if (
+      !requestedStart ||
+      requestedStart.getTime() > today.getTime()
+    ) {
 
-    last7Start.setDate(last7Start.getDate() - 6);
+      return today;
 
-    return monthStart.getTime() < last7Start.getTime()
-      ? monthStart
-      : last7Start;
+    }
+
+    return this.startOfDay(requestedStart);
 
   }
 
@@ -816,10 +1155,45 @@ export class SalesComponent implements OnInit {
   }
 
 
+  // Sales save the category and supplier names at the time of sale,
+  // so the product list is normally not needed here. Only older sales
+  // that were saved without those names fall back to the product list,
+  // and only then is it loaded (it is shared with other screens).
+  private productsRequested = false;
+
+  private ensureProductFallback(
+    sales: Sale[]
+  ): void {
+
+    if (this.productsRequested) {
+
+      return;
+
+    }
+
+    const needsProducts = sales.some(
+      sale =>
+        (sale.items ?? []).some(
+          item => !item.categoryName
+        )
+    );
+
+    if (needsProducts) {
+
+      this.productsRequested = true;
+
+      this.loadProducts();
+
+    }
+
+  }
+
+
   private loadProducts(): void {
 
     this.productService
       .getProducts()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (products: any[]) => {
@@ -850,6 +1224,7 @@ export class SalesComponent implements OnInit {
 
     this.categoryService
       .getCategories()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (categories) => {
@@ -879,6 +1254,7 @@ export class SalesComponent implements OnInit {
 
     this.supplierService
       .getSuppliers()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (suppliers) => {
@@ -908,6 +1284,7 @@ export class SalesComponent implements OnInit {
 
     this.warehouseService
       .getWarehouses()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (warehouses) => {

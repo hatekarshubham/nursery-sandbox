@@ -3,17 +3,17 @@ import { CommonModule } from '@angular/common';
 import {
   Component,
   OnDestroy,
-  OnInit
-} from '@angular/core';
+  OnInit,
+  inject} from '@angular/core';
+import { AppDialogService } from '../../../../services/app-dialog.service';
 
 import { FormsModule } from '@angular/forms';
 
 import { Router } from '@angular/router';
 
-import {
-  Subscription,
-  combineLatest
-} from 'rxjs';
+import { ProductPickerComponent } from '../../product-picker/product-picker.component';
+
+import { Subscription } from 'rxjs';
 
 import {
   ProductService
@@ -61,7 +61,8 @@ interface ProductOption {
 
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    ProductPickerComponent
   ],
 
   templateUrl:
@@ -72,6 +73,8 @@ interface ProductOption {
 })
 export class AddStockAdjustmentComponent
   implements OnInit, OnDestroy {
+
+  private readonly dialog = inject(AppDialogService);
 
 
   // =======================================================
@@ -234,77 +237,14 @@ export class AddStockAdjustmentComponent
 
 
     const dataSubscription =
-      combineLatest([
-
-        this.warehouseService
-          .getActiveWarehouses(),
-
-        this.productService
-          .getProducts(),
-
-        this.inventoryService
-          .getInventory()
-
-      ])
+      this.warehouseService
+        .getActiveWarehouses()
         .subscribe({
 
-          next: ([
-            warehouses,
-            products,
-            inventory
-          ]) => {
-
-            // =============================================
-            // WAREHOUSES
-            // =============================================
+          next: (warehouses) => {
 
             this.warehouses =
               warehouses;
-
-
-            // =============================================
-            // PRODUCTS
-            // =============================================
-
-            this.products =
-              products
-
-                .filter(
-                  product =>
-                    !!product.id &&
-                    product.isActive !== false
-                )
-
-                .map(
-                  product => ({
-
-                    id:
-                      product.id!,
-
-                    name:
-                      product.name ?? '',
-
-                    isActive:
-                      product.isActive !== false
-
-                  })
-                );
-
-
-            // =============================================
-            // INVENTORY
-            // =============================================
-
-            this.inventory =
-              inventory;
-
-
-            // =============================================
-            // REFRESH CURRENT STOCK
-            // =============================================
-
-            this.updateCurrentQuantity();
-
 
             this.isLoading =
               false;
@@ -315,13 +255,13 @@ export class AddStockAdjustmentComponent
           error: (error) => {
 
             console.error(
-              'Error loading stock adjustment data:',
+              'Error loading warehouses:',
               error
             );
 
 
             this.errorMessage =
-              'Failed to load stock adjustment data.';
+              'Failed to load warehouses.';
 
 
             this.isLoading =
@@ -356,6 +296,118 @@ export class AddStockAdjustmentComponent
     this.currentQuantity = 0;
 
     this.inventoryExists = false;
+
+    this.inventory = [];
+
+  }
+
+
+  // =======================================================
+  // PRODUCT PICKED (from the product picker)
+  // =======================================================
+  //
+  // The picker searches Firestore, so the whole product list is
+  // never loaded. Stock for the chosen product in the selected
+  // warehouse is read with one small query.
+  //
+  // =======================================================
+
+  async onProductPicked(
+    product: any | null
+  ) {
+
+    this.adjustment.quantity = null;
+
+    this.adjustment.reason = '';
+
+    this.adjustment.adjustmentType = '';
+
+    if (!product) {
+
+      this.adjustment.productId = '';
+
+      this.inventory = [];
+
+      this.updateCurrentQuantity();
+
+      return;
+
+    }
+
+    if (!this.products.some(entry => entry.id === product.id)) {
+
+      this.products.push({
+
+        id: product.id,
+
+        name: product.name ?? '',
+
+        isActive: product.isActive !== false
+
+      });
+
+    }
+
+    this.adjustment.productId = product.id;
+
+    this.currentQuantity = 0;
+
+    this.inventoryExists = false;
+
+    await this.refreshStock();
+
+  }
+
+
+  // Reads the chosen product's stock in the selected warehouse.
+  private async refreshStock() {
+
+    const productId = this.adjustment.productId;
+
+    const warehouseId = this.adjustment.warehouseId;
+
+    if (!productId || !warehouseId) {
+
+      this.inventory = [];
+
+      this.updateCurrentQuantity();
+
+      return;
+
+    }
+
+    try {
+
+      const record =
+        await this.inventoryService
+          .getInventoryByProductAndWarehouse(
+            productId,
+            warehouseId
+          );
+
+      // Ignore the answer if the user already chose something else.
+      if (
+        productId !== this.adjustment.productId ||
+        warehouseId !== this.adjustment.warehouseId
+      ) {
+
+        return;
+
+      }
+
+      this.inventory = record ? [record] : [];
+
+      this.updateCurrentQuantity();
+
+    } catch (error) {
+
+      console.error('Error reading stock:', error);
+
+      this.inventory = [];
+
+      this.updateCurrentQuantity();
+
+    }
 
   }
 
@@ -543,8 +595,8 @@ export class AddStockAdjustmentComponent
   // VALIDATE
   // =======================================================
 
-  private validateAdjustment():
-    boolean {
+  private async validateAdjustment():
+    Promise<boolean> {
 
     // =====================================================
     // WAREHOUSE
@@ -554,7 +606,7 @@ export class AddStockAdjustmentComponent
       !this.adjustment.warehouseId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a warehouse.'
       );
 
@@ -569,7 +621,7 @@ export class AddStockAdjustmentComponent
 
     if (!warehouse) {
 
-      alert(
+      await this.dialog.alert(
         'Selected warehouse is invalid.'
       );
 
@@ -586,7 +638,7 @@ export class AddStockAdjustmentComponent
       !this.adjustment.productId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a product.'
       );
 
@@ -601,7 +653,7 @@ export class AddStockAdjustmentComponent
 
     if (!product) {
 
-      alert(
+      await this.dialog.alert(
         'Selected product is invalid.'
       );
 
@@ -621,7 +673,7 @@ export class AddStockAdjustmentComponent
         'DECREASE'
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select an adjustment type.'
       );
 
@@ -647,7 +699,7 @@ export class AddStockAdjustmentComponent
       quantity <= 0
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please enter a valid adjustment quantity.'
       );
 
@@ -659,6 +711,11 @@ export class AddStockAdjustmentComponent
     // =====================================================
     // DECREASE VALIDATION
     // =====================================================
+    //
+    // Read the latest stock again right before saving.
+
+    await this.refreshStock();
+
 
     if (
       this.adjustment.adjustmentType ===
@@ -669,7 +726,7 @@ export class AddStockAdjustmentComponent
         !this.inventoryExists
       ) {
 
-        alert(
+        await this.dialog.alert(
           'No inventory exists for this product in the selected warehouse.'
         );
 
@@ -683,7 +740,7 @@ export class AddStockAdjustmentComponent
         this.currentQuantity
       ) {
 
-        alert(
+        await this.dialog.alert(
           `Only ${this.currentQuantity} units are currently available.`
         );
 
@@ -702,7 +759,7 @@ export class AddStockAdjustmentComponent
       !this.adjustment.reason
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select an adjustment reason.'
       );
 
@@ -719,7 +776,7 @@ export class AddStockAdjustmentComponent
       !this.adjustment.adjustmentDate
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select an adjustment date.'
       );
 
@@ -737,8 +794,21 @@ export class AddStockAdjustmentComponent
       this.today
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Adjustment date cannot be in the future.'
+      );
+
+      return false;
+
+    }
+
+
+    if (
+      (this.adjustment.notes ?? '').trim().length > 500
+    ) {
+
+      await this.dialog.alert(
+        'Notes must be 500 characters or fewer.'
       );
 
       return false;
@@ -769,7 +839,7 @@ export class AddStockAdjustmentComponent
 
 
     if (
-      !this.validateAdjustment()
+      !await this.validateAdjustment()
     ) {
 
       return;
@@ -790,7 +860,7 @@ export class AddStockAdjustmentComponent
       !warehouse
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Unable to resolve adjustment information.'
       );
 
@@ -817,7 +887,7 @@ export class AddStockAdjustmentComponent
 
 
     const confirmed =
-      window.confirm(
+      await this.dialog.confirm(
 
         `Confirm stock adjustment?\n\n` +
 
@@ -892,13 +962,7 @@ export class AddStockAdjustmentComponent
           });
 
 
-      console.log(
-        'Stock adjustment completed:',
-        adjustmentId
-      );
-
-
-      alert(
+      await this.dialog.alert(
         'Stock adjusted successfully.'
       );
 
@@ -938,7 +1002,7 @@ export class AddStockAdjustmentComponent
       );
 
 
-      alert(
+      await this.dialog.alert(
         error?.message ??
         'Failed to adjust stock.'
       );
@@ -986,6 +1050,8 @@ export class AddStockAdjustmentComponent
     this.currentQuantity = 0;
 
     this.inventoryExists = false;
+
+    this.inventory = [];
 
   }
 

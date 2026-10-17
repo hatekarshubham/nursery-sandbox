@@ -12,7 +12,11 @@ import {
   DocumentData
 } from '@angular/fire/firestore';
 
-import { Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
+
+import { shareLiveStream } from './shared-stream';
+
+import { assertFieldsUnique } from './unique-key';
 
 export interface Supplier {
 
@@ -52,21 +56,44 @@ export class SupplierService {
     ) as CollectionReference<DocumentData>;
 
 
+  // Small collection: one shared listener for the whole
+  // session.
+
+  private readonly suppliers$: Observable<Supplier[]> =
+    shareLiveStream<Supplier[]>(
+      'suppliers',
+      () =>
+        collectionData(
+          this.suppliersCollection,
+          {
+            idField: 'id'
+          }
+        ) as Observable<Supplier[]>
+    );
+
+
   getSuppliers(): Observable<Supplier[]> {
 
-    return collectionData(
-      this.suppliersCollection,
-      {
-        idField: 'id'
-      }
-    ) as Observable<Supplier[]>;
+    return this.suppliers$;
 
   }
+
+
+  private readonly uniqueRules = [
+    { field: 'name', label: 'Supplier name' },
+    { field: 'gstNumber', label: 'GST number' }
+  ];
 
 
   async addSupplier(
     supplier: Omit<Supplier, 'id'>
   ) {
+
+    assertFieldsUnique(
+      await firstValueFrom(this.suppliers$),
+      supplier,
+      this.uniqueRules
+    );
 
     return addDoc(
       this.suppliersCollection,
@@ -91,6 +118,31 @@ export class SupplierService {
         'suppliers',
         supplierId
       );
+
+    if (
+      supplier.name !== undefined ||
+      supplier.gstNumber !== undefined
+    ) {
+
+      const current =
+        await firstValueFrom(this.suppliers$);
+
+      const existing =
+        current.find(item => item.id === supplierId);
+
+      assertFieldsUnique(
+        current,
+        {
+          name: supplier.name ?? existing?.name,
+          gstNumber:
+            supplier.gstNumber ?? existing?.gstNumber
+        },
+        this.uniqueRules,
+        supplierId
+      );
+
+    }
+
 
     const updateData: any = {
       updatedAt: new Date()

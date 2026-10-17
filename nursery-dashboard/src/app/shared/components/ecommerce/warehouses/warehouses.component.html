@@ -63,10 +63,10 @@
 
   @else {
 
-    <div class="max-w-full overflow-x-auto">
+    <div class="max-w-full">
 
       <table
-        class="w-full min-w-[700px] text-left"
+        class="w-full text-left"
       >
 
         <!-- Table Header -->
@@ -80,7 +80,7 @@
             <!-- Warehouse -->
 
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="px-2 sm:px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Warehouse
             </th>
@@ -89,7 +89,7 @@
             <!-- Code -->
 
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="px-2 sm:px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Code
             </th>
@@ -98,7 +98,7 @@
             <!-- Status -->
 
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="px-2 sm:px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Status
             </th>
@@ -107,7 +107,8 @@
             <!-- Action -->
 
             <th
-              class="px-3 py-3 text-right font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              *ngIf="roles.canModify"
+              class="px-2 sm:px-3 py-3 text-right font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Action
             </th>
@@ -133,7 +134,7 @@
               <!-- Warehouse Name -->
 
               <td
-                class="px-3 py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90"
+                class="px-2 sm:px-3 py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90"
               >
 
                 @if (
@@ -147,8 +148,9 @@
 
                   <input
                     type="text"
-                    [(ngModel)]="editingWarehouseName"
-                    class="w-full max-w-xs rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                    [ngModel]="editingWarehouseName"
+                    (ngModelChange)="editingWarehouseName = upperName($event)"
+                    class="w-full max-w-xs rounded-lg border border-gray-300 bg-white px-2 sm:px-3 py-2 text-sm uppercase text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                   />
 
                 }
@@ -159,7 +161,7 @@
               <!-- Warehouse Code -->
 
               <td
-                class="px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+                class="px-2 sm:px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
               >
 
                 @if (
@@ -173,12 +175,34 @@
                     {{ warehouse.code }}
                   </span>
 
+                  <p
+                    class="mt-1 text-xs text-gray-400 dark:text-gray-500"
+                  >
+                    Invoice: {{ invoicePrefixOf(warehouse) }}
+                  </p>
+
                 } @else {
 
                   <input
                     type="text"
-                    [(ngModel)]="editingWarehouseCode"
-                    class="w-40 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm uppercase text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                    [ngModel]="editingWarehouseCode"
+                    (ngModelChange)="editingWarehouseCode = upperCode($event)"
+                    maxlength="10"
+                    class="w-40 rounded-lg border border-gray-300 bg-white px-2 sm:px-3 py-2 text-sm uppercase text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  />
+
+                  <label
+                    class="mt-2 block text-xs text-gray-500 dark:text-gray-400"
+                  >
+                    Invoice prefix (max 3)
+                  </label>
+
+                  <input
+                    type="text"
+                    [ngModel]="editingInvoicePrefix"
+                    (ngModelChange)="editingInvoicePrefix = sanitizePrefix($event)"
+                    maxlength="3"
+                    class="w-40 rounded-lg border border-gray-300 bg-white px-2 sm:px-3 py-2 text-sm uppercase text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                   />
 
                 }
@@ -188,12 +212,12 @@
 
               <!-- Status -->
 
-              <td class="px-3 py-4">
+              <td class="px-2 sm:px-3 py-4">
 
                 @if (warehouse.isActive) {
 
                   <span
-                    class="inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
+                    class="inline-flex rounded-full bg-green-100 px-2 sm:px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
                   >
                     Active
                   </span>
@@ -201,7 +225,7 @@
                 } @else {
 
                   <span
-                    class="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-500/10 dark:text-gray-400"
+                    class="inline-flex rounded-full bg-gray-100 px-2 sm:px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-500/10 dark:text-gray-400"
                   >
                     Inactive
                   </span>
@@ -213,10 +237,10 @@
 
               <!-- Actions -->
 
-              <td class="px-3 py-4">
+              <td *ngIf="roles.canModify" class="px-2 sm:px-3 py-4">
 
                 <div
-                  class="flex items-center justify-end gap-2"
+                  class="flex flex-wrap items-center justify-end gap-2"
                 >
 
                   <!-- Normal Actions -->
@@ -231,9 +255,15 @@
                     <button
                       type="button"
                       (click)="editWarehouse(warehouse)"
-                      class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                      aria-label="Edit"
+                      class="group relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                     >
-                      Edit
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                      </svg>
+                      <span class="pointer-events-none absolute bottom-full right-0 z-30 mb-1.5 invisible whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs font-medium text-white opacity-0 transition-opacity group-hover:visible group-hover:opacity-100 dark:bg-gray-600">
+                        Edit
+                      </span>
                     </button>
 
 
@@ -243,7 +273,7 @@
                       type="button"
                       (click)="toggleWarehouseStatus(warehouse)"
                       [disabled]="isUpdatingStatus"
-                      class="rounded-lg border border-blue-300 px-3 py-2 text-xs font-medium text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-500/30 dark:text-blue-400 dark:hover:bg-blue-500/10"
+                      class="rounded-lg border border-brand-500 px-2 sm:px-3 py-2 text-xs font-medium text-brand-500 hover:bg-[#EAF7EB] disabled:cursor-not-allowed disabled:opacity-50 dark:border-brand-400 dark:text-brand-400 dark:hover:bg-brand-500/10"
                     >
 
                       {{
@@ -267,7 +297,7 @@
                       type="button"
                       (click)="saveWarehouse()"
                       [disabled]="isSaving"
-                      class="rounded-lg border border-green-300 px-3 py-2 text-xs font-medium text-green-600 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-green-500/30 dark:text-green-400 dark:hover:bg-green-500/10"
+                      class="rounded-lg border border-green-300 px-2 sm:px-3 py-2 text-xs font-medium text-green-600 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-green-500/30 dark:text-green-400 dark:hover:bg-green-500/10"
                     >
 
                       @if (isSaving) {
@@ -289,7 +319,7 @@
                       type="button"
                       (click)="cancelEdit()"
                       [disabled]="isSaving"
-                      class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                      class="rounded-lg border border-gray-300 px-2 sm:px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                     >
                       Cancel
                     </button>

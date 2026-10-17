@@ -99,6 +99,58 @@
   }
 
 
+  <!-- SEARCH -->
+
+  @if (!isLoading && !errorMessage && purchases.length > 0) {
+
+    <div class="mb-5">
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Search Purchases
+      </label>
+
+      <input
+        type="text"
+        [(ngModel)]="searchText"
+        placeholder="Supplier, invoice number or product..."
+        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 md:max-w-md"
+      />
+
+    </div>
+
+  }
+
+
+  @if (
+    !isLoading &&
+    !errorMessage &&
+    purchases.length > 0 &&
+    filteredPurchases.length === 0
+  ) {
+
+    <div
+      class="rounded-lg border border-dashed border-gray-300 py-10 text-center dark:border-gray-700"
+    >
+
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        No records match "{{ searchText }}".
+      </p>
+
+      @if (hasMore) {
+
+        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+          Only the newest {{ purchases.length }} are searched. Use "Load older" below to search further back.
+        </p>
+
+      }
+
+    </div>
+
+  }
+
+
   <!-- ===================================================== -->
   <!-- PURCHASE TABLE -->
   <!-- ===================================================== -->
@@ -106,13 +158,13 @@
   @if (
     !isLoading &&
     !errorMessage &&
-    purchases.length > 0
+    filteredPurchases.length > 0
   ) {
 
     <div class="max-w-full overflow-x-auto">
 
       <table
-        class="w-full min-w-[1200px] text-left"
+        class="w-full min-w-[720px] table-fixed text-left"
       >
 
         <!-- ================================================= -->
@@ -125,100 +177,40 @@
 
           <tr>
 
-            <!-- DATE -->
-
             <th
-              class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+              class="w-[20%]  px-3 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
             >
-              Date
+              Purchase
             </th>
 
-
-            <!-- INVOICE -->
-
             <th
-              class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
-            >
-              Invoice
-            </th>
-
-
-            <!-- SUPPLIER -->
-
-            <th
-              class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+              class="w-[22%]  px-3 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
             >
               Supplier
             </th>
 
-
-            <!-- WAREHOUSE -->
-
             <th
-              class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
-            >
-              Warehouse
-            </th>
-
-
-            <!-- ITEMS -->
-
-            <th
-              class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+              class="w-[11%]  px-3 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
             >
               Items
             </th>
 
-
-            <!-- QUANTITY -->
-
             <th
-              class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+              *ngIf="roles.isAdmin"
+              class="w-[17%]  px-3 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
             >
-              Qty
+              Amount
             </th>
 
-
-            <!-- SUBTOTAL -->
-
             <th
-              class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
-            >
-              Subtotal
-            </th>
-
-
-            <!-- GST -->
-
-            <th
-              class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
-            >
-              GST
-            </th>
-
-
-            <!-- GRAND TOTAL -->
-
-            <th
-              class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
-            >
-              Total
-            </th>
-
-
-            <!-- STATUS -->
-
-            <th
-              class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+              class="w-[12%]  px-3 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
             >
               Status
             </th>
 
-
-            <!-- ACTION -->
-
             <th
-              class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+              *ngIf="roles.canModify"
+              class="w-[18%]  px-3 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
             >
               Action
             </th>
@@ -237,7 +229,7 @@
         >
 
           @for (
-            purchase of purchases;
+            purchase of filteredPurchases;
             track purchase.id
           ) {
 
@@ -246,76 +238,48 @@
             >
 
               <!-- ============================================= -->
-              <!-- PURCHASE DATE -->
+              <!-- PURCHASE (date + invoice) -->
               <!-- ============================================= -->
 
-              <td
-                class="whitespace-nowrap px-4 py-4 text-sm text-gray-700 dark:text-gray-300"
-              >
-                {{
-                  formatPurchaseDate(
-                    purchase.purchaseDate
-                  )
-                }}
-              </td>
-
-
-              <!-- ============================================= -->
-              <!-- INVOICE -->
-              <!-- ============================================= -->
-
-              <td
-                class="px-4 py-4"
-              >
-
-                @if (purchase.invoiceNumber) {
-
-                  <span
-                    class="text-sm font-medium text-gray-800 dark:text-white"
-                  >
-                    {{ purchase.invoiceNumber }}
-                  </span>
-
-                } @else {
-
-                  <span
-                    class="text-sm text-gray-400"
-                  >
-                    -
-                  </span>
-
-                }
-
-              </td>
-
-
-              <!-- ============================================= -->
-              <!-- SUPPLIER -->
-              <!-- ============================================= -->
-
-              <td
-                class="px-4 py-4"
-              >
+              <td class="px-3 py-4 align-top">
 
                 <p
-                  class="text-sm font-medium text-gray-800 dark:text-white"
+                  class="break-words text-sm font-medium text-gray-800 dark:text-white"
                 >
-                  {{ purchase.supplierName }}
+                  @if (purchase.invoiceNumber) {
+                    {{ purchase.invoiceNumber }}
+                  } @else {
+                    <span class="text-gray-400">No invoice no.</span>
+                  }
+                </p>
+
+                <p
+                  class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                >
+                  {{
+                    formatPurchaseDate(
+                      purchase.purchaseDate
+                    )
+                  }}
                 </p>
 
               </td>
 
 
               <!-- ============================================= -->
-              <!-- WAREHOUSE -->
+              <!-- SUPPLIER (+ warehouse) -->
               <!-- ============================================= -->
 
-              <td
-                class="px-4 py-4"
-              >
+              <td class="px-3 py-4 align-top">
 
                 <p
-                  class="text-sm text-gray-700 dark:text-gray-300"
+                  class="break-words text-sm font-medium text-gray-800 dark:text-white"
+                >
+                  {{ purchase.supplierName }}
+                </p>
+
+                <p
+                  class="mt-1 break-words text-xs text-gray-500 dark:text-gray-400"
                 >
                   {{ purchase.warehouseName }}
                 </p>
@@ -324,74 +288,46 @@
 
 
               <!-- ============================================= -->
-              <!-- ITEMS -->
+              <!-- ITEMS (+ total quantity) -->
               <!-- ============================================= -->
 
-              <td
-                class="whitespace-nowrap px-4 py-4 text-center text-sm text-gray-700 dark:text-gray-300"
-              >
-                {{
-                  getItemCount(
-                    purchase
-                  )
-                }}
+              <td class="px-3 py-4 text-center align-top">
+
+                <p
+                  class="text-sm text-gray-700 dark:text-gray-300"
+                >
+                  {{ getItemCount(purchase) }}
+                </p>
+
+                <p
+                  class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                >
+                  Qty {{ getTotalQuantity(purchase) }}
+                </p>
+
               </td>
 
 
               <!-- ============================================= -->
-              <!-- TOTAL QUANTITY -->
+              <!-- AMOUNT (total, with subtotal and GST below) -->
+              <!-- Purchase prices are for admins only. -->
               <!-- ============================================= -->
 
-              <td
-                class="whitespace-nowrap px-4 py-4 text-center text-sm text-gray-700 dark:text-gray-300"
-              >
-                {{
-                  getTotalQuantity(
-                    purchase
-                  )
-                }}
-              </td>
+              <td *ngIf="roles.isAdmin" class="px-3 py-4 text-right align-top">
 
+                <p
+                  class="whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white"
+                >
+                  ₹{{ purchase.grandTotal | number:'1.2-2' }}
+                </p>
 
-              <!-- ============================================= -->
-              <!-- SUBTOTAL -->
-              <!-- ============================================= -->
+                <p
+                  class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                >
+                  ₹{{ purchase.subtotal | number:'1.2-2' }}
+                  + GST ₹{{ purchase.gstAmount | number:'1.2-2' }}
+                </p>
 
-              <td
-                class="whitespace-nowrap px-4 py-4 text-right text-sm text-gray-700 dark:text-gray-300"
-              >
-                ₹{{
-                  purchase.subtotal
-                    | number:'1.2-2'
-                }}
-              </td>
-
-
-              <!-- ============================================= -->
-              <!-- GST -->
-              <!-- ============================================= -->
-
-              <td
-                class="whitespace-nowrap px-4 py-4 text-right text-sm text-gray-700 dark:text-gray-300"
-              >
-                ₹{{
-                  purchase.gstAmount
-                    | number:'1.2-2'
-                }}
-              </td>
-
-
-              <!-- ============================================= -->
-              <!-- GRAND TOTAL -->
-              <!-- ============================================= -->
-
-              <td
-                class="whitespace-nowrap px-4 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white"
-              >
-                ₹{{
-                  purchase.grandTotal
-                    | number:'1.2-2'
-                }}
               </td>
 
 
@@ -400,7 +336,7 @@
               <!-- ============================================= -->
 
               <td
-                class="whitespace-nowrap px-4 py-4 text-center"
+                class="px-3 py-4 text-center align-top"
               >
 
                 <!-- PENDING -->
@@ -458,7 +394,8 @@
               <!-- ============================================= -->
 
               <td
-                class="whitespace-nowrap px-4 py-4"
+                *ngIf="roles.canModify"
+                class="px-3 py-4 align-top"
               >
 
                 <!-- =========================================== -->
@@ -471,7 +408,7 @@
                 ) {
 
                   <div
-                    class="flex items-center justify-center gap-2"
+                    class="flex flex-wrap items-center justify-center gap-2"
                   >
 
                     <!-- COMPLETE -->
@@ -480,7 +417,7 @@
                       type="button"
                       (click)="completePurchase(purchase)"
                       [disabled]="isProcessing(purchase)"
-                      class="rounded-lg bg-green-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      class="rounded-lg bg-brand-500 px-3 py-2 text-xs font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
                     >
 
                       @if (
@@ -570,6 +507,23 @@
         </tbody>
 
       </table>
+
+    </div>
+
+  }
+
+
+  @if (!isLoading && !errorMessage && hasMore) {
+
+    <div class="mt-4 flex justify-center">
+
+      <button
+        type="button"
+        (click)="loadMore()"
+        class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+      >
+        Load older purchases
+      </button>
 
     </div>
 

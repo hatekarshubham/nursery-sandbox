@@ -21,6 +21,19 @@
         >
           Scan a barcode or manually select products to create a sale.
         </p>
+
+        @if (creatorName) {
+
+          <p
+            class="mt-1 text-sm text-gray-600 dark:text-gray-300"
+          >
+            Created by
+            <span class="font-medium text-gray-800 dark:text-white">
+              {{ creatorName }}
+            </span>
+          </p>
+
+        }
   
       </div>
   
@@ -314,7 +327,8 @@
   
             <input
               type="text"
-              [(ngModel)]="searchText"
+              [ngModel]="searchText"
+              (ngModelChange)="onSearchInput($event)"
               placeholder="Search product, category or barcode..."
               class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             />
@@ -343,7 +357,7 @@
             >
   
               @for (
-                product of filteredProducts;
+                product of visibleProducts;
                 track product.id
               ) {
   
@@ -366,6 +380,7 @@
                         <img
                           [src]="product.image"
                           [alt]="product.name"
+                          loading="lazy"
                           class="h-full w-full object-cover"
                         />
   
@@ -475,6 +490,18 @@
               }
   
   
+              @if (hasMoreProducts) {
+
+                <button
+                  type="button"
+                  (click)="showMoreProducts()"
+                  class="w-full rounded-xl border border-gray-300 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+                >
+                  Show more
+                </button>
+
+              }
+
               @if (
                 filteredProducts.length === 0
               ) {
@@ -659,7 +686,7 @@
                       >
   
                         <p
-                          class="whitespace-nowrap text-sm font-medium text-gray-800 dark:text-white"
+                          class="break-words text-sm font-medium text-gray-800 dark:text-white"
                         >
                           {{ item.productName }}
                         </p>
@@ -667,7 +694,7 @@
                         @if (item.barcode) {
   
                           <p
-                            class="mt-1 whitespace-nowrap font-mono text-[11px] text-gray-400"
+                            class="mt-1 break-all font-mono text-[11px] text-gray-400"
                           >
                             {{ item.barcode }}
                           </p>
@@ -1156,6 +1183,17 @@
                         completedInvoice.createdAt
                       )
                     }}
+                  </strong>
+                </p>
+
+                <p
+                  class="mt-2 text-sm text-gray-500"
+                >
+                  Created by:
+                  <strong
+                    class="ml-1 text-gray-900"
+                  >
+                    {{ completedInvoice.createdByName || 'Unknown' }}
                   </strong>
                 </p>
   

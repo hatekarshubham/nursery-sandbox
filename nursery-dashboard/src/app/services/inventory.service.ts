@@ -11,11 +11,14 @@ import {
   DocumentData,
   query,
   where,
+  limit,
   getDocs,
   runTransaction
 } from '@angular/fire/firestore';
 
 import { Observable } from 'rxjs';
+
+import { shareLiveStream } from './shared-stream';
 
 
 export interface Inventory {
@@ -76,14 +79,169 @@ export class InventoryService {
   // GET ALL INVENTORY
   // =========================
 
+  //
+  // One shared listener for the whole session. Screens that
+  // really need every warehouse (Products totals, stock
+  // transfers, adjustments) reuse it.
+  //
+  // =========================
+
+  private readonly inventory$: Observable<Inventory[]> =
+    shareLiveStream<Inventory[]>(
+      'inventory',
+      () =>
+        collectionData(
+          this.inventoryCollection,
+          {
+            idField: 'id'
+          }
+        ) as Observable<Inventory[]>
+    );
+
+
   getInventory(): Observable<Inventory[]> {
 
-    return collectionData(
-      this.inventoryCollection,
-      {
-        idField: 'id'
-      }
-    ) as Observable<Inventory[]>;
+    return this.inventory$;
+
+  }
+
+
+  // =========================
+  // GET INVENTORY FOR ONE
+  // WAREHOUSE
+  // =========================
+  //
+  // Create Sale only sells from one warehouse, so it does not
+  // need the other warehouses' records. One shared listener
+  // per warehouse.
+  //
+  // =========================
+
+  private readonly warehouseInventory$ =
+    new Map<string, Observable<Inventory[]>>();
+
+
+  getInventoryByWarehouse(
+    warehouseId: string
+  ): Observable<Inventory[]> {
+
+    let stream =
+      this.warehouseInventory$.get(
+        warehouseId
+      );
+
+
+    if (!stream) {
+
+      stream =
+        shareLiveStream<Inventory[]>(
+          `inventory:${warehouseId}`,
+          () =>
+            collectionData(
+              query(
+                this.inventoryCollection,
+                where(
+                  'warehouseId',
+                  '==',
+                  warehouseId
+                )
+              ),
+              {
+                idField: 'id'
+              }
+            ) as Observable<Inventory[]>
+        );
+
+
+      this.warehouseInventory$.set(
+        warehouseId,
+        stream
+      );
+
+    }
+
+
+    return stream;
+
+  }
+
+
+  // Inventory rows for a handful of products (the visible page),
+  // not the whole collection. 30 ids per query, which is Firestore's
+  // limit for `in`.
+  async getInventoryForProducts(
+    productIds: string[]
+  ): Promise<Inventory[]> {
+
+    const unique = [...new Set(productIds.filter(Boolean))];
+
+    const chunks: string[][] = [];
+
+    for (let index = 0; index < unique.length; index += 30) {
+
+      chunks.push(unique.slice(index, index + 30));
+
+    }
+
+    const snapshots = await Promise.all(
+      chunks.map(chunk =>
+        getDocs(
+          query(
+            this.inventoryCollection,
+            where('productId', 'in', chunk)
+          )
+        )
+      )
+    );
+
+    return snapshots.flatMap(snapshot =>
+      snapshot.docs.map(
+        entry => ({
+          id: entry.id,
+          ...entry.data()
+        }) as Inventory
+      )
+    );
+
+  }
+
+
+  // =========================
+  // PREVIEW OF A WAREHOUSE'S STOCK
+  // =========================
+  //
+  // A few inventory records of one warehouse (for the product
+  // picker's suggestions). Reads at most `maxRecords` documents.
+  // With onlyInStock, only records with quantity above 0.
+  //
+
+  async getInventoryPreview(
+    warehouseId: string,
+    onlyInStock: boolean,
+    maxRecords = 20
+  ): Promise<Inventory[]> {
+
+    const constraints: any[] = [
+      where('warehouseId', '==', warehouseId)
+    ];
+
+    if (onlyInStock) {
+
+      constraints.push(where('quantity', '>', 0));
+
+    }
+
+    const snapshot = await getDocs(
+      query(
+        this.inventoryCollection,
+        ...constraints,
+        limit(maxRecords)
+      )
+    );
+
+    return snapshot.docs.map(
+      entry => ({ id: entry.id, ...entry.data() } as Inventory)
+    );
 
   }
 

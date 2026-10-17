@@ -87,6 +87,58 @@
   }
 
 
+  <!-- SEARCH -->
+
+  @if (!isLoading && !errorMessage && stockAdjustments.length > 0) {
+
+    <div class="mb-5">
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Search Adjustments
+      </label>
+
+      <input
+        type="text"
+        [(ngModel)]="searchText"
+        placeholder="Product, warehouse or reason..."
+        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 md:max-w-md"
+      />
+
+    </div>
+
+  }
+
+
+  @if (
+    !isLoading &&
+    !errorMessage &&
+    stockAdjustments.length > 0 &&
+    filteredStockAdjustments.length === 0
+  ) {
+
+    <div
+      class="rounded-lg border border-dashed border-gray-300 py-10 text-center dark:border-gray-700"
+    >
+
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        No records match "{{ searchText }}".
+      </p>
+
+      @if (hasMore) {
+
+        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+          Only the newest {{ stockAdjustments.length }} are searched. Use "Load older" below to search further back.
+        </p>
+
+      }
+
+    </div>
+
+  }
+
+
   <!-- =================================================== -->
   <!-- TABLE -->
   <!-- =================================================== -->
@@ -94,12 +146,12 @@
   @if (
     !isLoading &&
     !errorMessage &&
-    stockAdjustments.length > 0
+    filteredStockAdjustments.length > 0
   ) {
 
     <div class="max-w-full overflow-x-auto">
 
-      <table class="w-full text-left">
+      <table class="w-full min-w-[720px] table-fixed text-left">
 
         <thead
           class="border-y border-gray-100 dark:border-gray-800"
@@ -108,55 +160,31 @@
           <tr>
 
             <th
-              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-            >
-              Date
-            </th>
-
-            <th
-              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[25%] px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Product
             </th>
 
             <th
-              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[18%] px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Warehouse
             </th>
 
             <th
-              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[22%] px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
-              Type
+              Change
             </th>
 
             <th
-              class="whitespace-nowrap px-3 py-3 text-center font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-            >
-              Quantity
-            </th>
-
-            <th
-              class="whitespace-nowrap px-3 py-3 text-center font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-            >
-              Before
-            </th>
-
-            <th
-              class="whitespace-nowrap px-3 py-3 text-center font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-            >
-              After
-            </th>
-
-            <th
-              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[20%] px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Reason
             </th>
 
             <th
-              class="whitespace-nowrap px-3 py-3 text-left font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[15%] px-3 py-3 text-left font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Action
             </th>
@@ -171,7 +199,7 @@
         >
 
           @for (
-            adjustment of stockAdjustments;
+            adjustment of filteredStockAdjustments;
             track adjustment.id
           ) {
 
@@ -179,40 +207,37 @@
               class="transition hover:bg-gray-50 dark:hover:bg-white/[0.02]"
             >
 
-              <!-- DATE -->
+              <!-- PRODUCT (+ date) -->
 
-              <td
-                class="whitespace-nowrap px-3 py-4 text-sm text-gray-600 dark:text-gray-400"
-              >
-                {{
-                  formatAdjustmentDate(
-                    adjustment.adjustmentDate
-                  )
-                }}
-              </td>
+              <td class="px-3 py-4 align-top">
 
-
-              <!-- PRODUCT -->
-
-              <td class="px-3 py-4">
-
-                <span
-                  class="font-medium text-gray-800 text-theme-sm dark:text-white/90"
+                <p
+                  class="break-words font-medium text-gray-800 text-theme-sm dark:text-white/90"
                 >
                   {{ adjustment.productName }}
-                </span>
+                </p>
+
+                <p
+                  class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                >
+                  {{
+                    formatAdjustmentDate(
+                      adjustment.adjustmentDate
+                    )
+                  }}
+                </p>
 
               </td>
 
 
               <!-- WAREHOUSE -->
 
-              <td class="px-3 py-4">
+              <td class="px-3 py-4 align-top">
 
                 <div class="flex flex-col gap-1">
 
                   <span
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="break-words text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ adjustment.warehouseName }}
                   </span>
@@ -228,9 +253,9 @@
               </td>
 
 
-              <!-- TYPE -->
+              <!-- CHANGE (type, quantity, before and after) -->
 
-              <td class="px-3 py-4">
+              <td class="px-3 py-4 align-top">
 
                 @if (
                   adjustment.adjustmentType ===
@@ -240,7 +265,7 @@
                   <span
                     class="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400"
                   >
-                    Increase
+                    + {{ adjustment.quantity }} Increase
                   </span>
 
                 } @else {
@@ -248,49 +273,22 @@
                   <span
                     class="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400"
                   >
-                    Decrease
+                    - {{ adjustment.quantity }} Decrease
                   </span>
 
                 }
 
-              </td>
-
-
-              <!-- QUANTITY -->
-
-              <td
-                class="px-3 py-4 text-center"
-              >
-
-                <span
-                  class="font-semibold text-gray-800 dark:text-white"
+                <p
+                  class="mt-1.5 text-xs text-gray-500 dark:text-gray-400"
                 >
-                  {{ adjustment.quantity }}
-                </span>
-
-              </td>
-
-
-              <!-- BEFORE -->
-
-              <td
-                class="px-3 py-4 text-center text-sm text-gray-600 dark:text-gray-400"
-              >
-                {{ adjustment.quantityBefore }}
-              </td>
-
-
-              <!-- AFTER -->
-
-              <td
-                class="px-3 py-4 text-center"
-              >
-
-                <span
-                  class="font-semibold text-gray-800 dark:text-white"
-                >
-                  {{ adjustment.quantityAfter }}
-                </span>
+                  Stock {{ adjustment.quantityBefore }}
+                  &rarr;
+                  <span
+                    class="font-semibold text-gray-800 dark:text-white"
+                  >
+                    {{ adjustment.quantityAfter }}
+                  </span>
+                </p>
 
               </td>
 
@@ -298,7 +296,7 @@
               <!-- REASON -->
 
               <td
-                class="px-3 py-4 text-sm text-gray-600 dark:text-gray-400"
+                class="break-words px-3 py-4 align-top text-sm text-gray-600 dark:text-gray-400"
               >
                 {{ adjustment.reason }}
               </td>
@@ -306,7 +304,7 @@
 
               <!-- ACTION -->
 
-              <td class="px-3 py-4 text-left">
+              <td class="px-3 py-4 text-left align-top">
 
                 <button
                   type="button"
@@ -325,6 +323,23 @@
         </tbody>
 
       </table>
+
+    </div>
+
+  }
+
+
+  @if (!isLoading && !errorMessage && hasMore) {
+
+    <div class="mt-4 flex justify-center">
+
+      <button
+        type="button"
+        (click)="loadMore()"
+        class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+      >
+        Load older adjustments
+      </button>
 
     </div>
 

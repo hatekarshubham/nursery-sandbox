@@ -10,12 +10,28 @@ import {
   getDocs,
   query,
   where,
+  orderBy,
+  limit,
   CollectionReference,
   DocumentData,
   runTransaction
 } from '@angular/fire/firestore';
 
-import { Observable } from 'rxjs';
+import { Observable, combineLatest, map } from 'rxjs';
+
+import { LIST_PAGE_SIZE } from './list-page';
+
+import {
+  addStockDelta,
+  readProductTotals,
+  writeProductTotals
+} from './stock-total';
+
+import {
+  DuplicateError,
+  buildUniqueKey,
+  reserveUniqueKey
+} from './unique-key';
 
 
 // =========================================================
@@ -155,14 +171,48 @@ export class PurchaseService {
   // GET ALL PURCHASES
   // =======================================================
 
-  getPurchases(): Observable<Purchase[]> {
+  //
+  // Loads the newest `limitCount` purchases, plus every PENDING
+  // purchase (even an old one) so nothing waiting to be completed
+  // can disappear from the list.
+  //
 
-    return collectionData(
-      this.purchasesCollection,
-      {
-        idField: 'id'
-      }
+  getPurchases(
+    limitCount = LIST_PAGE_SIZE
+  ): Observable<Purchase[]> {
+
+    const newest$ = collectionData(
+      query(
+        this.purchasesCollection,
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+      ),
+      { idField: 'id' }
     ) as Observable<Purchase[]>;
+
+    const pending$ = collectionData(
+      query(
+        this.purchasesCollection,
+        where('status', '==', 'PENDING')
+      ),
+      { idField: 'id' }
+    ) as Observable<Purchase[]>;
+
+    return combineLatest([newest$, pending$]).pipe(
+      map(([newest, pending]) => {
+
+        const byId = new Map<string, Purchase>();
+
+        for (const purchase of [...newest, ...pending]) {
+
+          byId.set(purchase.id as string, purchase);
+
+        }
+
+        return [...byId.values()];
+
+      })
+    );
 
   }
 
@@ -528,57 +578,155 @@ export class PurchaseService {
 
 
     // =====================================================
+    // INVOICE NUMBER MUST BE UNIQUE PER SUPPLIER
+    // =====================================================
+    //
+    // A cancelled purchase does not count, so its invoice
+    // number can be entered again.
+    //
+    // =====================================================
+
+    const invoiceNumber =
+      purchase.invoiceNumber
+        ?.trim()
+        .toUpperCase() ??
+      '';
+
+    const duplicateMessage =
+      `Invoice ${invoiceNumber} already exists for ` +
+      `${purchase.supplierName}. ` +
+      'Each supplier invoice can be saved only once.';
+
+
+    if (invoiceNumber) {
+
+      const existing =
+        await getDocs(
+          query(
+            this.purchasesCollection,
+            where(
+              'supplierId',
+              '==',
+              purchase.supplierId
+            ),
+            where(
+              'invoiceNumber',
+              '==',
+              invoiceNumber
+            ),
+            limit(10)
+          )
+        );
+
+      if (
+        existing.docs.some(
+          entry =>
+            entry.data()['status'] !==
+            'CANCELLED'
+        )
+      ) {
+
+        throw new DuplicateError(
+          duplicateMessage
+        );
+
+      }
+
+    }
+
+
+    // =====================================================
     // CREATE PENDING PURCHASE
+    // =====================================================
+    //
+    // The purchase and its invoice lock are written in one
+    // transaction, so a double click or two users saving the
+    // same invoice at once cannot create two records.
+    //
     // =====================================================
 
     const purchaseRef =
-      await addDoc(
-        this.purchasesCollection,
-        {
+      doc(this.purchasesCollection);
 
-          supplierId:
-            purchase.supplierId,
+    const purchaseData = {
 
-          supplierName:
-            purchase.supplierName,
+      supplierId:
+        purchase.supplierId,
 
-          warehouseId:
-            purchase.warehouseId,
+      supplierName:
+        purchase.supplierName,
 
-          warehouseName:
-            purchase.warehouseName,
+      warehouseId:
+        purchase.warehouseId,
 
-          purchaseDate:
-            purchase.purchaseDate,
+      warehouseName:
+        purchase.warehouseName,
 
-          invoiceNumber:
-            purchase.invoiceNumber?.trim() ??
-            '',
+      purchaseDate:
+        purchase.purchaseDate,
 
-          notes:
-            purchase.notes?.trim() ??
-            '',
+      invoiceNumber,
 
-          items:
-            calculatedItems,
+      notes:
+        purchase.notes?.trim() ??
+        '',
 
-          subtotal,
+      items:
+        calculatedItems,
 
-          gstAmount,
+      subtotal,
 
-          grandTotal,
+      gstAmount,
 
-          status:
-            'PENDING' as PurchaseStatus,
+      grandTotal,
 
-          createdAt:
-            new Date(),
+      status:
+        'PENDING' as PurchaseStatus,
 
-          updatedAt:
-            new Date()
+      createdAt:
+        new Date(),
 
-        }
-      );
+      updatedAt:
+        new Date()
+
+    };
+
+
+    await runTransaction(
+      this.firestore,
+      async transaction => {
+
+        const writeLock =
+          invoiceNumber
+            ? await reserveUniqueKey(
+                this.firestore,
+                transaction,
+                buildUniqueKey(
+                  'purchase',
+                  purchase.supplierId,
+                  invoiceNumber
+                ),
+                purchaseRef,
+                data =>
+                  data?.status !==
+                  'CANCELLED' &&
+                  data?.invoiceNumber ===
+                    invoiceNumber &&
+                  data?.supplierId ===
+                    purchase.supplierId,
+                duplicateMessage
+              )
+            : null;
+
+        transaction.set(
+          purchaseRef,
+          purchaseData
+        );
+
+        writeLock?.();
+
+      }
+    );
 
 
     return purchaseRef.id;
@@ -970,9 +1118,45 @@ export class PurchaseService {
         }
 
 
+        // Receiving stock raises each product's stored total.
+        const stockDeltas = new Map<string, number>();
+
+        for (const inventoryInfo of existingInventory) {
+
+          addStockDelta(
+            stockDeltas,
+            inventoryInfo.item.productId,
+            inventoryInfo.item.quantity
+          );
+
+        }
+
+        for (const inventoryInfo of newInventory) {
+
+          addStockDelta(
+            stockDeltas,
+            inventoryInfo.item.productId,
+            inventoryInfo.item.quantity
+          );
+
+        }
+
+        const productTotals =
+          await readProductTotals(
+            this.firestore,
+            transaction,
+            stockDeltas
+          );
+
+
         // =================================================
         // UPDATE EXISTING INVENTORY
         // =================================================
+
+        writeProductTotals(
+          transaction,
+          productTotals
+        );
 
         for (
           const inventoryInfo of

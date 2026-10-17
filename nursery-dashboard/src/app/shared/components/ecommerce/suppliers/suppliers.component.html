@@ -20,6 +20,29 @@
   </div>
 
 
+  <!-- Search -->
+  @if (!isLoading && suppliers.length > 0) {
+
+    <div class="mb-5">
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Search Suppliers
+      </label>
+
+      <input
+        type="text"
+        [(ngModel)]="searchText"
+        placeholder="Supplier name, mobile, GST..."
+        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 md:max-w-md"
+      />
+
+    </div>
+
+  }
+
+
   <!-- Loading -->
   @if (isLoading) {
 
@@ -56,12 +79,30 @@
   }
 
 
+  <!-- No search match -->
+  @else if (filteredSuppliers.length === 0) {
+
+    <div
+      class="rounded-lg border border-dashed border-gray-300 py-10 text-center dark:border-gray-700"
+    >
+
+      <p
+        class="text-sm text-gray-500 dark:text-gray-400"
+      >
+        No suppliers match "{{ searchText }}".
+      </p>
+
+    </div>
+
+  }
+
+
   <!-- Suppliers Table -->
   @else {
 
-    <div class="max-w-full overflow-x-auto">
+    <div class="max-w-full">
 
-      <table class="w-full min-w-[1100px] text-left">
+      <table class="w-full table-fixed text-left">
 
         <!-- Table Header -->
         <thead
@@ -72,42 +113,43 @@
 
             <!-- Supplier -->
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[34%] px-3 py-3 font-medium sm:w-[24%] text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Supplier
             </th>
 
             <!-- Mobile -->
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[30%] px-3 py-3 font-medium sm:w-[13%] text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Mobile
             </th>
 
             <!-- Email -->
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="hidden w-[18%] px-3 py-3 font-medium sm:table-cell text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Email
             </th>
 
             <!-- GST -->
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="hidden w-[15%] px-3 py-3 font-medium sm:table-cell text-gray-500 text-theme-xs dark:text-gray-400"
             >
               GST Number
             </th>
 
             <!-- Status -->
             <th
-              class="px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-24 px-3 py-3 font-medium sm:w-[10%] text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Status
             </th>
 
             <!-- Action -->
             <th
-              class="px-3 py-3 text-right font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              *ngIf="roles.canModify"
+              class="w-[20%] px-3 py-3 text-right font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Action
             </th>
@@ -123,7 +165,7 @@
         >
 
           @for (
-            supplier of suppliers;
+            supplier of filteredSuppliers;
             track supplier.id
           ) {
 
@@ -131,7 +173,7 @@
 
               <!-- Supplier -->
               <td
-                class="px-3 py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90"
+                class="break-words px-3 py-4 font-medium text-gray-800 text-theme-sm dark:text-white/90"
               >
 
                 @if (
@@ -167,7 +209,7 @@
 
               <!-- Mobile -->
               <td
-                class="px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+                class="break-words px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
               >
 
                 @if (
@@ -181,7 +223,7 @@
                   <input
                     type="tel"
                     [(ngModel)]="editingSupplierMobile"
-                    class="w-40 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                   />
 
                 }
@@ -191,7 +233,7 @@
 
               <!-- Email -->
               <td
-                class="px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+                class="hidden sm:table-cell break-words px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
               >
 
                 @if (
@@ -205,7 +247,7 @@
                   <input
                     type="email"
                     [(ngModel)]="editingSupplierEmail"
-                    class="w-56 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                   />
 
                 }
@@ -215,7 +257,7 @@
 
               <!-- GST -->
               <td
-                class="px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
+                class="hidden sm:table-cell break-words px-3 py-4 text-gray-500 text-theme-sm dark:text-gray-400"
               >
 
                 @if (
@@ -228,9 +270,10 @@
 
                   <input
                     type="text"
-                    [(ngModel)]="editingSupplierGstNumber"
+                    [ngModel]="editingSupplierGstNumber"
+                    (ngModelChange)="editingSupplierGstNumber = upperGst($event)"
                     maxlength="15"
-                    class="w-44 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm uppercase text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm uppercase text-gray-800 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                   />
 
                 }
@@ -263,10 +306,10 @@
 
 
               <!-- Actions -->
-              <td class="px-3 py-4">
+              <td *ngIf="roles.canModify" class="px-3 py-4">
 
                 <div
-                  class="flex items-center justify-end gap-2"
+                  class="flex flex-wrap items-center justify-end gap-2"
                 >
 
                   <!-- Normal Actions -->
@@ -278,9 +321,15 @@
                     <button
                       type="button"
                       (click)="editSupplier(supplier)"
-                      class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                      aria-label="Edit"
+                      class="group relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                     >
-                      Edit
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                      </svg>
+                      <span class="pointer-events-none absolute bottom-full right-0 z-30 mb-1.5 invisible whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs font-medium text-white opacity-0 transition-opacity group-hover:visible group-hover:opacity-100 dark:bg-gray-600">
+                        Edit
+                      </span>
                     </button>
 
 
@@ -289,7 +338,7 @@
                       type="button"
                       (click)="toggleSupplierStatus(supplier)"
                       [disabled]="isUpdatingStatus"
-                      class="rounded-lg border border-blue-300 px-3 py-2 text-xs font-medium text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-500/30 dark:text-blue-400 dark:hover:bg-blue-500/10"
+                      class="rounded-lg border border-brand-500 px-3 py-2 text-xs font-medium text-brand-500 hover:bg-[#EAF7EB] disabled:cursor-not-allowed disabled:opacity-50 dark:border-brand-400 dark:text-brand-400 dark:hover:bg-brand-500/10"
                     >
                       {{
                         supplier.isActive
@@ -303,9 +352,15 @@
                     <button
                       type="button"
                       (click)="openDeleteModal(supplier)"
-                      class="rounded-lg border border-red-300 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10"
+                      aria-label="Delete"
+                      class="group relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-red-300 text-red-600 hover:bg-red-50 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10"
                     >
-                      Delete
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                      </svg>
+                      <span class="pointer-events-none absolute bottom-full right-0 z-30 mb-1.5 invisible whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs font-medium text-white opacity-0 transition-opacity group-hover:visible group-hover:opacity-100 dark:bg-gray-600">
+                        Delete
+                      </span>
                     </button>
 
                   }

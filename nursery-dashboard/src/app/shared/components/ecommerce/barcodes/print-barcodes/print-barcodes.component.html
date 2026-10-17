@@ -253,7 +253,7 @@
               >
 
                 @for (
-                  product of filteredProducts;
+                  product of pagedProducts;
                   track product.id
                 ) {
 
@@ -416,6 +416,40 @@
             </table>
 
           </div>
+
+          @if (lastPage > 1) {
+
+            <div
+              class="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 px-4 py-3 text-sm text-gray-600 dark:border-gray-800 dark:text-gray-400"
+            >
+
+              <span>
+                Rows {{ firstRowNumber }} to {{ lastRowNumber }}
+                of {{ filteredProducts.length }}
+              </span>
+
+              <div class="flex items-center gap-2">
+
+                <button type="button" (click)="goToPage(1)" [disabled]="currentPage <= 1"
+                  class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:hover:bg-white/[0.03]">First</button>
+
+                <button type="button" (click)="goToPage(currentPage - 1)" [disabled]="currentPage <= 1"
+                  class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:hover:bg-white/[0.03]">Previous</button>
+
+                <span class="px-2">Page {{ currentPage }} of {{ lastPage }}</span>
+
+                <button type="button" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= lastPage"
+                  class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:hover:bg-white/[0.03]">Next</button>
+
+                <button type="button" (click)="goToPage(lastPage)" [disabled]="currentPage >= lastPage"
+                  class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:hover:bg-white/[0.03]">Last</button>
+
+              </div>
+
+            </div>
+
+          }
+
 
         </div>
 

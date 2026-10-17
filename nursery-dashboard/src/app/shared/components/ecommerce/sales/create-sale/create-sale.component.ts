@@ -1,9 +1,15 @@
 import {
+
   Component,
+  DestroyRef,
   ElementRef,
   OnInit,
-  ViewChild
+  ViewChild,
+  inject
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subscription } from 'rxjs';
+import { AppDialogService } from '../../../../services/app-dialog.service';
 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -26,6 +32,14 @@ import {
   SalesService,
   CreateSaleInput
 } from '../../../../../services/sales.service';
+
+import { AuthService } from '../../../../../services/auth';
+
+import {
+  indianMobile,
+  moneyAmount,
+  optionalText
+} from '../../../../utils/form-validation';
 
 
 // =======================================================
@@ -118,6 +132,8 @@ interface CompletedInvoice {
 
   warehouseName: string;
 
+  createdByName: string;
+
   items: InvoiceItem[];
 
   subtotal: number;
@@ -149,6 +165,8 @@ interface CompletedInvoice {
   styleUrl: './create-sale.component.css'
 })
 export class CreateSaleComponent implements OnInit {
+
+  private readonly dialog = inject(AppDialogService);
 
 
   // =====================================================
@@ -189,6 +207,14 @@ export class CreateSaleComponent implements OnInit {
 
   searchText = '';
 
+  hasMoreProducts = false;
+
+  private saleCursor: any = null;
+
+  private saleSerial = 0;
+
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+
 
   // =====================================================
   // INVENTORY
@@ -211,6 +237,8 @@ export class CreateSaleComponent implements OnInit {
   paymentMode = 'Cash';
 
   discount = 0;
+
+  creatorName = '';
 
 
   // =====================================================
@@ -240,7 +268,14 @@ export class CreateSaleComponent implements OnInit {
 
   private productsLoaded = false;
 
-  private inventoryLoaded = false;
+  // Stock is only loaded for the selected warehouse, so there is
+  // nothing to wait for until a warehouse is chosen.
+  private inventoryLoaded = true;
+
+  // Warehouse whose stock is currently loaded (and live).
+  private inventoryWarehouseId = '';
+
+  private inventorySubscription?: Subscription;
 
   private warehousesLoaded = false;
 
@@ -253,7 +288,9 @@ export class CreateSaleComponent implements OnInit {
     private productService: ProductService,
     private inventoryService: InventoryService,
     private warehouseService: WarehouseService,
-    private salesService: SalesService
+    private salesService: SalesService,
+    private authService: AuthService,
+    private destroyRef: DestroyRef
   ) {}
 
 
@@ -263,9 +300,19 @@ export class CreateSaleComponent implements OnInit {
 
   ngOnInit(): void {
 
-    this.loadProducts();
+    this.creatorName = this.authService.getCreator().name;
 
-    this.loadInventory();
+    this.authService.profile$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.creatorName = this.authService.getCreator().name;
+      });
+
+    this.destroyRef.onDestroy(() => {
+      this.inventorySubscription?.unsubscribe();
+    });
+
+    this.loadProducts();
 
     this.loadWarehouses();
 
@@ -278,41 +325,8 @@ export class CreateSaleComponent implements OnInit {
 
   private loadProducts(): void {
 
-    this.productService
-      .getProducts()
-      .subscribe({
-
-        next: (products: any[]) => {
-
-          this.rawProducts =
-            products ?? [];
-
-          this.productsLoaded =
-            true;
-
-          this.buildProductList();
-
-        },
-
-        error: (error) => {
-
-          console.error(
-            'Error loading products:',
-            error
-          );
-
-          this.rawProducts = [];
-
-          this.productsLoaded = true;
-
-          this.errorMessage =
-            'Unable to load products.';
-
-          this.buildProductList();
-
-        }
-
-      });
+    // Products are loaded a page at a time once a warehouse
+    // is chosen (see reloadSaleProducts). Nothing is read here.
 
   }
 
@@ -321,51 +335,89 @@ export class CreateSaleComponent implements OnInit {
   // LOAD INVENTORY
   // =====================================================
 
-  private loadInventory(): void {
+  //
+  // Only the selected warehouse's stock is loaded (and kept
+  // live), not every warehouse. Switching warehouse switches
+  // the listener.
+  //
+  // =====================================================
 
-    this.inventoryService
-      .getInventory()
-      .subscribe({
+  private loadInventoryForWarehouse(
+    warehouseId: string
+  ): void {
 
-        next: (inventory) => {
+    if (
+      warehouseId === this.inventoryWarehouseId
+    ) {
 
-          this.inventory =
-            inventory ?? [];
+      return;
 
-          this.inventoryLoaded =
-            true;
+    }
 
-          if (
-            this.productsLoaded
-          ) {
+    this.inventorySubscription?.unsubscribe();
 
-            this.refreshAvailableQuantities();
+    this.inventoryWarehouseId = warehouseId;
+
+    if (!warehouseId) {
+
+      this.inventory = [];
+
+      this.inventoryLoaded = true;
+
+      this.refreshAvailableQuantities();
+
+      return;
+
+    }
+
+    // Wait for the new warehouse's stock before showing quantities,
+    // so the screen never shows the old warehouse's numbers.
+    this.inventoryLoaded = false;
+
+    this.inventorySubscription =
+      this.inventoryService
+        .getInventoryByWarehouse(warehouseId)
+        .subscribe({
+
+          next: (inventory) => {
+
+            this.inventory =
+              inventory ?? [];
+
+            this.inventoryLoaded =
+              true;
+
+            if (
+              this.productsLoaded
+            ) {
+
+              this.refreshAvailableQuantities();
+
+            }
+
+            this.buildProductList();
+
+          },
+
+          error: (error) => {
+
+            console.error(
+              'Error loading inventory:',
+              error
+            );
+
+            this.inventory = [];
+
+            this.inventoryLoaded = true;
+
+            this.errorMessage =
+              'Unable to load inventory.';
+
+            this.buildProductList();
 
           }
 
-          this.buildProductList();
-
-        },
-
-        error: (error) => {
-
-          console.error(
-            'Error loading inventory:',
-            error
-          );
-
-          this.inventory = [];
-
-          this.inventoryLoaded = true;
-
-          this.errorMessage =
-            'Unable to load inventory.';
-
-          this.buildProductList();
-
-        }
-
-      });
+        });
 
   }
 
@@ -378,6 +430,7 @@ export class CreateSaleComponent implements OnInit {
 
     this.warehouseService
       .getActiveWarehouses()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (warehouses) => {
@@ -398,7 +451,15 @@ export class CreateSaleComponent implements OnInit {
 
           }
 
-          this.buildProductList();
+          if (this.selectedWarehouseId) {
+
+            void this.reloadSaleProducts();
+
+          } else {
+
+            this.isLoading = false;
+
+          }
 
         },
 
@@ -416,7 +477,7 @@ export class CreateSaleComponent implements OnInit {
           this.errorMessage =
             'Unable to load warehouses.';
 
-          this.buildProductList();
+          this.isLoading = false;
 
         }
 
@@ -485,7 +546,9 @@ export class CreateSaleComponent implements OnInit {
               ),
 
             image:
-              product.image ?? '',
+              product.thumbUrl ||
+              product.imageUrl ||
+              '',
 
             isActive:
               product.isActive !== false,
@@ -509,36 +572,208 @@ export class CreateSaleComponent implements OnInit {
 
   get filteredProducts(): SaleProduct[] {
 
-    const search =
-      this.searchText
-        .trim()
-        .toLowerCase();
+    return this.products;
 
-    if (!search) {
+  }
 
-      return this.products;
+  get visibleProducts(): SaleProduct[] {
+
+    return this.products;
+
+  }
+
+  onSearchInput(value: string) {
+
+    this.searchText = value;
+
+    if (this.searchTimer) {
+
+      clearTimeout(this.searchTimer);
 
     }
 
-    return this.products.filter(
-      product =>
-
-        product.name
-          .toLowerCase()
-          .includes(search)
-
-        ||
-
-        product.category
-          .toLowerCase()
-          .includes(search)
-
-        ||
-
-        product.barcode
-          .toLowerCase()
-          .includes(search)
+    this.searchTimer = setTimeout(
+      () => void this.reloadSaleProducts(),
+      300
     );
+
+  }
+
+  showMoreProducts(): void {
+
+    void this.reloadSaleProducts(true);
+
+  }
+
+
+  private async reloadSaleProducts(
+    more = false
+  ) {
+
+    const warehouseId = this.selectedWarehouseId;
+
+    if (!warehouseId) {
+
+      this.products = [];
+
+      this.hasMoreProducts = false;
+
+      return;
+
+    }
+
+    const serial = ++this.saleSerial;
+
+    if (!more) {
+
+      this.saleCursor = null;
+
+      this.isLoading = true;
+
+    }
+
+    const search = this.searchText.trim();
+
+    try {
+
+      let rows: any[] = [];
+
+      let moreAvailable = false;
+
+      if (search) {
+
+        rows = await this.productService.searchProducts(
+          search,
+          { maxResults: 50, fetchLimit: 80 }
+        );
+
+        const byBarcode =
+          await this.productService.findProductByBarcode(search);
+
+        if (byBarcode && !rows.some(row => row.id === byBarcode.id)) {
+
+          rows = [byBarcode, ...rows];
+
+        }
+
+      } else {
+
+        const page = await this.productService.pageProducts({
+          order: 'name',
+          pageSize: 50,
+          direction: more && this.saleCursor ? 'next' : 'first',
+          cursor: more ? this.saleCursor : null,
+          knownCount: more ? 1 : null
+        });
+
+        if (serial !== this.saleSerial) {
+
+          return;
+
+        }
+
+        rows = page.products;
+
+        this.saleCursor = page.last;
+
+        moreAvailable = rows.length === 50;
+
+      }
+
+      if (serial !== this.saleSerial) {
+
+        return;
+
+      }
+
+      const stock =
+        await this.inventoryService.getInventoryForProducts(
+          rows.map(row => row.id)
+        );
+
+      if (serial !== this.saleSerial) {
+
+        return;
+
+      }
+
+      this.inventory = more
+        ? [...this.inventory, ...stock]
+        : stock;
+
+      const quantities = new Map<string, number>();
+
+      for (const item of stock) {
+
+        if (item.warehouseId !== warehouseId) {
+
+          continue;
+
+        }
+
+        quantities.set(
+          item.productId,
+          (quantities.get(item.productId) ?? 0) +
+            Number(item.quantity ?? 0)
+        );
+
+      }
+
+      const mapped = rows
+        .filter(row => row.id && row.isActive !== false)
+        .map(row => this.toSaleProduct(row, quantities));
+
+      this.products = more ? [...this.products, ...mapped] : mapped;
+
+      this.hasMoreProducts = !search && moreAvailable;
+
+      this.productsLoaded = true;
+
+      this.inventoryLoaded = true;
+
+      this.isLoading = false;
+
+    } catch (error) {
+
+      if (serial !== this.saleSerial) {
+
+        return;
+
+      }
+
+      console.error('Error loading products:', error);
+
+      this.errorMessage = 'Unable to load products.';
+
+      this.isLoading = false;
+
+    }
+
+  }
+
+
+  private toSaleProduct(
+    product: any,
+    quantities: Map<string, number>
+  ): SaleProduct {
+
+    return {
+      id: product.id,
+      name: product.name ?? '',
+      category: product.category ?? '',
+      categoryId: product.categoryId ?? '',
+      supplierId: product.supplierId ?? '',
+      supplierName: product.supplier ?? '',
+      barcode: product.barcode ?? '',
+      unitPrice: Number(product.unitPrice ?? 0),
+      gst: Number(product.gst ?? 0),
+      image:
+        product.thumbUrl ||
+        product.imageUrl ||
+        '',
+      isActive: product.isActive !== false,
+      availableQuantity: quantities.get(product.id) ?? 0
+    };
 
   }
 
@@ -547,18 +782,24 @@ export class CreateSaleComponent implements OnInit {
   // WAREHOUSE CHANGE
   // =====================================================
 
-  onWarehouseChange(): void {
+  async onWarehouseChange(): Promise<void> {
 
     if (
       this.cartItems.length > 0
     ) {
 
       const confirmed =
-        window.confirm(
+        await this.dialog.confirm(
           'Changing the warehouse will clear the current cart. Continue?'
         );
 
       if (!confirmed) {
+
+        // Put the dropdown back on the warehouse whose stock is
+        // still loaded, so the screen never shows one warehouse's
+        // name next to another warehouse's quantities.
+        this.selectedWarehouseId =
+          this.inventoryWarehouseId;
 
         return;
 
@@ -568,7 +809,7 @@ export class CreateSaleComponent implements OnInit {
 
     }
 
-    this.refreshAvailableQuantities();
+    void this.reloadSaleProducts();
 
     this.focusBarcodeInput();
 
@@ -615,33 +856,145 @@ export class CreateSaleComponent implements OnInit {
 
     }
 
-    return this.inventory
+    return this.stockIndex().get(productId) ?? 0;
 
-      .filter(
-        inventoryItem =>
+  }
 
-          inventoryItem.productId ===
-            productId
 
-          &&
+  // Stock per product for the selected warehouse, built once per
+  // inventory update instead of scanning the list for every product.
+  private stockIndexInventory: Inventory[] | null = null;
 
-          inventoryItem.warehouseId ===
-            this.selectedWarehouseId
-      )
+  private stockIndexWarehouseId = '';
 
-      .reduce(
-        (
-          total,
-          inventoryItem
-        ) =>
+  private stockIndexMap = new Map<string, number>();
 
-          total +
-          Number(
-            inventoryItem.quantity ?? 0
-          ),
+  private stockIndex(): Map<string, number> {
 
-        0
+    if (
+      this.stockIndexInventory !== this.inventory ||
+      this.stockIndexWarehouseId !== this.selectedWarehouseId
+    ) {
+
+      const map = new Map<string, number>();
+
+      for (const item of this.inventory) {
+
+        if (item.warehouseId !== this.selectedWarehouseId) {
+
+          continue;
+
+        }
+
+        map.set(
+          item.productId,
+          (map.get(item.productId) ?? 0) +
+            Number(item.quantity ?? 0)
+        );
+
+      }
+
+      this.stockIndexMap = map;
+
+      this.stockIndexInventory = this.inventory;
+
+      this.stockIndexWarehouseId = this.selectedWarehouseId;
+
+    }
+
+    return this.stockIndexMap;
+
+  }
+
+
+  // =====================================================
+  // REFRESH STOCK AFTER A SALE
+  // =====================================================
+  //
+  // completeSale() does not know what anyone ELSE sold a
+  // moment ago, so simply subtracting the sold quantity
+  // from the number already on screen can land on the
+  // wrong number if two people were selling the same
+  // product at once.
+  //
+  // Re-reading just the products that were in THIS cart
+  // (one small batched read, not the whole catalogue, not
+  // a live listener) gives the real number instead of a
+  // guess.
+  // =====================================================
+
+  private async refreshStockAfterSale(
+    productIds: string[]
+  ): Promise<void> {
+
+    if (!productIds.length) {
+
+      return;
+
+    }
+
+    const fresh =
+      await this.inventoryService.getInventoryForProducts(
+        productIds
       );
+
+    const idSet = new Set(productIds);
+
+    // Drop the old rows for these products (any warehouse)
+    // before adding the fresh ones, so stock isn't double
+    // counted.
+    this.inventory = [
+      ...this.inventory.filter(
+        item => !idSet.has(item.productId)
+      ),
+      ...fresh
+    ];
+
+    this.products =
+      this.products.map(
+        product =>
+          idSet.has(product.id)
+            ? {
+                ...product,
+                availableQuantity:
+                  this.getAvailableQuantity(product.id)
+              }
+            : product
+      );
+
+  }
+
+
+  private async stockFor(
+    productIds: string[]
+  ): Promise<Map<string, number>> {
+
+    const stock =
+      await this.inventoryService.getInventoryForProducts(
+        productIds
+      );
+
+    this.inventory = [...this.inventory, ...stock];
+
+    const quantities = new Map<string, number>();
+
+    for (const item of stock) {
+
+      if (item.warehouseId !== this.selectedWarehouseId) {
+
+        continue;
+
+      }
+
+      quantities.set(
+        item.productId,
+        (quantities.get(item.productId) ?? 0) +
+          Number(item.quantity ?? 0)
+      );
+
+    }
+
+    return quantities;
 
   }
 
@@ -650,7 +1003,7 @@ export class CreateSaleComponent implements OnInit {
   // BARCODE SCAN
   // =====================================================
 
-  scanBarcode(): void {
+  async scanBarcode(): Promise<void> {
 
     const barcode =
       this.barcodeText.trim();
@@ -665,7 +1018,7 @@ export class CreateSaleComponent implements OnInit {
       !this.selectedWarehouseId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a warehouse first.'
       );
 
@@ -675,15 +1028,20 @@ export class CreateSaleComponent implements OnInit {
 
     }
 
+    const found =
+      await this.productService.findProductByBarcode(barcode);
+
     const product =
-      this.products.find(
-        item =>
-          item.barcode === barcode
-      );
+      found
+        ? this.toSaleProduct(
+            found,
+            await this.stockFor([found.id])
+          )
+        : this.products.find(item => item.barcode === barcode);
 
     if (!product) {
 
-      alert(
+      await this.dialog.alert(
         `No product found for barcode: ${barcode}`
       );
 
@@ -710,15 +1068,15 @@ export class CreateSaleComponent implements OnInit {
   // ADD TO CART
   // =====================================================
 
-  addToCart(
+  async addToCart(
     product: SaleProduct
-  ): void {
+  ): Promise<void> {
 
     if (
       !this.selectedWarehouseId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a warehouse first.'
       );
 
@@ -735,7 +1093,7 @@ export class CreateSaleComponent implements OnInit {
       availableQuantity <= 0
     ) {
 
-      alert(
+      await this.dialog.alert(
         `${product.name} is out of stock in the selected warehouse.`
       );
 
@@ -757,7 +1115,7 @@ export class CreateSaleComponent implements OnInit {
         availableQuantity
       ) {
 
-        alert(
+        await this.dialog.alert(
           `Only ${availableQuantity} unit(s) of ${product.name} are available.`
         );
 
@@ -818,9 +1176,9 @@ export class CreateSaleComponent implements OnInit {
   // INCREASE QUANTITY
   // =====================================================
 
-  increaseQuantity(
+  async increaseQuantity(
     item: CartItem
-  ): void {
+  ): Promise<void> {
 
     const availableQuantity =
       this.getAvailableQuantity(
@@ -832,7 +1190,7 @@ export class CreateSaleComponent implements OnInit {
       availableQuantity
     ) {
 
-      alert(
+      await this.dialog.alert(
         `Only ${availableQuantity} unit(s) of ${item.productName} are available.`
       );
 
@@ -870,9 +1228,9 @@ export class CreateSaleComponent implements OnInit {
   // MANUAL QUANTITY CHANGE
   // =====================================================
 
-  onQuantityChange(
+  async onQuantityChange(
     item: CartItem
-  ): void {
+  ): Promise<void> {
 
     let quantity =
       Number(
@@ -908,7 +1266,7 @@ export class CreateSaleComponent implements OnInit {
       quantity =
         availableQuantity;
 
-      alert(
+      await this.dialog.alert(
         `Only ${availableQuantity} unit(s) of ${item.productName} are available.`
       );
 
@@ -942,7 +1300,7 @@ export class CreateSaleComponent implements OnInit {
   // CLEAR CART
   // =====================================================
 
-  clearCart(): void {
+  async clearCart(): Promise<void> {
 
     if (
       this.cartItems.length === 0
@@ -953,7 +1311,7 @@ export class CreateSaleComponent implements OnInit {
     }
 
     const confirmed =
-      window.confirm(
+      await this.dialog.confirm(
         'Clear all products from the cart?'
       );
 
@@ -1186,8 +1544,43 @@ export class CreateSaleComponent implements OnInit {
       !this.selectedWarehouseId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a warehouse.'
+      );
+
+      return;
+
+    }
+
+
+    const customerError =
+      optionalText(
+        this.customerName,
+        'Customer name',
+        80
+      ) ||
+      indianMobile(
+        this.customerMobile,
+        false
+      );
+
+    if (customerError) {
+
+      await this.dialog.alert(customerError);
+
+      return;
+
+    }
+
+
+    if (
+      !['Cash', 'UPI', 'Card'].includes(
+        this.paymentMode
+      )
+    ) {
+
+      await this.dialog.alert(
+        'Please select a payment mode.'
       );
 
       return;
@@ -1203,7 +1596,7 @@ export class CreateSaleComponent implements OnInit {
       this.cartItems.length === 0
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please add at least one product.'
       );
 
@@ -1221,16 +1614,16 @@ export class CreateSaleComponent implements OnInit {
         this.discount ?? 0
       );
 
-    if (
-      !Number.isFinite(
-        discount
-      ) ||
-      discount < 0
-    ) {
-
-      alert(
-        'Please enter a valid discount.'
+    const discountError =
+      moneyAmount(
+        discount,
+        'Discount',
+        { allowZero: true }
       );
+
+    if (discountError) {
+
+      await this.dialog.alert(discountError);
 
       return;
 
@@ -1241,7 +1634,7 @@ export class CreateSaleComponent implements OnInit {
       this.totalBeforeDiscount
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Discount cannot be greater than the bill total.'
       );
 
@@ -1269,7 +1662,7 @@ export class CreateSaleComponent implements OnInit {
         available
       ) {
 
-        alert(
+        await this.dialog.alert(
           `Insufficient stock for ${item.productName}. Available: ${available}.`
         );
 
@@ -1365,7 +1758,13 @@ export class CreateSaleComponent implements OnInit {
           this.grandTotal,
 
         paymentMode:
-          this.paymentMode
+          this.paymentMode,
+
+        createdById:
+          this.authService.getCreator().id,
+
+        createdByName:
+          this.authService.getCreator().name
 
       };
 
@@ -1384,12 +1783,6 @@ export class CreateSaleComponent implements OnInit {
           .completeSale(
             saleData
           );
-
-
-      console.log(
-        'Sale completed successfully:',
-        result
-      );
 
 
       // =================================================
@@ -1415,6 +1808,9 @@ export class CreateSaleComponent implements OnInit {
 
         warehouseName:
           this.getWarehouseName(),
+
+        createdByName:
+          this.authService.getCreator().name,
 
         items:
           this.cartItems.map(
@@ -1494,6 +1890,23 @@ export class CreateSaleComponent implements OnInit {
 
 
       // =================================================
+      // REFRESH THE STOCK SHOWN ON THE CARDS
+      // =================================================
+      //
+      // Re-read the real quantity for just the products
+      // that were sold, instead of guessing by subtraction.
+      // See refreshStockAfterSale() for why.
+      // =================================================
+
+      const soldProductIds =
+        [...new Set(
+          this.cartItems.map(item => item.productId)
+        )];
+
+      void this.refreshStockAfterSale(soldProductIds);
+
+
+      // =================================================
       // RESET CREATE SALE FORM
       // =================================================
 
@@ -1522,7 +1935,7 @@ export class CreateSaleComponent implements OnInit {
         error
       );
 
-      alert(
+      await this.dialog.alert(
         error?.message ??
         'Unable to complete sale.'
       );
@@ -1563,7 +1976,7 @@ export class CreateSaleComponent implements OnInit {
   //
   // =====================================================
 
-  printInvoice(): void {
+  async printInvoice(): Promise<void> {
 
     if (
       !this.completedInvoice
@@ -1693,7 +2106,7 @@ export class CreateSaleComponent implements OnInit {
 
     if (!printWindow) {
 
-      alert(
+      await this.dialog.alert(
         'Unable to open print window. Please allow pop-ups for this site.'
       );
 
@@ -2650,23 +3063,48 @@ export class CreateSaleComponent implements OnInit {
 
           window.onload = function () {
 
+            var closed = false;
+
+            function finish() {
+
+              if (closed) {
+
+                return;
+
+              }
+
+              closed = true;
+
+              window.close();
+
+            }
+
+            window.addEventListener(
+              'afterprint',
+              finish
+            );
+
+            window.focus();
+
+            window.print();
+
             setTimeout(
               function () {
 
-                window.focus();
+                window.addEventListener(
+                  'focus',
+                  finish
+                );
 
-                window.print();
+                if (document.hasFocus()) {
+
+                  finish();
+
+                }
 
               },
-              250
+              400
             );
-
-          };
-
-
-          window.onafterprint = function () {
-
-            window.close();
 
           };
 
@@ -2680,6 +3118,8 @@ export class CreateSaleComponent implements OnInit {
 
 
     printWindow.document.close();
+
+    this.closeInvoice();
 
   }
 

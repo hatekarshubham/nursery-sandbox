@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
 
+import { FormsModule } from '@angular/forms';
+
 import {
   Component,
   OnDestroy,
@@ -7,6 +9,8 @@ import {
 } from '@angular/core';
 
 import { Subscription } from 'rxjs';
+
+import { LIST_PAGE_SIZE } from '../../../../services/list-page';
 
 import {
   StockAdjustment,
@@ -20,7 +24,8 @@ import {
   standalone: true,
 
   imports: [
-    CommonModule
+    CommonModule,
+    FormsModule
   ],
 
   templateUrl:
@@ -46,6 +51,16 @@ export class StockAdjustmentsComponent
   // =======================================================
 
   isLoading = true;
+
+  // How many newest records are loaded; "Load older" raises it.
+  limitCount = LIST_PAGE_SIZE;
+
+  hasMore = false;
+
+  // Search box text
+  searchText = '';
+
+  private listSubscription?: Subscription;
 
   errorMessage = '';
 
@@ -93,6 +108,8 @@ export class StockAdjustmentsComponent
 
   private loadStockAdjustments() {
 
+    this.listSubscription?.unsubscribe();
+
     this.isLoading = true;
 
     this.errorMessage = '';
@@ -100,7 +117,7 @@ export class StockAdjustmentsComponent
 
     const adjustmentSubscription =
       this.stockAdjustmentService
-        .getStockAdjustments()
+        .getStockAdjustments(this.limitCount)
         .subscribe({
 
           next: (adjustments) => {
@@ -120,6 +137,9 @@ export class StockAdjustmentsComponent
                   )
               );
 
+
+            this.hasMore =
+              this.stockAdjustments.length >= this.limitCount;
 
             this.isLoading = false;
 
@@ -147,6 +167,8 @@ export class StockAdjustmentsComponent
 
         });
 
+
+    this.listSubscription = adjustmentSubscription;
 
     this.subscription.add(
       adjustmentSubscription
@@ -367,6 +389,42 @@ export class StockAdjustmentsComponent
   // =======================================================
   // DESTROY
   // =======================================================
+
+
+  // Searches the records already loaded (the newest ones), so it
+  // costs no extra reads. "Load older" brings more into the search.
+  get filteredStockAdjustments(): StockAdjustment[] {
+
+    const term = this.searchText.trim().toLowerCase();
+
+    if (!term) {
+
+      return this.stockAdjustments;
+
+    }
+
+    return this.stockAdjustments.filter(adjustment =>
+      [
+        adjustment.productName,
+        adjustment.warehouseName,
+        adjustment.reason,
+        adjustment.notes
+      ].some(value =>
+        String(value ?? '').toLowerCase().includes(term)
+      )
+    );
+
+  }
+
+
+  loadMore(): void {
+
+    this.limitCount += LIST_PAGE_SIZE;
+
+    this.loadStockAdjustments();
+
+  }
+
 
   ngOnDestroy() {
 

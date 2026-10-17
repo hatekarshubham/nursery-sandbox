@@ -1,8 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { RoleService } from '../../../../services/role.service';
+import { DuplicateError } from '../../../../services/unique-key';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AppDialogService } from '../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 
 import { ProductService } from '../../../../services/product.service';
+import {
+  ImageUploadService,
+  productFullImage,
+  productListImage
+} from '../../../../services/image-upload.service';
 
 import {
   Category,
@@ -23,6 +32,24 @@ import {
   Warehouse,
   WarehouseService
 } from '../../../../services/warehouse.service';
+
+import { ProductColorFieldComponent } from './product-color-field/product-color-field.component';
+
+import {
+  PRODUCT_COLORS,
+  ResolvedProductColor,
+  resolveProductColor
+} from './product-colors';
+
+import {
+  customColorName,
+  moneyAmount,
+  optionalText,
+  percentAmount,
+  requiredText,
+  upperInput,
+  wholeQuantity
+} from '../../../utils/form-validation';
 
 
 // =======================================================
@@ -82,13 +109,21 @@ interface Product {
 
   description: string;
 
+  color?: string;
+
+  colorName?: string;
+
   unitPrice: number;
 
   gst: number;
 
   standardPackage: number | null;
 
-  image: string;
+  imageUrl?: string;
+
+  thumbUrl?: string;
+
+  imageVersion?: number;
 
   isActive: boolean;
 
@@ -130,7 +165,8 @@ interface Product {
 
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    ProductColorFieldComponent
   ],
 
   templateUrl: './products.component.html',
@@ -138,6 +174,14 @@ interface Product {
   styleUrl: './products.component.css'
 })
 export class ProductsComponent implements OnInit {
+
+  private destroyRef = inject(DestroyRef);
+
+
+  readonly roles = inject(RoleService);
+
+  private readonly dialog = inject(AppDialogService);
+
 
 
   // =======================================================
@@ -149,7 +193,8 @@ export class ProductsComponent implements OnInit {
     private categoryService: CategoryService,
     private supplierService: SupplierService,
     private inventoryService: InventoryService,
-    private warehouseService: WarehouseService
+    private warehouseService: WarehouseService,
+    private images: ImageUploadService
   ) {}
 
 
@@ -236,189 +281,130 @@ export class ProductsComponent implements OnInit {
   //
   // =======================================================
 
+  // The rows on screen are one server page (lowest stock first).
+  // Filters and search ask Firestore, so this list is not the
+  // whole catalogue.
+  matchCount = 0;
+
+  readonly pageSize = 50;
+
+  currentPage = 1;
+
+  private pageFirst: any = null;
+
+  private pageLast: any = null;
+
+  private knownCount: number | null = null;
+
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private loadSerial = 0;
+
+  listImage(product: {
+    thumbUrl?: string;
+    imageUrl?: string;
+  }): string {
+
+    return productListImage(product);
+
+  }
+
+
+  fullImage(product: {
+    thumbUrl?: string;
+    imageUrl?: string;
+  }): string {
+
+    return productFullImage(product);
+
+  }
+
+
   get filteredProducts(): Product[] {
 
-    const search =
-      this.searchText
-        .trim()
-        .toLowerCase();
+    return this.tableData;
 
+  }
 
-    const filtered =
-      this.tableData.filter(
-        (product) => {
+  get totalPages(): number {
 
+    return Math.max(
+      1,
+      Math.ceil(this.matchCount / this.pageSize)
+    );
 
-          // =========================================
-          // SEARCH
-          // =========================================
+  }
 
-          const matchesSearch =
-            !search ||
+  get pagedProducts(): Product[] {
 
-            product.name
-              ?.toLowerCase()
-              .includes(search) ||
+    return this.tableData;
 
-            product.category
-              ?.toLowerCase()
-              .includes(search) ||
+  }
 
-            this.getSupplierName(product)
-              .toLowerCase()
-              .includes(search) ||
+  get firstRowNumber(): number {
 
-            product.barcode
-              ?.toLowerCase()
-              .includes(search);
+    return this.tableData.length === 0
+      ? 0
+      : (this.currentPage - 1) * this.pageSize + 1;
 
+  }
 
-          // =========================================
-          // CATEGORY
-          // =========================================
+  get lastRowNumber(): number {
 
-          const matchesCategory =
-            !this.selectedCategory ||
-            product.category ===
-              this.selectedCategory;
+    return this.tableData.length === 0
+      ? 0
+      : this.firstRowNumber + this.tableData.length - 1;
 
+  }
 
-          // =========================================
-          // SUPPLIER
-          // =========================================
+  onSearchInput(value: string) {
 
-          const matchesSupplier =
-            !this.selectedSupplier ||
-            product.supplierId ===
-              this.selectedSupplier;
+    this.searchText = value;
 
+    if (this.searchTimer) {
 
-          // =========================================
-          // STATUS
-          // =========================================
+      clearTimeout(this.searchTimer);
 
-          let matchesStatus = true;
+    }
 
+    this.searchTimer = setTimeout(
+      () => void this.reloadFirstPage(),
+      300
+    );
 
-          if (
-            this.selectedStatus ===
-            'active'
-          ) {
+  }
 
-            matchesStatus =
-              product.isAvailable;
+  onFilterChange() {
 
-          }
+    void this.reloadFirstPage();
 
+  }
 
-          else if (
-            this.selectedStatus ===
-            'outOfStock'
-          ) {
+  goToPage(page: number) {
 
-            matchesStatus =
-              product.isActive &&
-              product.categoryIsActive &&
-              product.quantity <= 0;
+    const target = Math.min(
+      Math.max(1, page),
+      this.totalPages
+    );
 
-          }
+    if (target === this.currentPage || this.searchText.trim()) {
 
+      return;
 
-          else if (
-            this.selectedStatus ===
-            'inactive'
-          ) {
+    }
 
-            matchesStatus =
-              !product.isActive ||
-              !product.categoryIsActive;
+    const direction =
+      target === 1
+        ? 'first'
+        : target === this.totalPages
+          ? 'last'
+          : target === this.currentPage + 1
+            ? 'next'
+            : target === this.currentPage - 1
+              ? 'previous'
+              : 'first';
 
-          }
-
-
-          // =========================================
-          // RESULT
-          // =========================================
-
-          return (
-            matchesSearch &&
-            matchesCategory &&
-            matchesSupplier &&
-            matchesStatus
-          );
-
-        }
-      );
-
-
-    // =====================================================
-    // SORT BY TOTAL QUANTITY
-    // =====================================================
-    //
-    // IMPORTANT:
-    //
-    // quantity = stock across ALL warehouses.
-    //
-    // Lowest stock appears first.
-    //
-    // slice() creates a copy so we don't mutate tableData.
-    //
-    // =====================================================
-
-    return filtered
-      .slice()
-      .sort(
-        (a, b) => {
-
-          const quantityA =
-            Number(
-              a.quantity ?? 0
-            );
-
-
-          const quantityB =
-            Number(
-              b.quantity ?? 0
-            );
-
-
-          // =========================================
-          // PRIMARY SORT
-          // TOTAL QUANTITY ASCENDING
-          // =========================================
-
-          if (
-            quantityA !==
-            quantityB
-          ) {
-
-            return (
-              quantityA -
-              quantityB
-            );
-
-          }
-
-
-          // =========================================
-          // SECONDARY SORT
-          // PRODUCT NAME
-          // =========================================
-          //
-          // If two products have the same quantity,
-          // keep the table predictable by sorting
-          // alphabetically.
-          //
-          // =========================================
-
-          return (
-            a.name ?? ''
-          ).localeCompare(
-            b.name ?? ''
-          );
-
-        }
-      );
+    void this.fetchPage(direction, target);
 
   }
 
@@ -436,6 +422,8 @@ export class ProductsComponent implements OnInit {
     this.selectedSupplier = '';
 
     this.selectedStatus = '';
+
+    void this.reloadFirstPage();
 
   }
 
@@ -609,6 +597,12 @@ export class ProductsComponent implements OnInit {
 
   editingProduct: Product | null = null;
 
+  private pendingImageFile: File | null = null;
+
+  editImagePreview: string | null = null;
+
+  removeImage = false;
+
   isSavingProduct = false;
 
 
@@ -635,8 +629,6 @@ export class ProductsComponent implements OnInit {
 
     this.loadWarehouses();
 
-    this.loadInventory();
-
   }
 
 
@@ -648,6 +640,7 @@ export class ProductsComponent implements OnInit {
 
     this.categoryService
       .getCategories()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (categories) => {
@@ -697,6 +690,7 @@ export class ProductsComponent implements OnInit {
 
     this.supplierService
       .getSuppliers()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (suppliers) => {
@@ -712,11 +706,6 @@ export class ProductsComponent implements OnInit {
           this.suppliersLoaded =
             true;
 
-
-          console.log(
-            'Suppliers loaded:',
-            this.suppliers
-          );
 
 
           this.tryLoadProducts();
@@ -760,6 +749,7 @@ export class ProductsComponent implements OnInit {
 
     this.warehouseService
       .getActiveWarehouses()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (warehouses) => {
@@ -771,11 +761,6 @@ export class ProductsComponent implements OnInit {
           this.warehousesLoaded =
             true;
 
-
-          console.log(
-            'Warehouses loaded:',
-            this.warehouses
-          );
 
 
           this.tryLoadProducts();
@@ -815,6 +800,7 @@ export class ProductsComponent implements OnInit {
 
     this.inventoryService
       .getInventory()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (inventory) => {
@@ -826,11 +812,6 @@ export class ProductsComponent implements OnInit {
           this.inventoryLoaded =
             true;
 
-
-          console.log(
-            'Inventory loaded:',
-            this.inventory
-          );
 
 
           if (
@@ -890,7 +871,6 @@ export class ProductsComponent implements OnInit {
     if (
       !this.categoriesLoaded ||
       !this.suppliersLoaded ||
-      !this.inventoryLoaded ||
       !this.warehousesLoaded
     ) {
 
@@ -923,162 +903,240 @@ export class ProductsComponent implements OnInit {
 
   loadProducts() {
 
-    this.productService
-      .getProducts()
-      .subscribe({
+    void this.reloadFirstPage();
 
-        next: (products: any[]) => {
-
-          this.tableData =
-            products.map(
-              (product) => {
+  }
 
 
-                // =========================================
-                // CATEGORY
-                // =========================================
+  private async reloadFirstPage() {
 
-                const matchingCategory =
-                  this.categories.find(
-                    (category) =>
-                      category.id ===
-                        product.categoryId ||
-                      category.name ===
-                        product.category
-                  );
+    this.currentPage = 1;
+
+    this.knownCount = null;
+
+    await this.fetchPage('first', 1);
+
+  }
 
 
-                const categoryIsActive =
-                  matchingCategory
-                    ? matchingCategory.isActive
-                    : false;
+  private async fetchPage(
+    direction: 'first' | 'next' | 'previous' | 'last',
+    page: number
+  ) {
 
+    const serial = ++this.loadSerial;
 
-                // =========================================
-                // PRODUCT STATUS
-                // =========================================
+    this.isLoading = true;
 
-                const productIsActive =
-                  product.isActive !== false;
+    const search = this.searchText.trim();
 
+    try {
 
-                // =========================================
-                // TOTAL INVENTORY
-                // =========================================
-                //
-                // quantity = sum of inventory from
-                // every warehouse.
-                //
-                // =========================================
+      let products: any[] = [];
 
-                const totalQuantity =
-                  this.getProductTotalQuantity(
-                    product.id
-                  );
+      if (search) {
 
-
-                // =========================================
-                // AVAILABILITY
-                // =========================================
-
-                const hasStock =
-                  totalQuantity > 0;
-
-
-                const isAvailable =
-                  productIsActive &&
-                  categoryIsActive &&
-                  hasStock;
-
-
-                // =========================================
-                // SUPPLIER
-                // =========================================
-
-                let supplierId =
-                  product.supplierId ?? '';
-
-
-                let supplierName =
-                  product.supplier ?? '';
-
-
-                // =========================================
-                // RESOLVE SUPPLIER NAME
-                // =========================================
-
-                if (
-                  supplierId &&
-                  !supplierName
-                ) {
-
-                  const matchingSupplier =
-                    this.suppliers.find(
-                      (supplier) =>
-                        supplier.id ===
-                        supplierId
-                    );
-
-
-                  supplierName =
-                    matchingSupplier?.name ??
-                    '';
-
-                }
-
-
-                // =========================================
-                // RETURN PRODUCT
-                // =========================================
-
-                return {
-
-                  ...product,
-
-                  supplierId,
-
-                  supplier:
-                    supplierName,
-
-                  quantity:
-                    totalQuantity,
-
-                  categoryIsActive,
-
-                  isAvailable
-
-                };
-
-              }
-            ) as Product[];
-
-
-          this.isLoading =
-            false;
-
-
-          console.log(
-            'Products loaded:',
-            this.tableData
+        const byName =
+          await this.productService.searchProducts(
+            search,
+            { maxResults: 50, fetchLimit: 80 }
           );
 
-        },
+        const byBarcode =
+          await this.productService.findProductByBarcode(search);
 
+        const seen = new Set(byName.map(product => product.id));
 
-        error: (error: any) => {
+        products = byBarcode && !seen.has(byBarcode.id)
+          ? [byBarcode, ...byName]
+          : byName;
 
-          console.error(
-            'Error loading products:',
-            error
+        if (this.selectedCategory) {
+
+          products = products.filter(
+            product => product.category === this.selectedCategory
           );
-
-
-          this.isLoading =
-            false;
 
         }
 
-      });
+        if (this.selectedSupplier) {
+
+          products = products.filter(
+            product => product.supplierId === this.selectedSupplier
+          );
+
+        }
+
+        if (this.selectedStatus) {
+
+          const state =
+            this.selectedStatus === 'outOfStock'
+              ? 'out'
+              : this.selectedStatus === 'inactive'
+                ? 'inactive'
+                : 'active';
+
+          products = products.filter(
+            product =>
+              (product.stockState ?? 'active') === state
+          );
+
+        }
+
+        products.sort(
+          (a, b) =>
+            Number(a.totalQuantity ?? 0) -
+              Number(b.totalQuantity ?? 0) ||
+            String(a.name ?? '').localeCompare(String(b.name ?? ''))
+        );
+
+        this.matchCount = products.length;
+
+        this.pageFirst = null;
+
+        this.pageLast = null;
+
+      } else {
+
+        const stockState =
+          this.selectedStatus === 'outOfStock'
+            ? 'out'
+            : this.selectedStatus === 'inactive'
+              ? 'inactive'
+              : this.selectedStatus === 'active'
+                ? 'active'
+                : '';
+
+        const pageResult =
+          await this.productService.pageProducts({
+            order: 'stock',
+            category: this.selectedCategory,
+            supplierId: this.selectedSupplier,
+            stockState,
+            pageSize: this.pageSize,
+            direction,
+            cursor:
+              direction === 'next'
+                ? this.pageLast
+                : direction === 'previous'
+                  ? this.pageFirst
+                  : null,
+            knownCount:
+              direction === 'first' ? null : this.knownCount
+          });
+
+        if (serial !== this.loadSerial) {
+
+          return;
+
+        }
+
+        products = pageResult.products;
+
+        this.matchCount = pageResult.count;
+
+        this.knownCount = pageResult.count;
+
+        this.pageFirst = pageResult.first;
+
+        this.pageLast = pageResult.last;
+
+      }
+
+      if (serial !== this.loadSerial) {
+
+        return;
+
+      }
+
+      const inventory =
+        await this.inventoryService.getInventoryForProducts(
+          products.map(product => product.id)
+        );
+
+      if (serial !== this.loadSerial) {
+
+        return;
+
+      }
+
+      this.inventory = inventory;
+
+      this.inventoryLoaded = true;
+
+      this.tableData = products.map(
+        product => this.toTableProduct(product)
+      );
+
+      this.currentPage = page;
+
+      this.isLoading = false;
+
+    } catch (error) {
+
+      if (serial !== this.loadSerial) {
+
+        return;
+
+      }
+
+      console.error('Error loading products:', error);
+
+      this.tableData = [];
+
+      this.matchCount = 0;
+
+      this.isLoading = false;
+
+    }
+
+  }
+
+
+  private toTableProduct(product: any): Product {
+
+    const matchingCategory =
+      this.categories.find(
+        category =>
+          category.id === product.categoryId ||
+          category.name === product.category
+      );
+
+    const categoryIsActive =
+      product.categoryIsActive !== undefined
+        ? product.categoryIsActive !== false
+        : matchingCategory
+          ? matchingCategory.isActive !== false
+          : true;
+
+    const productIsActive = product.isActive !== false;
+
+    const totalQuantity = Number(product.totalQuantity ?? 0);
+
+    let supplierId = product.supplierId ?? '';
+
+    let supplierName = product.supplier ?? '';
+
+    if (supplierId && !supplierName) {
+
+      supplierName =
+        this.suppliers.find(
+          supplier => supplier.id === supplierId
+        )?.name ?? '';
+
+    }
+
+    return {
+      ...product,
+      supplierId,
+      supplier: supplierName,
+      categoryIsActive,
+      quantity: totalQuantity,
+      isAvailable:
+        productIsActive &&
+        categoryIsActive &&
+        totalQuantity > 0
+    };
 
   }
 
@@ -1172,25 +1230,55 @@ export class ProductsComponent implements OnInit {
     }
 
 
-    return this.inventory
+    return this.stockIndex().totals.get(productId) ?? 0;
 
-      .filter(
-        inventoryItem =>
-          inventoryItem.productId ===
-          productId
-      )
+  }
 
-      .reduce(
-        (
-          total,
-          inventoryItem
-        ) =>
-          total +
-          Number(
-            inventoryItem.quantity ?? 0
-          ),
-        0
-      );
+
+  // Stock totals are looked up from a map built once per inventory
+  // update. Scanning the whole inventory list for every product (and
+  // for every cell of every row) is far too slow with thousands of
+  // records.
+  private stockIndexSource: Inventory[] | null = null;
+
+  private stockIndexCache = {
+    totals: new Map<string, number>(),
+    byWarehouse: new Map<string, number>()
+  };
+
+  private stockIndex() {
+
+    if (this.stockIndexSource !== this.inventory) {
+
+      const totals = new Map<string, number>();
+
+      const byWarehouse = new Map<string, number>();
+
+      for (const item of this.inventory) {
+
+        const quantity = Number(item.quantity ?? 0);
+
+        totals.set(
+          item.productId,
+          (totals.get(item.productId) ?? 0) + quantity
+        );
+
+        const key = `${item.productId}|${item.warehouseId}`;
+
+        byWarehouse.set(
+          key,
+          (byWarehouse.get(key) ?? 0) + quantity
+        );
+
+      }
+
+      this.stockIndexCache = { totals, byWarehouse };
+
+      this.stockIndexSource = this.inventory;
+
+    }
+
+    return this.stockIndexCache;
 
   }
 
@@ -1214,27 +1302,11 @@ export class ProductsComponent implements OnInit {
     }
 
 
-    return this.inventory
-
-      .filter(
-        inventoryItem =>
-          inventoryItem.productId ===
-            productId &&
-          inventoryItem.warehouseId ===
-            warehouseId
-      )
-
-      .reduce(
-        (
-          total,
-          inventoryItem
-        ) =>
-          total +
-          Number(
-            inventoryItem.quantity ?? 0
-          ),
-        0
-      );
+    return (
+      this.stockIndex().byWarehouse.get(
+        `${productId}|${warehouseId}`
+      ) ?? 0
+    );
 
   }
 
@@ -1366,6 +1438,20 @@ export class ProductsComponent implements OnInit {
   // OPEN EDIT PRODUCT
   // =======================================================
 
+  onEditName(value: string) {
+
+    if (!this.editingProduct) {
+
+      return;
+
+    }
+
+    this.editingProduct.name =
+      upperInput(value);
+
+  }
+
+
   editProduct(
     product: Product
   ) {
@@ -1385,17 +1471,109 @@ export class ProductsComponent implements OnInit {
 
       ...product,
 
+      name:
+        upperInput(product.name),
+
       supplierId:
         product.supplierId ?? '',
 
       supplier:
-        product.supplier ?? ''
+        product.supplier ?? '',
+
+      color:
+        product.color ?? '',
+
+      colorName:
+        product.colorName ?? ''
 
     };
 
 
+    this.clearPendingImage();
+
     this.isEditModalOpen =
       true;
+
+  }
+
+
+  async onEditImageSelected(event: Event) {
+
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) {
+
+      return;
+
+    }
+
+    if (!file.type.startsWith('image/')) {
+
+      input.value = '';
+
+      await this.dialog.alert(
+        'Please choose an image file.'
+      );
+
+      return;
+
+    }
+
+    if (file.size > 15 * 1024 * 1024) {
+
+      input.value = '';
+
+      await this.dialog.alert(
+        'Image must be 15 MB or smaller.'
+      );
+
+      return;
+
+    }
+
+    this.revokeEditPreview();
+
+    this.pendingImageFile = file;
+
+    this.editImagePreview = URL.createObjectURL(file);
+
+    this.removeImage = false;
+
+  }
+
+
+  clearProductImage() {
+
+    this.revokeEditPreview();
+
+    this.pendingImageFile = null;
+
+    this.removeImage = true;
+
+  }
+
+
+  private clearPendingImage() {
+
+    this.revokeEditPreview();
+
+    this.pendingImageFile = null;
+
+    this.removeImage = false;
+
+  }
+
+
+  private revokeEditPreview() {
+
+    if (this.editImagePreview?.startsWith('blob:')) {
+
+      URL.revokeObjectURL(this.editImagePreview);
+
+    }
+
+    this.editImagePreview = null;
 
   }
 
@@ -1419,6 +1597,8 @@ export class ProductsComponent implements OnInit {
 
     this.editingProduct =
       null;
+
+    this.clearPendingImage();
 
   }
 
@@ -1463,11 +1643,52 @@ export class ProductsComponent implements OnInit {
     // PRODUCT NAME
     // =========================================
 
-    if (!product.name.trim()) {
-
-      alert(
-        'Please enter a product name.'
+    const nameError =
+      requiredText(product.name, 'product name') ||
+      optionalText(
+        product.description ?? '',
+        'Description',
+        500
+      ) ||
+      moneyAmount(product.unitPrice, 'unit price') ||
+      percentAmount(product.gst) ||
+      (
+        product.standardPackage === null ||
+        product.standardPackage === undefined
+          ? ''
+          : wholeQuantity(
+              product.standardPackage,
+              'Standard package'
+            )
       );
+
+    if (nameError) {
+
+      await this.dialog.alert(nameError);
+
+      return;
+
+    }
+
+
+    const tone =
+      resolveProductColor(
+        product.color,
+        product.colorName
+      );
+
+    const colorError =
+      customColorName(
+        tone.colorName,
+        !!tone.color &&
+          !PRODUCT_COLORS.some(
+            option => option.name === tone.colorName
+          )
+      );
+
+    if (colorError) {
+
+      await this.dialog.alert(colorError);
 
       return;
 
@@ -1480,7 +1701,7 @@ export class ProductsComponent implements OnInit {
 
     if (!product.category) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a category.'
       );
 
@@ -1495,7 +1716,7 @@ export class ProductsComponent implements OnInit {
 
     if (!product.supplierId) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a supplier.'
       );
 
@@ -1515,7 +1736,7 @@ export class ProductsComponent implements OnInit {
       product.unitPrice <= 0
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please enter a valid unit price.'
       );
 
@@ -1562,57 +1783,191 @@ export class ProductsComponent implements OnInit {
       true;
 
 
+    const updatedFields = {
+
+      name:
+        product.name.trim().toUpperCase(),
+
+      category:
+        product.category,
+
+      categoryId:
+        selectedCategory?.id ?? '',
+
+      supplierId:
+        product.supplierId,
+
+      supplier:
+        supplierName,
+
+      description:
+        product.description ?? '',
+
+      color:
+        tone.color,
+
+      colorName:
+        tone.colorName,
+
+      unitPrice:
+        product.unitPrice,
+
+      gst:
+        product.gst ?? 0,
+
+      standardPackage:
+        product.standardPackage ??
+        null,
+
+      imageUrl:
+        product.imageUrl ?? '',
+
+      thumbUrl:
+        product.thumbUrl ?? '',
+
+      imageVersion:
+        product.imageVersion ?? 0,
+
+      isActive:
+        product.isActive !== false
+
+    };
+
+    let photoFailed = false;
+
     try {
+
+      if (this.pendingImageFile) {
+
+        try {
+
+          const stored =
+            await this.images.uploadProductImage(
+              productId,
+              this.pendingImageFile
+            );
+
+          updatedFields.imageUrl = stored.imageUrl;
+
+          updatedFields.thumbUrl = stored.thumbUrl;
+
+          updatedFields.imageVersion = stored.imageVersion;
+
+        } catch (error) {
+
+          console.error(
+            'Error storing product image:',
+            error
+          );
+
+          photoFailed = true;
+
+        }
+
+      } else if (this.removeImage) {
+
+        try {
+
+          await this.images.deleteProductImage(
+            productId
+          );
+
+          updatedFields.imageUrl = '';
+
+          updatedFields.thumbUrl = '';
+
+          updatedFields.imageVersion = 0;
+
+        } catch (error) {
+
+          console.error(
+            'Error removing product image:',
+            error
+          );
+
+          photoFailed = true;
+
+        }
+
+      }
 
       await this.productService
         .updateProduct(
 
           productId,
 
-          {
-
-            name:
-              product.name.trim(),
-
-            category:
-              product.category,
-
-            categoryId:
-              selectedCategory?.id ?? '',
-
-            supplierId:
-              product.supplierId,
-
-            supplier:
-              supplierName,
-
-            description:
-              product.description ?? '',
-
-            unitPrice:
-              product.unitPrice,
-
-            gst:
-              product.gst ?? 0,
-
-            standardPackage:
-              product.standardPackage ??
-              null,
-
-            image:
-              product.image ?? '',
-
-            isActive:
-              product.isActive !== false
-
-          }
+          updatedFields
 
         );
 
 
+      // =====================================================
+      // PATCH THE ROW ON SCREEN
+      // =====================================================
+      //
+      // The document is already saved. Replacing this one row
+      // in tableData shows the new values immediately, without
+      // reloading this page (or the whole catalogue).
+      //
+      // If a status filter is active and this product no
+      // longer matches it, drop the row instead (same as a
+      // delete would).
+      // =====================================================
+
+      const existingRow =
+        this.tableData.find(
+          row => row.id === productId
+        );
+
+      const categoryIsActive =
+        selectedCategory?.isActive !== false;
+
+      const stillMatchesStatus =
+        !this.selectedStatus ||
+        (
+          this.selectedStatus === 'inactive'
+            ? !updatedFields.isActive || !categoryIsActive
+            : this.selectedStatus === 'outOfStock'
+              ? updatedFields.isActive &&
+                categoryIsActive &&
+                (existingRow?.quantity ?? 0) === 0
+              : updatedFields.isActive &&
+                categoryIsActive &&
+                (existingRow?.quantity ?? 0) > 0
+        );
+
+      if (!stillMatchesStatus) {
+
+        this.tableData =
+          this.tableData.filter(
+            row => row.id !== productId
+          );
+
+        this.matchCount =
+          Math.max(0, this.matchCount - 1);
+
+      } else {
+
+        this.tableData =
+          this.tableData.map(
+            row =>
+              row.id === productId
+                ? {
+                    ...row,
+                    ...updatedFields,
+                    categoryIsActive,
+                    isAvailable:
+                      updatedFields.isActive &&
+                      categoryIsActive &&
+                      (row.quantity ?? 0) > 0
+                  }
+                : row
+          );
+
+      }
+
       this.isSavingProduct =
         false;
-
 
       this.isEditModalOpen =
         false;
@@ -1622,8 +1977,12 @@ export class ProductsComponent implements OnInit {
         null;
 
 
-      alert(
-        'Product updated successfully.'
+      this.clearPendingImage();
+
+      await this.dialog.alert(
+        photoFailed
+          ? 'Product updated. The photo could not be stored.'
+          : 'Product updated successfully.'
       );
 
     }
@@ -1641,8 +2000,10 @@ export class ProductsComponent implements OnInit {
         false;
 
 
-      alert(
-        'Failed to update product. Please try again.'
+      await this.dialog.alert(
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to update product. Please try again.')
       );
 
     }
@@ -1675,6 +2036,25 @@ export class ProductsComponent implements OnInit {
 
     this.isDeleteModalOpen =
       true;
+
+  }
+
+
+  // =======================================================
+  // COLOR
+  // =======================================================
+
+  colorTone(
+    product: {
+      color?: string;
+      colorName?: string;
+    }
+  ): ResolvedProductColor {
+
+    return resolveProductColor(
+      product.color,
+      product.colorName
+    );
 
   }
 
@@ -1719,13 +2099,52 @@ export class ProductsComponent implements OnInit {
       true;
 
 
+    const deletedId =
+      this.productToDelete.id;
+
     try {
 
       await this.productService
         .deleteProduct(
-          this.productToDelete.id
+          deletedId
         );
 
+      try {
+
+        await this.images.deleteProductImage(
+          deletedId
+        );
+
+      } catch (error) {
+
+        console.error(
+          'Error removing stored product image:',
+          error
+        );
+
+      }
+
+
+      // =====================================================
+      // REMOVE THE ROW ON SCREEN
+      // =====================================================
+      //
+      // The document is already gone from Firestore. Dropping
+      // it from tableData here avoids re-reading this page (or
+      // the whole catalogue) just to find out it's missing one
+      // row.
+      //
+      // If that was the last row on page 2+, go back a page
+      // instead of leaving an empty page on screen.
+      // =====================================================
+
+      this.tableData =
+        this.tableData.filter(
+          product => product.id !== deletedId
+        );
+
+      this.matchCount =
+        Math.max(0, this.matchCount - 1);
 
       this.isDeletingProduct =
         false;
@@ -1739,9 +2158,22 @@ export class ProductsComponent implements OnInit {
         null;
 
 
-      alert(
+      await this.dialog.alert(
         'Product deleted successfully.'
       );
+
+      if (
+        this.tableData.length === 0 &&
+        this.currentPage > 1 &&
+        !this.searchText.trim()
+      ) {
+
+        void this.fetchPage(
+          'previous',
+          this.currentPage - 1
+        );
+
+      }
 
     }
 
@@ -1758,7 +2190,7 @@ export class ProductsComponent implements OnInit {
         false;
 
 
-      alert(
+      await this.dialog.alert(
         'Failed to delete product. Please try again.'
       );
 

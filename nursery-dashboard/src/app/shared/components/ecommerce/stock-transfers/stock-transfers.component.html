@@ -88,6 +88,58 @@
   }
 
 
+  <!-- SEARCH -->
+
+  @if (!isLoading && !errorMessage && stockTransfers.length > 0) {
+
+    <div class="mb-5">
+
+      <label
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        Search Transfers
+      </label>
+
+      <input
+        type="text"
+        [(ngModel)]="searchText"
+        placeholder="Product or warehouse..."
+        class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 md:max-w-md"
+      />
+
+    </div>
+
+  }
+
+
+  @if (
+    !isLoading &&
+    !errorMessage &&
+    stockTransfers.length > 0 &&
+    filteredStockTransfers.length === 0
+  ) {
+
+    <div
+      class="rounded-lg border border-dashed border-gray-300 py-10 text-center dark:border-gray-700"
+    >
+
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        No records match "{{ searchText }}".
+      </p>
+
+      @if (hasMore) {
+
+        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+          Only the newest {{ stockTransfers.length }} are searched. Use "Load older" below to search further back.
+        </p>
+
+      }
+
+    </div>
+
+  }
+
+
   <!-- =================================================== -->
   <!-- TRANSFER TABLE -->
   <!-- =================================================== -->
@@ -95,12 +147,12 @@
   @if (
     !isLoading &&
     !errorMessage &&
-    stockTransfers.length > 0
+    filteredStockTransfers.length > 0
   ) {
 
     <div class="max-w-full overflow-x-auto">
 
-      <table class="w-full text-left">
+      <table class="w-full min-w-[720px] table-fixed text-left">
 
         <!-- =============================================== -->
         <!-- TABLE HEADER -->
@@ -113,49 +165,37 @@
           <tr>
 
             <th
-              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
-            >
-              Date
-            </th>
-
-
-            <th
-              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[24%] px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Product
             </th>
 
-
             <th
-              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[20%] px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               From Warehouse
             </th>
 
-
             <th
-              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[20%] px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               To Warehouse
             </th>
 
-
             <th
-              class="whitespace-nowrap px-3 py-3 text-center font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[10%] px-3 py-3 text-center font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Quantity
             </th>
 
-
             <th
-              class="whitespace-nowrap px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[14%] px-3 py-3 font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Status
             </th>
 
-
             <th
-              class="whitespace-nowrap px-3 py-3 text-right font-medium text-gray-500 text-theme-xs dark:text-gray-400"
+              class="w-[12%] px-3 py-3 text-right font-medium text-gray-500 text-theme-xs dark:text-gray-400"
             >
               Action
             </th>
@@ -174,7 +214,7 @@
         >
 
           @for (
-            transfer of stockTransfers;
+            transfer of filteredStockTransfers;
             track transfer.id
           ) {
 
@@ -182,40 +222,37 @@
               class="transition hover:bg-gray-50 dark:hover:bg-white/[0.02]"
             >
 
-              <!-- DATE -->
+              <!-- PRODUCT (+ date) -->
 
-              <td
-                class="whitespace-nowrap px-3 py-4 text-sm text-gray-600 dark:text-gray-400"
-              >
-                {{
-                  formatTransferDate(
-                    transfer.transferDate
-                  )
-                }}
-              </td>
+              <td class="px-3 py-4 align-top">
 
-
-              <!-- PRODUCT -->
-
-              <td class="px-3 py-4">
-
-                <div
-                  class="font-medium text-gray-800 text-theme-sm dark:text-white/90"
+                <p
+                  class="break-words font-medium text-gray-800 text-theme-sm dark:text-white/90"
                 >
                   {{ transfer.productName }}
-                </div>
+                </p>
+
+                <p
+                  class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                >
+                  {{
+                    formatTransferDate(
+                      transfer.transferDate
+                    )
+                  }}
+                </p>
 
               </td>
 
 
               <!-- FROM WAREHOUSE -->
 
-              <td class="px-3 py-4">
+              <td class="px-3 py-4 align-top">
 
                 <div class="flex flex-col gap-1">
 
                   <span
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="break-words text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ transfer.fromWarehouseName }}
                   </span>
@@ -233,12 +270,12 @@
 
               <!-- TO WAREHOUSE -->
 
-              <td class="px-3 py-4">
+              <td class="px-3 py-4 align-top">
 
                 <div class="flex flex-col gap-1">
 
                   <span
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="break-words text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ transfer.toWarehouseName }}
                   </span>
@@ -261,7 +298,7 @@
               >
 
                 <span
-                  class="inline-flex min-w-[45px] justify-center rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-semibold text-gray-800 dark:bg-gray-700 dark:text-white"
+                  class="inline-flex min-w-[40px] justify-center rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-semibold text-gray-800 dark:bg-gray-700 dark:text-white"
                 >
                   {{ transfer.quantity }}
                 </span>
@@ -305,6 +342,23 @@
         </tbody>
 
       </table>
+
+    </div>
+
+  }
+
+
+  @if (!isLoading && !errorMessage && hasMore) {
+
+    <div class="mt-4 flex justify-center">
+
+      <button
+        type="button"
+        (click)="loadMore()"
+        class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+      >
+        Load older transfers
+      </button>
 
     </div>
 

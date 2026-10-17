@@ -1,11 +1,25 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { RoleService } from '../../../../services/role.service';
+import { DuplicateError } from '../../../../services/unique-key';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AppDialogService } from '../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 
 import {
   Supplier,
   SupplierService
 } from '../../../../services/supplier.service';
+
+import {
+  emailAddress,
+  gstNumber,
+  indianMobile,
+  normalizeIndianMobile,
+  optionalText,
+  requiredText,
+  upperInput
+} from '../../../utils/form-validation';
 
 @Component({
   selector: 'app-suppliers',
@@ -18,6 +32,14 @@ import {
 })
 export class SuppliersComponent implements OnInit {
 
+  private destroyRef = inject(DestroyRef);
+
+
+  readonly roles = inject(RoleService);
+
+  private readonly dialog = inject(AppDialogService);
+
+
   constructor(
     private supplierService: SupplierService
   ) {}
@@ -25,6 +47,9 @@ export class SuppliersComponent implements OnInit {
   suppliers: Supplier[] = [];
 
   isLoading = true;
+
+  // Search box text
+  searchText = '';
 
   // Edit state
   editingSupplierId: string | null = null;
@@ -48,10 +73,38 @@ export class SuppliersComponent implements OnInit {
   isUpdatingStatus = false;
 
 
+  // Suppliers matching the search box (name first, also mobile,
+  // email and GST number). Done in the browser on the list that is
+  // already loaded, so searching costs no extra reads.
+  get filteredSuppliers(): Supplier[] {
+
+    const term = this.searchText.trim().toLowerCase();
+
+    if (!term) {
+
+      return this.suppliers;
+
+    }
+
+    return this.suppliers.filter(supplier =>
+      [
+        supplier.name,
+        supplier.mobile,
+        supplier.email,
+        supplier.gstNumber
+      ].some(value =>
+        String(value ?? '').toLowerCase().includes(term)
+      )
+    );
+
+  }
+
+
   ngOnInit() {
 
     this.supplierService
       .getSuppliers()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (suppliers) => {
@@ -59,11 +112,6 @@ export class SuppliersComponent implements OnInit {
           this.suppliers = suppliers;
 
           this.isLoading = false;
-
-          console.log(
-            'Suppliers loaded:',
-            suppliers
-          );
 
         },
 
@@ -125,27 +173,36 @@ export class SuppliersComponent implements OnInit {
   }
 
 
+  upperGst(value: string) {
+
+    return upperInput(value);
+
+  }
+
+
   async saveSupplier() {
 
     if (!this.editingSupplierId) {
       return;
     }
 
-    if (!this.editingSupplierName.trim()) {
+    const name =
+      this.editingSupplierName.trim();
 
-      alert(
-        'Please enter a supplier name.'
-      );
+    const mobile =
+      normalizeIndianMobile(this.editingSupplierMobile);
 
-      return;
+    const error =
+      requiredText(name, 'supplier name') ||
+      indianMobile(this.editingSupplierMobile, true) ||
+      emailAddress(this.editingSupplierEmail, false) ||
+      gstNumber(this.editingSupplierGstNumber) ||
+      optionalText(this.editingSupplierAddress, 'Address', 300) ||
+      optionalText(this.editingSupplierNotes, 'Notes', 500);
 
-    }
+    if (error) {
 
-    if (!this.editingSupplierMobile.trim()) {
-
-      alert(
-        'Please enter a supplier mobile number.'
-      );
+      await this.dialog.alert(error);
 
       return;
 
@@ -158,8 +215,8 @@ export class SuppliersComponent implements OnInit {
       await this.supplierService.updateSupplier(
         this.editingSupplierId,
         {
-          name: this.editingSupplierName.trim(),
-          mobile: this.editingSupplierMobile.trim(),
+          name,
+          mobile,
           email: this.editingSupplierEmail.trim(),
           address: this.editingSupplierAddress.trim(),
           gstNumber:
@@ -174,7 +231,7 @@ export class SuppliersComponent implements OnInit {
 
       this.cancelEdit();
 
-      alert(
+      await this.dialog.alert(
         'Supplier updated successfully.'
       );
 
@@ -187,8 +244,10 @@ export class SuppliersComponent implements OnInit {
 
       this.isSaving = false;
 
-      alert(
-        'Failed to update supplier. Please try again.'
+      await this.dialog.alert(
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to update supplier. Please try again.')
       );
 
     }
@@ -229,13 +288,6 @@ export class SuppliersComponent implements OnInit {
 
       supplier.isActive = newStatus;
 
-      console.log(
-        `Supplier "${supplier.name}" is now ${
-          newStatus
-            ? 'Active'
-            : 'Inactive'
-        }.`
-      );
 
       this.isUpdatingStatus = false;
 
@@ -248,8 +300,10 @@ export class SuppliersComponent implements OnInit {
 
       this.isUpdatingStatus = false;
 
-      alert(
-        'Failed to update supplier status. Please try again.'
+      await this.dialog.alert(
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to update supplier status. Please try again.')
       );
 
     }
@@ -306,10 +360,6 @@ export class SuppliersComponent implements OnInit {
           this.supplierToDelete.id
         );
 
-      console.log(
-        'Supplier deleted:',
-        this.supplierToDelete.id
-      );
 
       this.isDeleting = false;
 
@@ -317,7 +367,7 @@ export class SuppliersComponent implements OnInit {
 
       this.supplierToDelete = null;
 
-      alert(
+      await this.dialog.alert(
         'Supplier deleted successfully.'
       );
 
@@ -330,7 +380,7 @@ export class SuppliersComponent implements OnInit {
 
       this.isDeleting = false;
 
-      alert(
+      await this.dialog.alert(
         'Failed to delete supplier. Please try again.'
       );
 

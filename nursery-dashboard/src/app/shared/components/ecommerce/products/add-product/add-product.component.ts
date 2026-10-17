@@ -1,9 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { DuplicateError } from '../../../../../services/unique-key';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Auth } from '@angular/fire/auth';
+import { AppDialogService } from '../../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { ProductService } from '../../../../../services/product.service';
+import { ImageUploadService } from '../../../../../services/image-upload.service';
 
 import {
   Category,
@@ -15,12 +20,30 @@ import {
   SupplierService
 } from '../../../../../services/supplier.service';
 
+import { ProductColorFieldComponent } from '../product-color-field/product-color-field.component';
+
+import {
+  PRODUCT_COLORS,
+  resolveProductColor
+} from '../product-colors';
+
+import {
+  customColorName,
+  moneyAmount,
+  optionalText,
+  percentAmount,
+  requiredText,
+  upperInput,
+  wholeQuantity
+} from '../../../../utils/form-validation';
+
 @Component({
   selector: 'app-add-product',
 
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    ProductColorFieldComponent
   ],
 
   templateUrl: './add-product.component.html',
@@ -28,10 +51,19 @@ import {
 })
 export class AddProductComponent implements OnInit {
 
+  private destroyRef = inject(DestroyRef);
+
+
+  private readonly dialog = inject(AppDialogService);
+
+  private readonly auth = inject(Auth);
+
+
   constructor(
     private productService: ProductService,
     private categoryService: CategoryService,
     private supplierService: SupplierService,
+    private images: ImageUploadService,
     private router: Router
   ) {}
 
@@ -50,16 +82,20 @@ export class AddProductComponent implements OnInit {
 
     description: '',
 
+    color: '',
+
+    colorName: '',
+
     unitPrice: null as number | null,
 
     gst: 18,
 
     standardPackage: null as number | null,
 
-    image: '',
-
     isActive: true
   };
+
+  private selectedImageFile: File | null = null;
 
 
   // =========================
@@ -105,6 +141,24 @@ export class AddProductComponent implements OnInit {
   // INIT
   // =========================
 
+  upperName(value: string) {
+
+    return upperInput(value);
+
+  }
+
+
+  private isPaletteColor(
+    name: string
+  ): boolean {
+
+    return PRODUCT_COLORS.some(
+      option => option.name === name
+    );
+
+  }
+
+
   ngOnInit() {
 
     this.loadCategories();
@@ -122,6 +176,7 @@ export class AddProductComponent implements OnInit {
 
     this.categoryService
       .getActiveCategories()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (categories) => {
@@ -130,14 +185,9 @@ export class AddProductComponent implements OnInit {
 
           this.isLoadingCategories = false;
 
-          console.log(
-            'Active categories loaded:',
-            categories
-          );
-
         },
 
-        error: (error) => {
+        error: async (error) => {
 
           console.error(
             'Error loading categories:',
@@ -146,7 +196,11 @@ export class AddProductComponent implements OnInit {
 
           this.isLoadingCategories = false;
 
-          alert(
+          if (!this.auth.currentUser) {
+            return;
+          }
+
+          await this.dialog.alert(
             'Failed to load product categories. Please try again.'
           );
 
@@ -165,6 +219,7 @@ export class AddProductComponent implements OnInit {
 
     this.supplierService
       .getSuppliers()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (suppliers) => {
@@ -177,14 +232,9 @@ export class AddProductComponent implements OnInit {
 
           this.isLoadingSuppliers = false;
 
-          console.log(
-            'Active suppliers loaded:',
-            this.suppliers
-          );
-
         },
 
-        error: (error) => {
+        error: async (error) => {
 
           console.error(
             'Error loading suppliers:',
@@ -193,7 +243,11 @@ export class AddProductComponent implements OnInit {
 
           this.isLoadingSuppliers = false;
 
-          alert(
+          if (!this.auth.currentUser) {
+            return;
+          }
+
+          await this.dialog.alert(
             'Failed to load suppliers. Please try again.'
           );
 
@@ -256,7 +310,7 @@ export class AddProductComponent implements OnInit {
   // IMAGE SELECTION
   // =========================
 
-  onImageSelected(event: Event) {
+  async onImageSelected(event: Event) {
 
     const input =
       event.target as HTMLInputElement;
@@ -269,20 +323,36 @@ export class AddProductComponent implements OnInit {
       const file =
         input.files[0];
 
-      const reader =
-        new FileReader();
+      if (!file.type.startsWith('image/')) {
 
-      reader.onload = () => {
+        input.value = '';
 
-        this.selectedImage =
-          reader.result as string;
+        await this.dialog.alert(
+          'Please choose an image file.'
+        );
 
-        this.product.image =
-          this.selectedImage;
+        return;
 
-      };
+      }
 
-      reader.readAsDataURL(file);
+      if (file.size > 15 * 1024 * 1024) {
+
+        input.value = '';
+
+        await this.dialog.alert(
+          'Image must be 15 MB or smaller.'
+        );
+
+        return;
+
+      }
+
+      this.revokePreview();
+
+      this.selectedImageFile = file;
+
+      this.selectedImage =
+        URL.createObjectURL(file);
 
     }
 
@@ -342,22 +412,61 @@ export class AddProductComponent implements OnInit {
     // VALIDATION
     // -------------------------
 
-    if (
-      !this.product.name.trim() ||
-      !this.product.category ||
-      !this.product.categoryId ||
-      !this.product.supplierId ||
-      !this.product.supplier ||
-      this.product.unitPrice === null ||
-      !Number.isFinite(
-        this.product.unitPrice
-      ) ||
-      this.product.unitPrice <= 0
-    ) {
+    const name =
+      this.product.name.trim().toUpperCase();
 
-      alert(
-        'Please enter a valid product name, category, supplier, and unit price.'
+    const tone =
+      resolveProductColor(
+        this.product.color,
+        this.product.colorName
       );
+
+    const packageQuantity =
+      this.product.standardPackage;
+
+    const error =
+      requiredText(name, 'product name') ||
+      (
+        !this.product.category ||
+        !this.product.categoryId
+          ? 'Please select a category.'
+          : ''
+      ) ||
+      (
+        !this.product.supplierId ||
+        !this.product.supplier
+          ? 'Please select a supplier.'
+          : ''
+      ) ||
+      optionalText(
+        this.product.description,
+        'Description',
+        500
+      ) ||
+      moneyAmount(
+        this.product.unitPrice,
+        'unit price'
+      ) ||
+      percentAmount(this.product.gst) ||
+      (
+        packageQuantity === null ||
+        packageQuantity === undefined
+          ? ''
+          : wholeQuantity(
+              packageQuantity,
+              'Standard package'
+            )
+      ) ||
+      customColorName(
+        tone.colorName,
+        !!tone.color &&
+          tone.colorName !== '' &&
+          !this.isPaletteColor(tone.colorName)
+      );
+
+    if (error) {
+
+      await this.dialog.alert(error);
 
       return false;
 
@@ -369,11 +478,6 @@ export class AddProductComponent implements OnInit {
 
     try {
 
-      console.log(
-        'Product before Firestore:',
-        this.product
-      );
-
 
       // -------------------------
       // SAVE PRODUCT
@@ -384,11 +488,19 @@ export class AddProductComponent implements OnInit {
 
           ...this.product,
 
-          name:
-            this.product.name.trim(),
+          name,
+
+          gst:
+            this.product.gst ?? 0,
 
           description:
             this.product.description.trim(),
+
+          color:
+            tone.color,
+
+          colorName:
+            tone.colorName,
 
           createdAt:
             new Date(),
@@ -406,15 +518,41 @@ export class AddProductComponent implements OnInit {
       this.productId =
         result.id;
 
+      let photoFailed = false;
 
-      console.log(
-        'Product added to Firestore:',
-        result.id
-      );
+      if (this.selectedImageFile) {
+
+        try {
+
+          const stored =
+            await this.images.uploadProductImage(
+              result.id,
+              this.selectedImageFile
+            );
+
+          await this.productService.updateProductImage(
+            result.id,
+            stored
+          );
+
+        } catch (error) {
+
+          console.error(
+            'Error storing product image:',
+            error
+          );
+
+          photoFailed = true;
+
+        }
+
+      }
 
 
-      alert(
-        `Product added successfully!\nProduct ID: ${result.id}`
+      await this.dialog.alert(
+        photoFailed
+          ? 'Product added. The photo could not be stored.'
+          : 'Product added successfully!'
       );
 
 
@@ -430,8 +568,10 @@ export class AddProductComponent implements OnInit {
       );
 
 
-      alert(
-        'Failed to add product. Please try again.'
+      await this.dialog.alert(
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to add product. Please try again.')
       );
 
 
@@ -473,22 +613,39 @@ export class AddProductComponent implements OnInit {
 
       description: '',
 
+      color: '',
+
+      colorName: '',
+
       unitPrice: null,
 
       gst: 18,
 
       standardPackage: null,
 
-      image: '',
-
       isActive: true
 
     };
 
 
-    this.selectedImage = null;
+    this.revokePreview();
+
+    this.selectedImageFile = null;
 
     this.productId = null;
+
+  }
+
+
+  private revokePreview() {
+
+    if (this.selectedImage?.startsWith('blob:')) {
+
+      URL.revokeObjectURL(this.selectedImage);
+
+    }
+
+    this.selectedImage = null;
 
   }
 

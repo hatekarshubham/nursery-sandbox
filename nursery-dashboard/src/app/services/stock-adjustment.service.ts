@@ -8,12 +8,22 @@ import {
   getDocs,
   query,
   where,
+  orderBy,
+  limit,
   runTransaction,
   CollectionReference,
   DocumentData
 } from '@angular/fire/firestore';
 
 import { Observable } from 'rxjs';
+
+import { LIST_PAGE_SIZE } from './list-page';
+
+import {
+  addStockDelta,
+  readProductTotals,
+  writeProductTotals
+} from './stock-total';
 
 
 // =========================================================
@@ -171,11 +181,17 @@ export class StockAdjustmentService {
   // GET ALL STOCK ADJUSTMENTS
   // =======================================================
 
-  getStockAdjustments():
-    Observable<StockAdjustment[]> {
+  // Loads only the newest `limitCount` records.
+  getStockAdjustments(
+    limitCount = LIST_PAGE_SIZE
+  ): Observable<StockAdjustment[]> {
 
     return collectionData(
-      this.stockAdjustmentsCollection,
+      query(
+        this.stockAdjustmentsCollection,
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+      ),
       {
         idField: 'id'
       }
@@ -555,9 +571,31 @@ export class StockAdjustmentService {
         }
 
 
+        // Same change, applied to the product's stored total.
+        const stockDeltas = new Map<string, number>();
+
+        addStockDelta(
+          stockDeltas,
+          adjustment.productId,
+          newQuantity - currentQuantity
+        );
+
+        const productTotals =
+          await readProductTotals(
+            this.firestore,
+            transaction,
+            stockDeltas
+          );
+
+
         // =================================================
         // UPDATE EXISTING INVENTORY
         // =================================================
+
+        writeProductTotals(
+          transaction,
+          productTotals
+        );
 
         if (
           inventoryExists

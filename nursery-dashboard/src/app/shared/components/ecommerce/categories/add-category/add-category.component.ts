@@ -1,9 +1,22 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { DuplicateError } from '../../../../../services/unique-key';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AppDialogService } from '../../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
-import { CategoryService } from '../../../../../services/category.service';
+import {
+  Category,
+  CategoryService
+} from '../../../../../services/category.service';
+
+import {
+  duplicateValue,
+  requiredText,
+  shortCode,
+  upperInput
+} from '../../../../utils/form-validation';
 
 @Component({
   selector: 'app-add-category',
@@ -14,17 +27,50 @@ import { CategoryService } from '../../../../../services/category.service';
   templateUrl: './add-category.component.html',
   styleUrl: './add-category.component.css'
 })
-export class AddCategoryComponent {
+export class AddCategoryComponent implements OnInit {
+
+  private destroyRef = inject(DestroyRef);
+
+
+  private readonly dialog = inject(AppDialogService);
+
 
   categoryName = '';
   categoryCode = '';
 
   isSaving = false;
 
+  private categories: Category[] = [];
+
   constructor(
     private categoryService: CategoryService,
     private router: Router
   ) {}
+
+  ngOnInit() {
+
+    this.categoryService
+      .getCategories()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(categories => {
+
+        this.categories = categories ?? [];
+
+      });
+
+  }
+
+  onNameInput(value: string) {
+
+    this.categoryName = upperInput(value);
+
+  }
+
+  onCodeInput(value: string) {
+
+    this.categoryCode = upperInput(value);
+
+  }
 
 
   // =====================================================
@@ -74,34 +120,28 @@ export class AddCategoryComponent {
     }
 
     const name =
-      this.categoryName.trim();
+      this.categoryName.trim().toUpperCase();
 
     const code =
-      this.categoryCode
-        .trim()
-        .toUpperCase();
+      this.categoryCode.trim().toUpperCase();
 
-
-    // Validate category name
-
-    if (!name) {
-
-      alert(
-        'Please enter a category name.'
+    const error =
+      requiredText(name, 'category name') ||
+      shortCode(code, 'Category code', 50) ||
+      duplicateValue(
+        name,
+        this.categories.map(category => category.name),
+        'category name'
+      ) ||
+      duplicateValue(
+        code,
+        this.categories.map(category => category.code),
+        'category code'
       );
 
-      return false;
+    if (error) {
 
-    }
-
-
-    // Validate category code
-
-    if (!code) {
-
-      alert(
-        'Please enter a category code.'
-      );
+      await this.dialog.alert(error);
 
       return false;
 
@@ -112,14 +152,6 @@ export class AddCategoryComponent {
 
       this.isSaving = true;
 
-      console.log(
-        'Adding category:',
-        {
-          name,
-          code
-        }
-      );
-
 
       const result =
         await this.categoryService
@@ -129,14 +161,8 @@ export class AddCategoryComponent {
           );
 
 
-      console.log(
-        'Category added successfully:',
-        result.id
-      );
-
-
-      alert(
-        `Category added successfully!\nCategory ID: ${result.id}`
+      await this.dialog.alert(
+        'Category added successfully!'
       );
 
 
@@ -152,8 +178,10 @@ export class AddCategoryComponent {
       );
 
 
-      alert(
-        'Failed to add category. Please try again.'
+      await this.dialog.alert(
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to add category. Please try again.')
       );
 
 

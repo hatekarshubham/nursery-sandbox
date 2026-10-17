@@ -1,11 +1,23 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { invoicePrefixFor, sanitizeInvoicePrefix } from '../../../../services/invoice-number';
+import { RoleService } from '../../../../services/role.service';
+import { DuplicateError } from '../../../../services/unique-key';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AppDialogService } from '../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 
 import {
   Warehouse,
   WarehouseService
 } from '../../../../services/warehouse.service';
+
+import {
+  duplicateValue,
+  requiredText,
+  shortCode,
+  upperInput
+} from '../../../utils/form-validation';
 
 
 @Component({
@@ -21,6 +33,18 @@ import {
   styleUrl: './warehouses.component.css'
 })
 export class WarehousesComponent implements OnInit {
+
+  private destroyRef = inject(DestroyRef);
+
+
+  readonly roles = inject(RoleService);
+
+  readonly sanitizePrefix = sanitizeInvoicePrefix;
+
+  readonly invoicePrefixOf = invoicePrefixFor;
+
+  private readonly dialog = inject(AppDialogService);
+
 
   constructor(
     private warehouseService: WarehouseService
@@ -46,6 +70,8 @@ export class WarehousesComponent implements OnInit {
 
   editingWarehouseCode = '';
 
+  editingInvoicePrefix = '';
+
   isSaving = false;
 
 
@@ -64,6 +90,7 @@ export class WarehousesComponent implements OnInit {
 
     this.warehouseService
       .getWarehouses()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
 
         next: (warehouses) => {
@@ -71,11 +98,6 @@ export class WarehousesComponent implements OnInit {
           this.warehouses = warehouses;
 
           this.isLoading = false;
-
-          console.log(
-            'Warehouses loaded:',
-            warehouses
-          );
 
         },
 
@@ -119,11 +141,14 @@ export class WarehousesComponent implements OnInit {
 
 
     this.editingWarehouseName =
-      warehouse.name;
+      upperInput(warehouse.name);
 
 
     this.editingWarehouseCode =
-      warehouse.code;
+      upperInput(warehouse.code);
+
+    this.editingInvoicePrefix =
+      invoicePrefixFor(warehouse);
 
   }
 
@@ -145,12 +170,28 @@ export class WarehousesComponent implements OnInit {
 
     this.editingWarehouseCode = '';
 
+    this.editingInvoicePrefix = '';
+
   }
 
 
   // =========================
   // SAVE WAREHOUSE
   // =========================
+
+  upperCode(value: string) {
+
+    return upperInput(value);
+
+  }
+
+
+  upperName(value: string) {
+
+    return upperInput(value);
+
+  }
+
 
   async saveWarehouse() {
 
@@ -163,59 +204,29 @@ export class WarehousesComponent implements OnInit {
     // NAME VALIDATION
     // -------------------------
 
-    if (!this.editingWarehouseName.trim()) {
-
-      alert(
-        'Please enter a warehouse name.'
-      );
-
-      return;
-
-    }
-
-
-    // -------------------------
-    // CODE VALIDATION
-    // -------------------------
-
-    if (!this.editingWarehouseCode.trim()) {
-
-      alert(
-        'Please enter a warehouse code.'
-      );
-
-      return;
-
-    }
-
-
-    // -------------------------
-    // DUPLICATE CODE CHECK
-    // -------------------------
+    const name =
+      this.editingWarehouseName.trim().toUpperCase();
 
     const normalizedCode =
-      this.editingWarehouseCode
-        .trim()
-        .toUpperCase();
+      this.editingWarehouseCode.trim().toUpperCase();
 
-
-    const duplicateWarehouse =
-      this.warehouses.find(
-        (warehouse) =>
-          warehouse.id !==
-            this.editingWarehouseId &&
-          warehouse.code
-            .trim()
-            .toUpperCase() ===
-            normalizedCode
+    const error =
+      requiredText(name, 'warehouse name') ||
+      shortCode(normalizedCode, 'Warehouse code') ||
+      duplicateValue(
+        normalizedCode,
+        this.warehouses
+          .filter(
+            warehouse =>
+              warehouse.id !== this.editingWarehouseId
+          )
+          .map(warehouse => warehouse.code),
+        'warehouse code'
       );
 
+    if (error) {
 
-    if (duplicateWarehouse) {
-
-      alert(
-        'Another warehouse already uses this code.'
-      );
+      await this.dialog.alert(error);
 
       return;
 
@@ -231,12 +242,13 @@ export class WarehousesComponent implements OnInit {
         .updateWarehouse(
           this.editingWarehouseId,
           {
-            name:
-              this.editingWarehouseName
-                .trim(),
+            name,
 
             code:
-              normalizedCode
+              normalizedCode,
+
+            invoicePrefix:
+              this.editingInvoicePrefix
           }
         );
 
@@ -247,7 +259,7 @@ export class WarehousesComponent implements OnInit {
       this.cancelEdit();
 
 
-      alert(
+      await this.dialog.alert(
         'Warehouse updated successfully.'
       );
 
@@ -264,8 +276,10 @@ export class WarehousesComponent implements OnInit {
       this.isSaving = false;
 
 
-      alert(
-        'Failed to update warehouse. Please try again.'
+      await this.dialog.alert(
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to update warehouse. Please try again.')
       );
 
     }
@@ -317,15 +331,6 @@ export class WarehousesComponent implements OnInit {
         newStatus;
 
 
-      console.log(
-        `Warehouse "${warehouse.name}" is now ${
-          newStatus
-            ? 'Active'
-            : 'Inactive'
-        }.`
-      );
-
-
       this.isUpdatingStatus = false;
 
     }
@@ -341,8 +346,10 @@ export class WarehousesComponent implements OnInit {
       this.isUpdatingStatus = false;
 
 
-      alert(
-        'Failed to update warehouse status. Please try again.'
+      await this.dialog.alert(
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to update warehouse status. Please try again.')
       );
 
     }

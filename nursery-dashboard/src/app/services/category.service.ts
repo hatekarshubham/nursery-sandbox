@@ -8,12 +8,21 @@ import {
   updateDoc,
   doc,
   getDocs,
+  getCountFromServer,
   query,
   where,
   writeBatch,
   CollectionReference,
   DocumentData
 } from '@angular/fire/firestore';
+
+import { Observable, map, firstValueFrom } from 'rxjs';
+
+import { shareLiveStream } from './shared-stream';
+
+import { assertFieldsUnique } from './unique-key';
+
+import { stockStateFor } from './stock-total';
 
 export interface Category {
   id?: string;
@@ -35,48 +44,60 @@ export class CategoryService {
   // GET ALL CATEGORIES
   // =========================
 
-  getCategories() {
-    const categoriesRef =
-      collection(
-        this.firestore,
-        'categories'
-      ) as CollectionReference<DocumentData>;
+  // Small collection: one shared listener for the whole
+  // session.
 
-    return collectionData(
-      categoriesRef,
-      {
-        idField: 'id'
+  private readonly categories$: Observable<Category[]> =
+    shareLiveStream<Category[]>(
+      'categories',
+      () => {
+
+        const categoriesRef =
+          collection(
+            this.firestore,
+            'categories'
+          ) as CollectionReference<DocumentData>;
+
+        return collectionData(
+          categoriesRef,
+          {
+            idField: 'id'
+          }
+        ) as Observable<Category[]>;
+
       }
-    ) as import('rxjs').Observable<Category[]>;
+    );
+
+
+  private readonly uniqueRules = [
+    { field: 'name', label: 'Category name' },
+    { field: 'code', label: 'Category code' }
+  ];
+
+
+  getCategories(): Observable<Category[]> {
+
+    return this.categories$;
+
   }
 
   // =========================
   // GET ACTIVE CATEGORIES
   // =========================
+  //
+  // Derived from the shared list, so it does not open a
+  // second listener on the same collection.
 
-  getActiveCategories() {
-    const categoriesRef =
-      collection(
-        this.firestore,
-        'categories'
-      );
+  getActiveCategories(): Observable<Category[]> {
 
-    const activeCategoriesQuery =
-      query(
-        categoriesRef,
-        where(
-          'isActive',
-          '==',
-          true
+    return this.categories$.pipe(
+      map(categories =>
+        categories.filter(
+          category => category.isActive === true
         )
-      );
+      )
+    );
 
-    return collectionData(
-      activeCategoriesQuery,
-      {
-        idField: 'id'
-      }
-    ) as import('rxjs').Observable<Category[]>;
   }
 
   // =========================
@@ -87,6 +108,13 @@ export class CategoryService {
     name: string,
     code: string
   ) {
+
+    assertFieldsUnique(
+      await firstValueFrom(this.categories$),
+      { name, code },
+      this.uniqueRules
+    );
+
     const categoriesRef =
       collection(
         this.firestore,
@@ -112,6 +140,14 @@ export class CategoryService {
     name: string,
     code: string
   ) {
+
+    assertFieldsUnique(
+      await firstValueFrom(this.categories$),
+      { name, code },
+      this.uniqueRules,
+      id
+    );
+
     const categoryRef =
       doc(
         this.firestore,
@@ -143,12 +179,61 @@ export class CategoryService {
         id
       );
 
-    return updateDoc(
+    await updateDoc(
       categoryRef,
       {
         isActive
       }
     );
+
+    // Products keep a copy so the Products screen can filter
+    // "inactive" without reading every product.
+    const productsSnapshot = await getDocs(
+      query(
+        collection(this.firestore, 'products'),
+        where('categoryId', '==', id)
+      )
+    );
+
+    let batch = writeBatch(this.firestore);
+
+    let pending = 0;
+
+    for (const product of productsSnapshot.docs) {
+
+      const data = product.data();
+
+      const totalQuantity = Number(data['totalQuantity'] ?? 0);
+
+      batch.update(product.ref, {
+        categoryIsActive: isActive,
+        stockState: stockStateFor(
+          data['isActive'] !== false,
+          isActive,
+          totalQuantity
+        )
+      });
+
+      pending++;
+
+      if (pending >= 400) {
+
+        await batch.commit();
+
+        batch = writeBatch(this.firestore);
+
+        pending = 0;
+
+      }
+
+    }
+
+    if (pending > 0) {
+
+      await batch.commit();
+
+    }
+
   }
 
   // =========================
@@ -175,10 +260,12 @@ export class CategoryService {
         )
       );
 
-    const productsSnapshot =
-      await getDocs(productsQuery);
+    // Counts on the server: about 1 read per 1000 products,
+    // instead of reading every product in the category.
+    const countSnapshot =
+      await getCountFromServer(productsQuery);
 
-    return productsSnapshot.size;
+    return countSnapshot.data().count;
   }
 
   // =========================
@@ -249,9 +336,6 @@ export class CategoryService {
 
       await batch.commit();
 
-      console.log(
-        `Deleted ${batchDocuments.length} product(s).`
-      );
     }
 
     // Delete category after products.
@@ -271,9 +355,6 @@ export class CategoryService {
 
     await categoryBatch.commit();
 
-    console.log(
-      `Category "${categoryName}" deleted successfully.`
-    );
 
     return {
       productsDeleted

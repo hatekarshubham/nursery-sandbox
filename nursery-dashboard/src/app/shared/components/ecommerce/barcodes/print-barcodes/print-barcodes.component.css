@@ -150,7 +150,7 @@
   
     width: 100%;
   
-    height: 4.5mm;
+    height: 3.8mm;
   
     display: flex;
   
@@ -207,17 +207,25 @@
   
     width: 100%;
   
-    height: 4mm;
+    max-height: 6.8mm;
   
     overflow: hidden;
   
-    text-overflow: ellipsis;
+    display: -webkit-box;
   
-    white-space: nowrap;
+    -webkit-box-orient: vertical;
   
-    font-size: 8.5pt;
+    -webkit-line-clamp: 2;
   
-    line-height: 4mm;
+    line-clamp: 2;
+  
+    white-space: normal;
+  
+    overflow-wrap: break-word;
+  
+    font-size: 8pt;
+  
+    line-height: 3.4mm;
   
     font-weight: 700;
   
@@ -259,9 +267,9 @@
   
     width: 100%;
   
-    height: 13mm;
+    height: 11.5mm;
   
-    margin-top: 0.5mm;
+    margin-top: 0.3mm;
   
     display: flex;
   

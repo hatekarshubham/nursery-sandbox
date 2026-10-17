@@ -1,11 +1,22 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { RoleService } from '../../../../services/role.service';
+import { DuplicateError } from '../../../../services/unique-key';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AppDialogService } from '../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 
 import {
   Category,
   CategoryService
 } from '../../../../services/category.service';
+
+import {
+  duplicateValue,
+  requiredText,
+  shortCode,
+  upperInput
+} from '../../../utils/form-validation';
 
 @Component({
   selector: 'app-categories',
@@ -18,7 +29,18 @@ import {
 })
 export class CategoriesComponent implements OnInit {
 
+  private destroyRef = inject(DestroyRef);
+
+
+  readonly roles = inject(RoleService);
+
+  private readonly dialog = inject(AppDialogService);
+
+
   categories: Category[] = [];
+
+  // Search box text
+  searchText = '';
 
   isLoading = true;
 
@@ -45,16 +67,38 @@ export class CategoriesComponent implements OnInit {
   ) {}
 
   // =========================
+  // SEARCH
+  // =========================
+  //
+  // Filters the list that is already loaded (name or code),
+  // so searching costs no extra reads.
+
+  get filteredCategories(): Category[] {
+
+    const term = this.searchText.trim().toLowerCase();
+
+    if (!term) {
+      return this.categories;
+    }
+
+    return this.categories.filter(category =>
+      [category.name, category.code].some(value =>
+        String(value ?? '').toLowerCase().includes(term)
+      )
+    );
+
+  }
+
+  // =========================
   // LOAD CATEGORIES
   // =========================
 
   ngOnInit() {
-    this.categoryService.getCategories().subscribe({
+    this.categoryService.getCategories().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (categories) => {
         this.categories = categories;
         this.isLoading = false;
 
-        console.log('Categories loaded:', categories);
       },
 
       error: (error) => {
@@ -81,8 +125,20 @@ export class CategoriesComponent implements OnInit {
     }
 
     this.editingCategoryId = category.id;
-    this.editingCategoryName = category.name;
-    this.editingCategoryCode = category.code;
+    this.editingCategoryName = upperInput(category.name);
+    this.editingCategoryCode = upperInput(category.code);
+  }
+
+  onEditNameInput(value: string) {
+
+    this.editingCategoryName = upperInput(value);
+
+  }
+
+  onEditCodeInput(value: string) {
+
+    this.editingCategoryCode = upperInput(value);
+
   }
 
   cancelEdit() {
@@ -97,20 +153,33 @@ export class CategoriesComponent implements OnInit {
     }
 
     const name =
-      this.editingCategoryName.trim();
+      this.editingCategoryName.trim().toUpperCase();
 
     const code =
-      this.editingCategoryCode
-        .trim()
-        .toUpperCase();
+      this.editingCategoryCode.trim().toUpperCase();
 
-    if (!name) {
-      alert('Please enter a category name.');
-      return;
-    }
+    const others =
+      this.categories.filter(
+        category =>
+          category.id !== this.editingCategoryId
+      );
 
-    if (!code) {
-      alert('Please enter a category code.');
+    const error =
+      requiredText(name, 'category name') ||
+      shortCode(code, 'Category code', 50) ||
+      duplicateValue(
+        name,
+        others.map(category => category.name),
+        'category name'
+      ) ||
+      duplicateValue(
+        code,
+        others.map(category => category.code),
+        'category code'
+      );
+
+    if (error) {
+      await this.dialog.alert(error);
       return;
     }
 
@@ -121,7 +190,7 @@ export class CategoriesComponent implements OnInit {
         code
       );
 
-      alert(
+      await this.dialog.alert(
         'Category updated successfully.'
       );
 
@@ -133,8 +202,10 @@ export class CategoriesComponent implements OnInit {
         error
       );
 
-      alert(
-        'Failed to update category. Please try again.'
+      await this.dialog.alert(
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to update category. Please try again.')
       );
     }
   }
@@ -162,7 +233,7 @@ export class CategoriesComponent implements OnInit {
         newStatus
       );
 
-      alert(
+      await this.dialog.alert(
         newStatus
           ? 'Category activated successfully.'
           : 'Category made inactive successfully.'
@@ -174,8 +245,10 @@ export class CategoriesComponent implements OnInit {
         error
       );
 
-      alert(
-        'Failed to update category status. Please try again.'
+      await this.dialog.alert(
+        (error instanceof DuplicateError
+          ? error.message
+          : 'Failed to update category status. Please try again.')
       );
     }
   }
@@ -216,7 +289,7 @@ export class CategoriesComponent implements OnInit {
 
       this.closeDeleteModal();
 
-      alert(
+      await this.dialog.alert(
         'Failed to check products in this category. Please try again.'
       );
 
@@ -287,7 +360,7 @@ export class CategoriesComponent implements OnInit {
 
       this.isCheckingProducts = false;
 
-      alert(
+      await this.dialog.alert(
         `Category deleted successfully.\n\n` +
         `Products deleted: ${result.productsDeleted}`
       );
@@ -301,7 +374,7 @@ export class CategoriesComponent implements OnInit {
 
       this.isDeleting = false;
 
-      alert(
+      await this.dialog.alert(
         'Failed to delete category. Please try again.'
       );
     }

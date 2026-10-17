@@ -3,17 +3,17 @@ import { CommonModule } from '@angular/common';
 import {
   Component,
   OnDestroy,
-  OnInit
-} from '@angular/core';
+  OnInit,
+  inject} from '@angular/core';
+import { AppDialogService } from '../../../../services/app-dialog.service';
 
 import { FormsModule } from '@angular/forms';
 
 import { Router } from '@angular/router';
 
-import {
-  Subscription,
-  combineLatest
-} from 'rxjs';
+import { ProductPickerComponent } from '../../product-picker/product-picker.component';
+
+import { Subscription } from 'rxjs';
 
 import {
   ProductService
@@ -60,7 +60,8 @@ interface ProductOption {
 
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    ProductPickerComponent
   ],
 
   templateUrl:
@@ -71,6 +72,8 @@ interface ProductOption {
 })
 export class AddStockTransferComponent
   implements OnInit, OnDestroy {
+
+  private readonly dialog = inject(AppDialogService);
 
 
   // =======================================================
@@ -187,77 +190,14 @@ export class AddStockTransferComponent
 
 
     const dataSubscription =
-      combineLatest([
-
-        this.warehouseService
-          .getActiveWarehouses(),
-
-        this.productService
-          .getProducts(),
-
-        this.inventoryService
-          .getInventory()
-
-      ])
+      this.warehouseService
+        .getActiveWarehouses()
         .subscribe({
 
-          next: ([
-            warehouses,
-            products,
-            inventory
-          ]) => {
-
-            // =============================================
-            // WAREHOUSES
-            // =============================================
+          next: (warehouses) => {
 
             this.warehouses =
               warehouses;
-
-
-            // =============================================
-            // PRODUCTS
-            // =============================================
-
-            this.products =
-              products
-
-                .filter(
-                  product =>
-                    !!product.id &&
-                    product.isActive !== false
-                )
-
-                .map(
-                  product => ({
-
-                    id:
-                      product.id,
-
-                    name:
-                      product.name ?? '',
-
-                    isActive:
-                      product.isActive !== false
-
-                  })
-                );
-
-
-            // =============================================
-            // INVENTORY
-            // =============================================
-
-            this.inventory =
-              inventory;
-
-
-            // =============================================
-            // REFRESH AVAILABLE QUANTITY
-            // =============================================
-
-            this.updateAvailableQuantity();
-
 
             this.isLoading =
               false;
@@ -268,13 +208,13 @@ export class AddStockTransferComponent
           error: (error) => {
 
             console.error(
-              'Error loading stock transfer data:',
+              'Error loading warehouses:',
               error
             );
 
 
             this.errorMessage =
-              'Failed to load stock transfer data.';
+              'Failed to load warehouses.';
 
 
             this.isLoading =
@@ -293,43 +233,105 @@ export class AddStockTransferComponent
 
 
   // =======================================================
-  // PRODUCTS AVAILABLE IN SOURCE WAREHOUSE
+  // PRODUCT PICKED (from the product picker)
+  // =======================================================
+  //
+  // The picker searches Firestore, so the whole product list is
+  // never loaded. Stock for the chosen product in the source
+  // warehouse is read with one small query.
+  //
   // =======================================================
 
-  getAvailableProducts():
-    ProductOption[] {
+  async onProductPicked(
+    product: any | null
+  ) {
 
-    if (
-      !this.transfer.fromWarehouseId
-    ) {
+    this.transfer.quantity = null;
 
-      return [];
+    if (!product) {
+
+      this.transfer.productId = '';
+
+      this.inventory = [];
+
+      this.availableQuantity = 0;
+
+      return;
 
     }
 
+    if (!this.products.some(entry => entry.id === product.id)) {
 
-    return this.products.filter(
-      product => {
+      this.products.push({
 
-        const inventoryRecord =
-          this.inventory.find(
-            inventoryItem =>
-              inventoryItem.productId ===
-                product.id &&
-              inventoryItem.warehouseId ===
-                this.transfer.fromWarehouseId
+        id: product.id,
+
+        name: product.name ?? '',
+
+        isActive: product.isActive !== false
+
+      });
+
+    }
+
+    this.transfer.productId = product.id;
+
+    this.availableQuantity = 0;
+
+    await this.refreshStock();
+
+  }
+
+
+  // Reads the chosen product's stock in the source warehouse.
+  private async refreshStock() {
+
+    const productId = this.transfer.productId;
+
+    const warehouseId = this.transfer.fromWarehouseId;
+
+    if (!productId || !warehouseId) {
+
+      this.inventory = [];
+
+      this.availableQuantity = 0;
+
+      return;
+
+    }
+
+    try {
+
+      const record =
+        await this.inventoryService
+          .getInventoryByProductAndWarehouse(
+            productId,
+            warehouseId
           );
 
+      // Ignore the answer if the user already chose something else.
+      if (
+        productId !== this.transfer.productId ||
+        warehouseId !== this.transfer.fromWarehouseId
+      ) {
 
-        return (
-          inventoryRecord !== undefined &&
-          Number(
-            inventoryRecord.quantity ?? 0
-          ) > 0
-        );
+        return;
 
       }
-    );
+
+      this.inventory = record ? [record] : [];
+
+      this.updateAvailableQuantity();
+
+    } catch (error) {
+
+      console.error('Error reading stock:', error);
+
+      this.inventory = [];
+
+      this.availableQuantity = 0;
+
+    }
 
   }
 
@@ -370,6 +372,8 @@ export class AddStockTransferComponent
 
     this.transfer.productId = '';
 
+    this.inventory = [];
+
     this.transfer.quantity = null;
 
     this.availableQuantity = 0;
@@ -393,7 +397,7 @@ export class AddStockTransferComponent
   // DESTINATION WAREHOUSE CHANGE
   // =======================================================
 
-  onDestinationWarehouseChange() {
+  async onDestinationWarehouseChange() {
 
     if (
       this.transfer.toWarehouseId ===
@@ -403,7 +407,7 @@ export class AddStockTransferComponent
       this.transfer.toWarehouseId = '';
 
 
-      alert(
+      await this.dialog.alert(
         'Source and destination warehouses cannot be the same.'
       );
 
@@ -513,8 +517,8 @@ export class AddStockTransferComponent
   // VALIDATE TRANSFER
   // =======================================================
 
-  private validateTransfer():
-    boolean {
+  private async validateTransfer():
+    Promise<boolean> {
 
     // =====================================================
     // SOURCE WAREHOUSE
@@ -524,7 +528,7 @@ export class AddStockTransferComponent
       !this.transfer.fromWarehouseId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a source warehouse.'
       );
 
@@ -539,7 +543,7 @@ export class AddStockTransferComponent
 
     if (!sourceWarehouse) {
 
-      alert(
+      await this.dialog.alert(
         'Selected source warehouse is invalid.'
       );
 
@@ -556,7 +560,7 @@ export class AddStockTransferComponent
       !this.transfer.toWarehouseId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a destination warehouse.'
       );
 
@@ -571,7 +575,7 @@ export class AddStockTransferComponent
 
     if (!destinationWarehouse) {
 
-      alert(
+      await this.dialog.alert(
         'Selected destination warehouse is invalid.'
       );
 
@@ -589,7 +593,7 @@ export class AddStockTransferComponent
       this.transfer.toWarehouseId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Source and destination warehouses cannot be the same.'
       );
 
@@ -606,7 +610,7 @@ export class AddStockTransferComponent
       !this.transfer.productId
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a product.'
       );
 
@@ -621,7 +625,7 @@ export class AddStockTransferComponent
 
     if (!product) {
 
-      alert(
+      await this.dialog.alert(
         'Selected product is invalid.'
       );
 
@@ -633,15 +637,17 @@ export class AddStockTransferComponent
     // =====================================================
     // AVAILABLE STOCK
     // =====================================================
+    //
+    // Read the latest stock again right before saving.
 
-    this.updateAvailableQuantity();
+    await this.refreshStock();
 
 
     if (
       this.availableQuantity <= 0
     ) {
 
-      alert(
+      await this.dialog.alert(
         'The selected product has no available stock in the source warehouse.'
       );
 
@@ -667,7 +673,7 @@ export class AddStockTransferComponent
       quantity <= 0
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please enter a valid transfer quantity.'
       );
 
@@ -681,7 +687,7 @@ export class AddStockTransferComponent
       this.availableQuantity
     ) {
 
-      alert(
+      await this.dialog.alert(
         `Only ${this.availableQuantity} units are available in the source warehouse.`
       );
 
@@ -698,7 +704,7 @@ export class AddStockTransferComponent
       !this.transfer.transferDate
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Please select a transfer date.'
       );
 
@@ -716,8 +722,21 @@ export class AddStockTransferComponent
       this.today
     ) {
 
-      alert(
+      await this.dialog.alert(
         'Transfer date cannot be in the future.'
+      );
+
+      return false;
+
+    }
+
+
+    if (
+      this.transfer.notes.trim().length > 500
+    ) {
+
+      await this.dialog.alert(
+        'Notes must be 500 characters or fewer.'
       );
 
       return false;
@@ -805,8 +824,8 @@ export class AddStockTransferComponent
   // CONFIRM TRANSFER
   // =======================================================
 
-  private confirmTransfer():
-    boolean {
+  private async confirmTransfer():
+    Promise<boolean> {
 
     const product =
       this.getSelectedProduct();
@@ -837,7 +856,7 @@ export class AddStockTransferComponent
       );
 
 
-    return window.confirm(
+    return await this.dialog.confirm(
 
       `Transfer ${quantity} unit(s) of ${product.name}?\n\n` +
 
@@ -870,7 +889,7 @@ export class AddStockTransferComponent
 
 
     if (
-      !this.validateTransfer()
+      !await this.validateTransfer()
     ) {
 
       return;
@@ -884,7 +903,7 @@ export class AddStockTransferComponent
 
     if (!transferData) {
 
-      alert(
+      await this.dialog.alert(
         'Unable to resolve transfer information.'
       );
 
@@ -894,7 +913,7 @@ export class AddStockTransferComponent
 
 
     if (
-      !this.confirmTransfer()
+      !await this.confirmTransfer()
     ) {
 
       return;
@@ -915,13 +934,7 @@ export class AddStockTransferComponent
           );
 
 
-      console.log(
-        'Stock transfer completed:',
-        transferId
-      );
-
-
-      alert(
+      await this.dialog.alert(
         'Stock transferred successfully.'
       );
 
@@ -941,7 +954,7 @@ export class AddStockTransferComponent
       );
 
 
-      alert(
+      await this.dialog.alert(
         error?.message ??
         'Failed to transfer stock.'
       );
@@ -975,7 +988,7 @@ export class AddStockTransferComponent
 
 
     if (
-      !this.validateTransfer()
+      !await this.validateTransfer()
     ) {
 
       return;
@@ -989,7 +1002,7 @@ export class AddStockTransferComponent
 
     if (!transferData) {
 
-      alert(
+      await this.dialog.alert(
         'Unable to resolve transfer information.'
       );
 
@@ -999,7 +1012,7 @@ export class AddStockTransferComponent
 
 
     if (
-      !this.confirmTransfer()
+      !await this.confirmTransfer()
     ) {
 
       return;
@@ -1020,13 +1033,7 @@ export class AddStockTransferComponent
           );
 
 
-      console.log(
-        'Stock transfer completed:',
-        transferId
-      );
-
-
-      alert(
+      await this.dialog.alert(
         'Stock transferred successfully.'
       );
 
@@ -1046,7 +1053,7 @@ export class AddStockTransferComponent
       );
 
 
-      alert(
+      await this.dialog.alert(
         error?.message ??
         'Failed to transfer stock.'
       );
@@ -1120,6 +1127,8 @@ export class AddStockTransferComponent
 
 
     this.availableQuantity = 0;
+
+    this.inventory = [];
 
   }
 

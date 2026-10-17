@@ -50,7 +50,6 @@ export class AddProductFormComponent {
   stockQuantity: number = 1;
 
   handleSelectChange(value: string) {
-    console.log('Selected value:', value);
   }
 
   incrementQuantity() {
@@ -68,10 +67,8 @@ export class AddProductFormComponent {
   }
 
   onDraft() {
-    console.log('Draft button clicked');
   }
 
   onPublish() {
-    console.log('Publish Product button clicked');
   }
 }

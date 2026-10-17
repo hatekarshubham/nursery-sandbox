@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { DropdownComponent } from '../../ui/dropdown/dropdown.component';
 
@@ -13,6 +14,16 @@ import { AuthService } from '../../../../services/auth';
 @Component({
   selector: 'app-user-dropdown',
   templateUrl: './user-dropdown.component.html',
+  styles: [`
+    @keyframes user-avatar-breathe {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-1.5px) scale(1.06); }
+    }
+
+    .user-avatar-icon {
+      animation: user-avatar-breathe 2.4s ease-in-out infinite;
+    }
+  `],
   imports: [
     CommonModule,
     RouterModule,
@@ -20,16 +31,24 @@ import { AuthService } from '../../../../services/auth';
     DropdownItemTwoComponent
   ]
 })
-export class UserDropdownComponent {
+export class UserDropdownComponent implements OnInit {
 
   isOpen = false;
 
   profile: any = null;
 
-  constructor(private authService: AuthService) {
+  private destroyRef = inject(DestroyRef);
+
+  constructor(private authService: AuthService) {}
+
+  ngOnInit() {
     this.profile = this.authService.getProfile();
 
-    console.log('Dashboard Profile:', this.profile);
+    this.authService.profile$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(profile => {
+        this.profile = profile;
+      });
   }
 
   toggleDropdown() {

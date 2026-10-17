@@ -184,10 +184,11 @@
         <input
           type="text"
           name="invoiceNumber"
-          [(ngModel)]="purchase.invoiceNumber"
+          [ngModel]="purchase.invoiceNumber"
+          (ngModelChange)="purchase.invoiceNumber = upperInvoice($event)"
           [disabled]="isSaving"
           placeholder="Enter supplier invoice number"
-          class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition focus:border-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:disabled:bg-gray-800"
+          class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm uppercase text-gray-800 outline-none transition focus:border-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:disabled:bg-gray-800"
         />
 
       </div>
@@ -262,7 +263,7 @@
             isSaving ||
             !purchase.supplierId
           "
-          class="inline-flex items-center justify-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20"
+          class="inline-flex items-center justify-center rounded-lg border border-brand-500 bg-white px-4 py-2 text-sm font-medium text-brand-500 transition hover:bg-[#EAF7EB] disabled:cursor-not-allowed disabled:opacity-50 dark:border-brand-400 dark:bg-transparent dark:text-brand-400 dark:hover:bg-brand-500/10"
         >
           + Add Product
         </button>
@@ -289,49 +290,14 @@
       }
 
 
-      <!-- NO PRODUCTS MESSAGE -->
-
-      @if (
-        purchase.supplierId &&
-        !isLoadingProducts &&
-        getAvailableProducts().length === 0
-      ) {
-
-        <div
-          class="px-5 py-10 text-center"
-        >
-
-          <p
-            class="text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            No products found for this supplier.
-          </p>
-
-          <p
-            class="mt-1 text-xs text-gray-500 dark:text-gray-400"
-          >
-            Add or assign products to this supplier before recording a purchase.
-          </p>
-
-        </div>
-
-      }
-
-
       <!-- ITEMS TABLE -->
 
-      @if (
-        purchase.supplierId &&
-        (
-          isLoadingProducts ||
-          getAvailableProducts().length > 0
-        )
-      ) {
+      @if (purchase.supplierId) {
 
-        <div class="overflow-x-auto">
+        <div>
 
           <table
-            class="w-full min-w-[1000px] text-left"
+            class="w-full table-fixed text-left"
           >
 
             <thead
@@ -341,49 +307,49 @@
               <tr>
 
                 <th
-                  class="px-4 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                  class="px-3 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
                 >
                   Product
                 </th>
 
                 <th
-                  class="w-28 px-4 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                  class="w-24 px-3 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
                 >
-                  Quantity
+                  Qty
                 </th>
 
                 <th
-                  class="w-36 px-4 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                  class="w-32 px-3 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
                 >
                   Unit Price
                 </th>
 
                 <th
-                  class="w-28 px-4 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                  class="w-24 px-3 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
                 >
                   GST %
                 </th>
 
                 <th
-                  class="w-36 px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                  class="w-28 px-3 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
                 >
                   Subtotal
                 </th>
 
                 <th
-                  class="w-32 px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                  class="w-24 px-3 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
                 >
                   GST
                 </th>
 
                 <th
-                  class="w-36 px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                  class="w-28 px-3 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
                 >
                   Total
                 </th>
 
                 <th
-                  class="w-20 px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                  class="w-16 px-3 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
                 >
                   Action
                 </th>
@@ -407,50 +373,25 @@
 
                   <!-- PRODUCT -->
 
-                  <td class="px-4 py-4">
+                  <td class="px-3 py-4">
 
-                    <select
-                      [name]="'productId_' + i"
-                      [(ngModel)]="item.productId"
-                      (ngModelChange)="onProductChange(item)"
-                      [disabled]="
-                        isLoadingProducts ||
-                        isSaving
-                      "
-                      class="w-full min-w-[220px] rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none transition focus:border-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:disabled:bg-gray-800"
-                    >
+                    <div>
 
-                      <option value="">
+                      <app-product-picker
+                        [selectedName]="item.productName"
+                        [supplierId]="purchase.supplierId"
+                        [disabled]="isSaving"
+                        (productSelected)="onProductPicked(item, $event)"
+                      />
 
-                        {{
-                          isLoadingProducts
-                            ? 'Loading products...'
-                            : 'Select Product'
-                        }}
-
-                      </option>
-
-                      @for (
-                        product of getAvailableProducts();
-                        track product.id
-                      ) {
-
-                        <option
-                          [value]="product.id"
-                        >
-                          {{ product.name }}
-                        </option>
-
-                      }
-
-                    </select>
+                    </div>
 
                   </td>
 
 
                   <!-- QUANTITY -->
 
-                  <td class="px-4 py-4">
+                  <td class="px-3 py-4">
 
                     <input
                       type="number"
@@ -469,7 +410,7 @@
 
                   <!-- UNIT PRICE -->
 
-                  <td class="px-4 py-4">
+                  <td class="px-3 py-4">
 
                     <div class="relative">
 
@@ -498,7 +439,7 @@
 
                   <!-- GST -->
 
-                  <td class="px-4 py-4">
+                  <td class="px-3 py-4">
 
                     <input
                       type="number"
@@ -518,7 +459,7 @@
                   <!-- SUBTOTAL -->
 
                   <td
-                    class="whitespace-nowrap px-4 py-4 text-right text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="whitespace-nowrap px-3 py-4 text-right text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     ₹{{ item.subTotal | number:'1.2-2' }}
                   </td>
@@ -527,7 +468,7 @@
                   <!-- GST AMOUNT -->
 
                   <td
-                    class="whitespace-nowrap px-4 py-4 text-right text-sm text-gray-600 dark:text-gray-400"
+                    class="whitespace-nowrap px-3 py-4 text-right text-sm text-gray-600 dark:text-gray-400"
                   >
                     ₹{{ item.gstAmount | number:'1.2-2' }}
                   </td>
@@ -536,7 +477,7 @@
                   <!-- TOTAL -->
 
                   <td
-                    class="whitespace-nowrap px-4 py-4 text-right text-sm font-semibold text-gray-800 dark:text-white"
+                    class="whitespace-nowrap px-3 py-4 text-right text-sm font-semibold text-gray-800 dark:text-white"
                   >
                     ₹{{ item.total | number:'1.2-2' }}
                   </td>
@@ -545,7 +486,7 @@
                   <!-- REMOVE -->
 
                   <td
-                    class="px-4 py-4 text-center"
+                    class="px-3 py-4 text-center"
                   >
 
                     <button
@@ -742,7 +683,7 @@
           isLoadingWarehouses ||
           isLoadingProducts
         "
-        class="rounded-lg bg-green-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+        class="rounded-lg bg-brand-500 px-6 py-3 text-sm font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
       >
 
         @if (isSaving) {
@@ -765,7 +706,7 @@
           isLoadingWarehouses ||
           isLoadingProducts
         "
-        class="rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        class="rounded-lg border border-brand-500 bg-white px-6 py-3 text-sm font-medium text-brand-500 transition hover:bg-[#EAF7EB] dark:border-brand-400 dark:bg-transparent dark:text-brand-400 dark:hover:bg-brand-500/10 disabled:cursor-not-allowed disabled:opacity-50"
       >
 
         @if (isSaving) {
