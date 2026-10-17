@@ -9,6 +9,7 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  deleteField,
   getDoc,
   getDocs,
   getCountFromServer,
@@ -1022,8 +1023,22 @@ export class ProductService {
           product.standardPackage ??
           null,
 
-        image:
-          product.image ?? '',
+        image: deleteField(),
+
+        imageUrl:
+          product.imageUrl !== undefined
+            ? product.imageUrl
+            : (currentData['imageUrl'] ?? ''),
+
+        thumbUrl:
+          product.thumbUrl !== undefined
+            ? product.thumbUrl
+            : (currentData['thumbUrl'] ?? ''),
+
+        imageVersion:
+          product.imageVersion !== undefined
+            ? Number(product.imageVersion)
+            : Number(currentData['imageVersion'] ?? 0),
 
         isActive,
 
@@ -1046,6 +1061,41 @@ export class ProductService {
       }
     );
 
+
+  }
+
+
+  // =========================================================
+  // UPDATE PRODUCT IMAGE LINKS
+  // =========================================================
+  //
+  // Written after the file is already in Storage. The product
+  // document keeps the links only, never the picture itself.
+  // =========================================================
+
+  async updateProductImage(
+    productId: string,
+    image: {
+      imageUrl: string;
+      thumbUrl: string;
+      imageVersion: number;
+    }
+  ) {
+
+    await updateDoc(
+      doc(
+        this.firestore,
+        'products',
+        productId
+      ),
+      {
+        image: deleteField(),
+        imageUrl: image.imageUrl,
+        thumbUrl: image.thumbUrl,
+        imageVersion: image.imageVersion,
+        updatedAt: new Date()
+      }
+    );
 
   }
 

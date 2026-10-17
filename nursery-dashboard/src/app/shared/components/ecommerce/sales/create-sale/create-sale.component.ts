@@ -546,7 +546,9 @@ export class CreateSaleComponent implements OnInit {
               ),
 
             image:
-              product.image ?? '',
+              product.thumbUrl ||
+              product.imageUrl ||
+              '',
 
             isActive:
               product.isActive !== false,
@@ -765,7 +767,10 @@ export class CreateSaleComponent implements OnInit {
       barcode: product.barcode ?? '',
       unitPrice: Number(product.unitPrice ?? 0),
       gst: Number(product.gst ?? 0),
-      image: product.image ?? '',
+      image:
+        product.thumbUrl ||
+        product.imageUrl ||
+        '',
       isActive: product.isActive !== false,
       availableQuantity: quantities.get(product.id) ?? 0
     };
@@ -898,6 +903,64 @@ export class CreateSaleComponent implements OnInit {
     }
 
     return this.stockIndexMap;
+
+  }
+
+
+  // =====================================================
+  // REFRESH STOCK AFTER A SALE
+  // =====================================================
+  //
+  // completeSale() does not know what anyone ELSE sold a
+  // moment ago, so simply subtracting the sold quantity
+  // from the number already on screen can land on the
+  // wrong number if two people were selling the same
+  // product at once.
+  //
+  // Re-reading just the products that were in THIS cart
+  // (one small batched read, not the whole catalogue, not
+  // a live listener) gives the real number instead of a
+  // guess.
+  // =====================================================
+
+  private async refreshStockAfterSale(
+    productIds: string[]
+  ): Promise<void> {
+
+    if (!productIds.length) {
+
+      return;
+
+    }
+
+    const fresh =
+      await this.inventoryService.getInventoryForProducts(
+        productIds
+      );
+
+    const idSet = new Set(productIds);
+
+    // Drop the old rows for these products (any warehouse)
+    // before adding the fresh ones, so stock isn't double
+    // counted.
+    this.inventory = [
+      ...this.inventory.filter(
+        item => !idSet.has(item.productId)
+      ),
+      ...fresh
+    ];
+
+    this.products =
+      this.products.map(
+        product =>
+          idSet.has(product.id)
+            ? {
+                ...product,
+                availableQuantity:
+                  this.getAvailableQuantity(product.id)
+              }
+            : product
+      );
 
   }
 
@@ -1824,6 +1887,23 @@ export class CreateSaleComponent implements OnInit {
 
       this.showInvoiceModal =
         true;
+
+
+      // =================================================
+      // REFRESH THE STOCK SHOWN ON THE CARDS
+      // =================================================
+      //
+      // Re-read the real quantity for just the products
+      // that were sold, instead of guessing by subtraction.
+      // See refreshStockAfterSale() for why.
+      // =================================================
+
+      const soldProductIds =
+        [...new Set(
+          this.cartItems.map(item => item.productId)
+        )];
+
+      void this.refreshStockAfterSale(soldProductIds);
 
 
       // =================================================

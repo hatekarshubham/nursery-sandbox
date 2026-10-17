@@ -402,11 +402,12 @@
                   class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50"
                 >
 
-                  @if (product.image) {
+                  @if (listImage(product)) {
 
                     <img
-                      [src]="product.image"
+                      [src]="listImage(product)"
                       [alt]="product.name"
+                      loading="lazy"
                       (click)="openProductDetails(product)"
                       class="h-full w-full cursor-pointer object-cover"
                     />
@@ -803,10 +804,10 @@
           class="flex h-48 w-48 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50"
         >
 
-          @if (selectedProduct.image) {
+          @if (fullImage(selectedProduct)) {
 
             <img
-              [src]="selectedProduct.image"
+              [src]="fullImage(selectedProduct)"
               [alt]="selectedProduct.name"
               class="h-full w-full object-cover"
             />
@@ -1577,7 +1578,7 @@
           </label>
 
 
-          @if (editingProduct.image) {
+          @if (editImagePreview || (!removeImage && fullImage(editingProduct))) {
 
             <div
               class="mb-3 flex justify-center"
@@ -1588,7 +1589,7 @@
               >
 
                 <img
-                  [src]="editingProduct.image"
+                  [src]="editImagePreview || fullImage(editingProduct)"
                   [alt]="editingProduct.name"
                   class="h-full w-full object-cover"
                 />
@@ -1601,11 +1602,23 @@
 
 
           <input
-            type="text"
-            [(ngModel)]="editingProduct.image"
-            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            placeholder="Enter image URL or data"
+            type="file"
+            accept="image/*"
+            (change)="onEditImageSelected($event)"
+            class="block w-full rounded-lg border border-gray-300 bg-white text-sm text-gray-600 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
           />
+
+          @if (editImagePreview || (!removeImage && fullImage(editingProduct))) {
+
+            <button
+              type="button"
+              (click)="clearProductImage()"
+              class="mt-2 text-sm font-medium text-red-600 hover:text-red-700"
+            >
+              Remove image
+            </button>
+
+          }
 
         </div>
 

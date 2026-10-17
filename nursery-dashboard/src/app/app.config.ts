@@ -12,6 +12,7 @@ import {
   provideFirestore,
   connectFirestoreEmulator
 } from '@angular/fire/firestore';
+import { connectStorageEmulator, getStorage, provideStorage } from '@angular/fire/storage';
 import { environment } from '../environments/environment';
 
 export const appConfig: ApplicationConfig = {
@@ -60,6 +61,13 @@ export const appConfig: ApplicationConfig = {
         connectFirestoreEmulator(firestore, 'localhost', 8080);
       }
       return firestore;
+    }),
+    provideStorage(() => {
+      const storage = getStorage();
+      if (isDevMode()) {
+        connectStorageEmulator(storage, '127.0.0.1', 9199);
+      }
+      return storage;
     })
   ]
 };

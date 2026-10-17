@@ -16,8 +16,10 @@
 // Only documents that are missing the field are touched, so the cost is
 // one read per document plus one write per document that needs it.
 
+import { randomUUID } from 'node:crypto';
 import { initializeApp, applicationDefault } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 
 const RETENTION_YEARS = 3;
 const BATCH_SIZE = 400;
@@ -33,7 +35,11 @@ if (!projectId) {
   process.exit(1);
 }
 
-initializeApp({ projectId, credential: applicationDefault() });
+initializeApp({
+  projectId,
+  credential: applicationDefault(),
+  storageBucket: `${projectId}.firebasestorage.app`
+});
 const db = getFirestore();
 
 const target = process.env.FIRESTORE_EMULATOR_HOST
@@ -166,6 +172,75 @@ await backfill('products', (data, id) => {
     stockState: state
   };
 });
+
+// Move a picture saved inside the product document out to Storage.
+// An empty image is left alone. A web address is copied into imageUrl.
+// A data:image value is uploaded, then removed from the document.
+const imageSnapshot = await db.collection('products').get();
+let imagesToMove = 0;
+const bucket = getStorage().bucket();
+
+function storedImageUrl(objectPath, token) {
+  const encoded = encodeURIComponent(objectPath);
+  const host = process.env.FIREBASE_STORAGE_EMULATOR_HOST;
+  if (host) {
+    return `http://${host}/v0/b/${bucket.name}/o/${encoded}?alt=media&token=${token}`;
+  }
+  return `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encoded}?alt=media&token=${token}`;
+}
+
+for (const entry of imageSnapshot.docs) {
+  if (!Object.prototype.hasOwnProperty.call(entry.data(), 'image')) continue;
+  const image = String(entry.data().image ?? '');
+  if (!image || entry.data().imageUrl) {
+    imagesToMove++;
+    if (apply) await entry.ref.update({ image: FieldValue.delete() });
+    continue;
+  }
+  imagesToMove++;
+  if (!apply) continue;
+
+  if (/^https?:\/\//i.test(image)) {
+    await entry.ref.update({ imageUrl: image, image: FieldValue.delete() });
+    continue;
+  }
+
+  const match = image.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+  if (!match) continue;
+
+  const contentType = match[1];
+  const bytes = Buffer.from(match[2], 'base64');
+  const extension = contentType.includes('png')
+    ? 'png'
+    : contentType.includes('webp')
+      ? 'webp'
+      : 'jpg';
+  const version = Date.now();
+  const token = randomUUID();
+
+  async function upload(kind) {
+    const objectPath = `products/${entry.id}/${kind}.${extension}`;
+    await bucket.file(objectPath).save(bytes, {
+      contentType,
+      metadata: {
+        cacheControl: 'public, max-age=31536000',
+        metadata: { firebaseStorageDownloadTokens: token }
+      }
+    });
+    return `${storedImageUrl(objectPath, token)}&v=${version}`;
+  }
+
+  const imageUrl = await upload('main');
+  const thumbUrl = await upload('thumb');
+  await entry.ref.update({
+    image: FieldValue.delete(),
+    imageUrl,
+    thumbUrl,
+    imageVersion: version
+  });
+}
+
+console.log(`product images: ${apply ? 'moved' : 'would move'} ${imagesToMove}`);
 
 // Rebuild daily summaries from every sale. Safe to re-run:
 // each document is rewritten to the total of its sales.

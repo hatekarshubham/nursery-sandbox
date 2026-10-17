@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { ProductService } from '../../../../../services/product.service';
+import { ImageUploadService } from '../../../../../services/image-upload.service';
 
 import {
   Category,
@@ -62,6 +63,7 @@ export class AddProductComponent implements OnInit {
     private productService: ProductService,
     private categoryService: CategoryService,
     private supplierService: SupplierService,
+    private images: ImageUploadService,
     private router: Router
   ) {}
 
@@ -90,10 +92,10 @@ export class AddProductComponent implements OnInit {
 
     standardPackage: null as number | null,
 
-    image: '',
-
     isActive: true
   };
+
+  private selectedImageFile: File | null = null;
 
 
   // =========================
@@ -333,32 +335,24 @@ export class AddProductComponent implements OnInit {
 
       }
 
-      if (file.size > 2 * 1024 * 1024) {
+      if (file.size > 15 * 1024 * 1024) {
 
         input.value = '';
 
         await this.dialog.alert(
-          'Image must be 2 MB or smaller.'
+          'Image must be 15 MB or smaller.'
         );
 
         return;
 
       }
 
-      const reader =
-        new FileReader();
+      this.revokePreview();
 
-      reader.onload = () => {
+      this.selectedImageFile = file;
 
-        this.selectedImage =
-          reader.result as string;
-
-        this.product.image =
-          this.selectedImage;
-
-      };
-
-      reader.readAsDataURL(file);
+      this.selectedImage =
+        URL.createObjectURL(file);
 
     }
 
@@ -524,9 +518,41 @@ export class AddProductComponent implements OnInit {
       this.productId =
         result.id;
 
+      let photoFailed = false;
+
+      if (this.selectedImageFile) {
+
+        try {
+
+          const stored =
+            await this.images.uploadProductImage(
+              result.id,
+              this.selectedImageFile
+            );
+
+          await this.productService.updateProductImage(
+            result.id,
+            stored
+          );
+
+        } catch (error) {
+
+          console.error(
+            'Error storing product image:',
+            error
+          );
+
+          photoFailed = true;
+
+        }
+
+      }
+
 
       await this.dialog.alert(
-        'Product added successfully!'
+        photoFailed
+          ? 'Product added. The photo could not be stored.'
+          : 'Product added successfully!'
       );
 
 
@@ -597,16 +623,29 @@ export class AddProductComponent implements OnInit {
 
       standardPackage: null,
 
-      image: '',
-
       isActive: true
 
     };
 
 
-    this.selectedImage = null;
+    this.revokePreview();
+
+    this.selectedImageFile = null;
 
     this.productId = null;
+
+  }
+
+
+  private revokePreview() {
+
+    if (this.selectedImage?.startsWith('blob:')) {
+
+      URL.revokeObjectURL(this.selectedImage);
+
+    }
+
+    this.selectedImage = null;
 
   }
 

@@ -1,0 +1,45 @@
+rules_version = '2';
+
+// Product photos only. A signed-in Admin or SalesPerson can view them.
+// Only an Admin can upload, replace, or delete them.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return /databases/(default)/documents/users/$(request.auth.uid);
+    }
+
+    function roleName() {
+      return signedIn() && firestore.exists(userDoc())
+        ? firestore.get(userDoc()).data.role
+        : '';
+    }
+
+    function isAdmin() {
+      return roleName() == 'Admin';
+    }
+
+    function hasRole() {
+      return roleName() == 'Admin' || roleName() == 'SalesPerson';
+    }
+
+    function isProductPhoto(fileName) {
+      return fileName.matches('main\\.(webp|jpe?g|png)')
+        || fileName.matches('thumb\\.(webp|jpe?g|png)');
+    }
+
+    match /products/{productId}/{fileName} {
+      allow read: if hasRole() && isProductPhoto(fileName);
+
+      allow delete: if isAdmin() && isProductPhoto(fileName);
+
+      allow create, update: if isAdmin()
+        && isProductPhoto(fileName)
+        && request.resource.size < 500 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

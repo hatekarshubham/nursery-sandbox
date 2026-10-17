@@ -132,9 +132,9 @@ firebase use nursery-sandbox-94f65
 Config already in the repo:
 
 - `.firebaserc` — project id
-- `firebase.json` — Hosting and emulator ports (Auth `9099`, Firestore `8080`, Hosting `5000`, Emulator UI `4000`)
-- `firestore.rules` and `firestore.indexes.json`
-- `nursery-dashboard/src/app/app.config.ts` — connects to the Auth and Firestore emulators when `ng serve` is in development mode
+- `firebase.json` — Hosting and emulator ports (Auth `9099`, Firestore `8080`, Storage `9199`, Functions `5001`, Hosting `5000`, Emulator UI `4000`)
+- `firestore.rules`, `firestore.indexes.json` and `storage.rules`
+- `nursery-dashboard/src/app/app.config.ts` — connects to the Auth, Firestore and Storage emulators when `ng serve` is in development mode
 
 ## 4. Run locally
 
@@ -194,16 +194,18 @@ The rules live in `firestore.rules` (they read the role from `users/{uid}`). To 
 
 ## 6. Deploy
 
-This needs Editor access on the Firebase project.
+This needs Editor access on the Firebase project. The full order (Storage, staff accounts, rules and indexes, backfill, function, website) is in [PRODUCTION_DEPLOY.md](PRODUCTION_DEPLOY.md).
+
+For a code-only change after that first deploy:
 
 ```bash
 cd nursery-dashboard
 npx ng build
 cd ..
-firebase deploy
+firebase deploy --only hosting
 ```
 
-The live site uses production Auth and Firestore, not the emulator. Create those users in Firebase Console → Authentication, and add a matching `users/{uid}` document in production Firestore.
+The live site uses production Auth, Firestore and Storage, not the emulator.
 
 ## 7. Daily Git
 

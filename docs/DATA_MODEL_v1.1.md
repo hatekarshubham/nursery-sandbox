@@ -180,7 +180,9 @@ products/{productId}
 | `gst` | number | Yes | GST percentage |
 | `standardPackage` | number | No | Package quantity/size |
 | `barcode` | string | Future | Product barcode |
-| `image` | string | No | Product image |
+| `imageUrl` | string | No | Link to the full product photo in Storage |
+| `thumbUrl` | string | No | Link to the small photo used in lists |
+| `imageVersion` | number | No | Changes when the photo is replaced so browsers load the new file |
 | `isActive` | boolean | Yes | Product status |
 | `createdAt` | timestamp | Recommended | Creation timestamp |
 | `updatedAt` | timestamp | Recommended | Last modification timestamp |

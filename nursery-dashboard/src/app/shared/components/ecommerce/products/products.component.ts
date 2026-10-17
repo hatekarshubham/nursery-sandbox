@@ -7,6 +7,11 @@ import { AppDialogService } from '../../../services/app-dialog.service';
 import { FormsModule } from '@angular/forms';
 
 import { ProductService } from '../../../../services/product.service';
+import {
+  ImageUploadService,
+  productFullImage,
+  productListImage
+} from '../../../../services/image-upload.service';
 
 import {
   Category,
@@ -114,7 +119,11 @@ interface Product {
 
   standardPackage: number | null;
 
-  image: string;
+  imageUrl?: string;
+
+  thumbUrl?: string;
+
+  imageVersion?: number;
 
   isActive: boolean;
 
@@ -184,7 +193,8 @@ export class ProductsComponent implements OnInit {
     private categoryService: CategoryService,
     private supplierService: SupplierService,
     private inventoryService: InventoryService,
-    private warehouseService: WarehouseService
+    private warehouseService: WarehouseService,
+    private images: ImageUploadService
   ) {}
 
 
@@ -289,6 +299,26 @@ export class ProductsComponent implements OnInit {
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   private loadSerial = 0;
+
+  listImage(product: {
+    thumbUrl?: string;
+    imageUrl?: string;
+  }): string {
+
+    return productListImage(product);
+
+  }
+
+
+  fullImage(product: {
+    thumbUrl?: string;
+    imageUrl?: string;
+  }): string {
+
+    return productFullImage(product);
+
+  }
+
 
   get filteredProducts(): Product[] {
 
@@ -566,6 +596,12 @@ export class ProductsComponent implements OnInit {
   isEditModalOpen = false;
 
   editingProduct: Product | null = null;
+
+  private pendingImageFile: File | null = null;
+
+  editImagePreview: string | null = null;
+
+  removeImage = false;
 
   isSavingProduct = false;
 
@@ -1453,8 +1489,91 @@ export class ProductsComponent implements OnInit {
     };
 
 
+    this.clearPendingImage();
+
     this.isEditModalOpen =
       true;
+
+  }
+
+
+  async onEditImageSelected(event: Event) {
+
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) {
+
+      return;
+
+    }
+
+    if (!file.type.startsWith('image/')) {
+
+      input.value = '';
+
+      await this.dialog.alert(
+        'Please choose an image file.'
+      );
+
+      return;
+
+    }
+
+    if (file.size > 15 * 1024 * 1024) {
+
+      input.value = '';
+
+      await this.dialog.alert(
+        'Image must be 15 MB or smaller.'
+      );
+
+      return;
+
+    }
+
+    this.revokeEditPreview();
+
+    this.pendingImageFile = file;
+
+    this.editImagePreview = URL.createObjectURL(file);
+
+    this.removeImage = false;
+
+  }
+
+
+  clearProductImage() {
+
+    this.revokeEditPreview();
+
+    this.pendingImageFile = null;
+
+    this.removeImage = true;
+
+  }
+
+
+  private clearPendingImage() {
+
+    this.revokeEditPreview();
+
+    this.pendingImageFile = null;
+
+    this.removeImage = false;
+
+  }
+
+
+  private revokeEditPreview() {
+
+    if (this.editImagePreview?.startsWith('blob:')) {
+
+      URL.revokeObjectURL(this.editImagePreview);
+
+    }
+
+    this.editImagePreview = null;
 
   }
 
@@ -1478,6 +1597,8 @@ export class ProductsComponent implements OnInit {
 
     this.editingProduct =
       null;
+
+    this.clearPendingImage();
 
   }
 
@@ -1574,24 +1695,6 @@ export class ProductsComponent implements OnInit {
     }
 
 
-    const image =
-      (product.image ?? '').trim();
-
-    if (
-      image &&
-      !/^https?:\/\//i.test(image) &&
-      !image.startsWith('data:image/')
-    ) {
-
-      await this.dialog.alert(
-        'Image must be a web address or an uploaded image.'
-      );
-
-      return;
-
-    }
-
-
     // =========================================
     // CATEGORY
     // =========================================
@@ -1680,63 +1783,191 @@ export class ProductsComponent implements OnInit {
       true;
 
 
+    const updatedFields = {
+
+      name:
+        product.name.trim().toUpperCase(),
+
+      category:
+        product.category,
+
+      categoryId:
+        selectedCategory?.id ?? '',
+
+      supplierId:
+        product.supplierId,
+
+      supplier:
+        supplierName,
+
+      description:
+        product.description ?? '',
+
+      color:
+        tone.color,
+
+      colorName:
+        tone.colorName,
+
+      unitPrice:
+        product.unitPrice,
+
+      gst:
+        product.gst ?? 0,
+
+      standardPackage:
+        product.standardPackage ??
+        null,
+
+      imageUrl:
+        product.imageUrl ?? '',
+
+      thumbUrl:
+        product.thumbUrl ?? '',
+
+      imageVersion:
+        product.imageVersion ?? 0,
+
+      isActive:
+        product.isActive !== false
+
+    };
+
+    let photoFailed = false;
+
     try {
+
+      if (this.pendingImageFile) {
+
+        try {
+
+          const stored =
+            await this.images.uploadProductImage(
+              productId,
+              this.pendingImageFile
+            );
+
+          updatedFields.imageUrl = stored.imageUrl;
+
+          updatedFields.thumbUrl = stored.thumbUrl;
+
+          updatedFields.imageVersion = stored.imageVersion;
+
+        } catch (error) {
+
+          console.error(
+            'Error storing product image:',
+            error
+          );
+
+          photoFailed = true;
+
+        }
+
+      } else if (this.removeImage) {
+
+        try {
+
+          await this.images.deleteProductImage(
+            productId
+          );
+
+          updatedFields.imageUrl = '';
+
+          updatedFields.thumbUrl = '';
+
+          updatedFields.imageVersion = 0;
+
+        } catch (error) {
+
+          console.error(
+            'Error removing product image:',
+            error
+          );
+
+          photoFailed = true;
+
+        }
+
+      }
 
       await this.productService
         .updateProduct(
 
           productId,
 
-          {
-
-            name:
-              product.name.trim().toUpperCase(),
-
-            category:
-              product.category,
-
-            categoryId:
-              selectedCategory?.id ?? '',
-
-            supplierId:
-              product.supplierId,
-
-            supplier:
-              supplierName,
-
-            description:
-              product.description ?? '',
-
-            color:
-              tone.color,
-
-            colorName:
-              tone.colorName,
-
-            unitPrice:
-              product.unitPrice,
-
-            gst:
-              product.gst ?? 0,
-
-            standardPackage:
-              product.standardPackage ??
-              null,
-
-            image:
-              product.image ?? '',
-
-            isActive:
-              product.isActive !== false
-
-          }
+          updatedFields
 
         );
 
 
+      // =====================================================
+      // PATCH THE ROW ON SCREEN
+      // =====================================================
+      //
+      // The document is already saved. Replacing this one row
+      // in tableData shows the new values immediately, without
+      // reloading this page (or the whole catalogue).
+      //
+      // If a status filter is active and this product no
+      // longer matches it, drop the row instead (same as a
+      // delete would).
+      // =====================================================
+
+      const existingRow =
+        this.tableData.find(
+          row => row.id === productId
+        );
+
+      const categoryIsActive =
+        selectedCategory?.isActive !== false;
+
+      const stillMatchesStatus =
+        !this.selectedStatus ||
+        (
+          this.selectedStatus === 'inactive'
+            ? !updatedFields.isActive || !categoryIsActive
+            : this.selectedStatus === 'outOfStock'
+              ? updatedFields.isActive &&
+                categoryIsActive &&
+                (existingRow?.quantity ?? 0) === 0
+              : updatedFields.isActive &&
+                categoryIsActive &&
+                (existingRow?.quantity ?? 0) > 0
+        );
+
+      if (!stillMatchesStatus) {
+
+        this.tableData =
+          this.tableData.filter(
+            row => row.id !== productId
+          );
+
+        this.matchCount =
+          Math.max(0, this.matchCount - 1);
+
+      } else {
+
+        this.tableData =
+          this.tableData.map(
+            row =>
+              row.id === productId
+                ? {
+                    ...row,
+                    ...updatedFields,
+                    categoryIsActive,
+                    isAvailable:
+                      updatedFields.isActive &&
+                      categoryIsActive &&
+                      (row.quantity ?? 0) > 0
+                  }
+                : row
+          );
+
+      }
+
       this.isSavingProduct =
         false;
-
 
       this.isEditModalOpen =
         false;
@@ -1746,8 +1977,12 @@ export class ProductsComponent implements OnInit {
         null;
 
 
+      this.clearPendingImage();
+
       await this.dialog.alert(
-        'Product updated successfully.'
+        photoFailed
+          ? 'Product updated. The photo could not be stored.'
+          : 'Product updated successfully.'
       );
 
     }
@@ -1864,13 +2099,52 @@ export class ProductsComponent implements OnInit {
       true;
 
 
+    const deletedId =
+      this.productToDelete.id;
+
     try {
 
       await this.productService
         .deleteProduct(
-          this.productToDelete.id
+          deletedId
         );
 
+      try {
+
+        await this.images.deleteProductImage(
+          deletedId
+        );
+
+      } catch (error) {
+
+        console.error(
+          'Error removing stored product image:',
+          error
+        );
+
+      }
+
+
+      // =====================================================
+      // REMOVE THE ROW ON SCREEN
+      // =====================================================
+      //
+      // The document is already gone from Firestore. Dropping
+      // it from tableData here avoids re-reading this page (or
+      // the whole catalogue) just to find out it's missing one
+      // row.
+      //
+      // If that was the last row on page 2+, go back a page
+      // instead of leaving an empty page on screen.
+      // =====================================================
+
+      this.tableData =
+        this.tableData.filter(
+          product => product.id !== deletedId
+        );
+
+      this.matchCount =
+        Math.max(0, this.matchCount - 1);
 
       this.isDeletingProduct =
         false;
@@ -1887,6 +2161,19 @@ export class ProductsComponent implements OnInit {
       await this.dialog.alert(
         'Product deleted successfully.'
       );
+
+      if (
+        this.tableData.length === 0 &&
+        this.currentPage > 1 &&
+        !this.searchText.trim()
+      ) {
+
+        void this.fetchPage(
+          'previous',
+          this.currentPage - 1
+        );
+
+      }
 
     }
 
