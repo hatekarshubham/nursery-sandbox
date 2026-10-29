@@ -1,6 +1,5 @@
 export const environment = {
   production: false,
-  firestoreDatabaseId: 'nurserydb',
   firebaseConfig: {
     apiKey: 'AIzaSyDtwk_dqtUB4k6qBMNiijO7KElAvKhwfns',
     authDomain: 'nursery-sandbox-94f65.firebaseapp.com',
