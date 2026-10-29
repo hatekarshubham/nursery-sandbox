@@ -1,3 +1,4 @@
+
 import { Injectable, inject } from '@angular/core';
 import {
   Storage,
@@ -63,7 +64,8 @@ export class ImageUploadService {
 
   async uploadProductImage(
     productId: string,
-    file: File
+    file: File,
+    replaceExisting = false
   ): Promise<StoredProductImage> {
 
     if (!file.type.startsWith('image/')) {
@@ -72,10 +74,21 @@ export class ImageUploadService {
 
     }
 
-    const full = await resizeImage(file, MAX_FULL_EDGE, 0.8);
-    const thumb = await resizeImage(file, MAX_THUMB_EDGE, 0.8);
+    const full = await resizeImage(
+      file,
+      MAX_FULL_EDGE,
+      0.8
+    );
+
+    const thumb = await resizeImage(
+      file,
+      MAX_THUMB_EDGE,
+      0.8
+    );
+
     const version = Date.now();
 
+    // Upload the main image.
     const imageUrl = await this.store(
       productId,
       'main',
@@ -83,12 +96,31 @@ export class ImageUploadService {
       version
     );
 
+    // Upload the thumbnail.
     const thumbUrl = await this.store(
       productId,
       'thumb',
       thumb,
       version
     );
+
+    // Cleanup is only required when replacing an existing image.
+    // New products skip all unnecessary DELETE requests.
+    if (replaceExisting) {
+
+      const mainName = imageName('main', full);
+      const thumbName = imageName('thumb', thumb);
+
+      await Promise.all(
+        STORED_NAMES
+          .filter(name =>
+            (name.startsWith('main.') && name !== mainName) ||
+            (name.startsWith('thumb.') && name !== thumbName)
+          )
+          .map(name => this.remove(productId, name))
+      );
+
+    }
 
     return {
       imageUrl,
@@ -99,15 +131,23 @@ export class ImageUploadService {
   }
 
 
-  async deleteProductImage(productId: string): Promise<void> {
+  // Delete all supported image variants when deleting a product
+  // or explicitly removing its image.
+  async deleteProductImage(
+    productId: string
+  ): Promise<void> {
 
     await Promise.all(
-      STORED_NAMES.map(name => this.remove(productId, name))
+      STORED_NAMES.map(
+        name => this.remove(productId, name)
+      )
     );
 
   }
 
 
+  // Upload one compressed image to Firebase Storage.
+  // No cleanup is performed here.
   private async store(
     productId: string,
     kind: 'main' | 'thumb',
@@ -115,19 +155,7 @@ export class ImageUploadService {
     version: number
   ): Promise<string> {
 
-    const extension = image.type === 'image/webp'
-      ? 'webp'
-      : image.type === 'image/png'
-        ? 'png'
-        : 'jpg';
-
-    const name = `${kind}.${extension}`;
-
-    await Promise.all(
-      STORED_NAMES
-        .filter(stored => stored.startsWith(`${kind}.`) && stored !== name)
-        .map(stored => this.remove(productId, stored))
-    );
+    const name = imageName(kind, image);
 
     const stored = ref(
       this.storage,
@@ -150,6 +178,8 @@ export class ImageUploadService {
   }
 
 
+  // Delete an existing image.
+  // Missing files are ignored, preserving existing behavior.
   private async remove(
     productId: string,
     name: string
@@ -158,12 +188,16 @@ export class ImageUploadService {
     try {
 
       await deleteObject(
-        ref(this.storage, `products/${productId}/${name}`)
+        ref(
+          this.storage,
+          `products/${productId}/${name}`
+        )
       );
 
     } catch (error: unknown) {
 
-      const code = (error as { code?: string })?.code ?? '';
+      const code =
+        (error as { code?: string })?.code ?? '';
 
       if (
         code.includes('object-not-found') ||
@@ -183,12 +217,31 @@ export class ImageUploadService {
 }
 
 
+// Determine the stored filename based on image format.
+function imageName(
+  kind: 'main' | 'thumb',
+  image: CompressedImage
+): string {
+
+  const extension =
+    image.type === 'image/webp'
+      ? 'webp'
+      : image.type === 'image/png'
+        ? 'png'
+        : 'jpg';
+
+  return `${kind}.${extension}`;
+
+}
+
+
 interface CompressedImage {
   blob: Blob;
   type: string;
 }
 
 
+// Resize and compress images before uploading.
 async function resizeImage(
   file: File,
   maxEdge: number,
@@ -196,12 +249,25 @@ async function resizeImage(
 ): Promise<CompressedImage> {
 
   const bitmap = await createImageBitmap(file);
+
   const scale = Math.min(
     1,
-    maxEdge / Math.max(bitmap.width, bitmap.height)
+    maxEdge / Math.max(
+      bitmap.width,
+      bitmap.height
+    )
   );
-  const width = Math.max(1, Math.round(bitmap.width * scale));
-  const height = Math.max(1, Math.round(bitmap.height * scale));
+
+  const width = Math.max(
+    1,
+    Math.round(bitmap.width * scale)
+  );
+
+  const height = Math.max(
+    1,
+    Math.round(bitmap.height * scale)
+  );
+
   const canvas = document.createElement('canvas');
 
   canvas.width = width;
@@ -212,26 +278,52 @@ async function resizeImage(
   if (!context) {
 
     bitmap.close();
-    throw new Error('Could not prepare the image.');
+
+    throw new Error(
+      'Could not prepare the image.'
+    );
 
   }
 
-  context.drawImage(bitmap, 0, 0, width, height);
+  context.drawImage(
+    bitmap,
+    0,
+    0,
+    width,
+    height
+  );
+
   bitmap.close();
 
-  const webp = await canvasBlob(canvas, 'image/webp', quality);
+  const webp = await canvasBlob(
+    canvas,
+    'image/webp',
+    quality
+  );
 
-  if (webp && webp.size <= MAX_STORED_BYTES) {
+  if (
+    webp &&
+    webp.size <= MAX_STORED_BYTES
+  ) {
 
-    return { blob: webp, type: 'image/webp' };
+    return {
+      blob: webp,
+      type: 'image/webp'
+    };
 
   }
 
-  const jpeg = await canvasBlob(canvas, 'image/jpeg', quality);
+  const jpeg = await canvasBlob(
+    canvas,
+    'image/jpeg',
+    quality
+  );
 
   if (!jpeg) {
 
-    throw new Error('Could not prepare the image.');
+    throw new Error(
+      'Could not prepare the image.'
+    );
 
   }
 
@@ -243,11 +335,15 @@ async function resizeImage(
 
   }
 
-  return { blob: jpeg, type: 'image/jpeg' };
+  return {
+    blob: jpeg,
+    type: 'image/jpeg'
+  };
 
 }
 
 
+// Convert a canvas into a compressed image blob.
 function canvasBlob(
   canvas: HTMLCanvasElement,
   type: string,
@@ -256,7 +352,11 @@ function canvasBlob(
 
   return new Promise(resolve => {
 
-    canvas.toBlob(blob => resolve(blob), type, quality);
+    canvas.toBlob(
+      blob => resolve(blob),
+      type,
+      quality
+    );
 
   });
 
