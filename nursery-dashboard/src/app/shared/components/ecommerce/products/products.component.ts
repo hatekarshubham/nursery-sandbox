@@ -1844,7 +1844,8 @@ export class ProductsComponent implements OnInit {
           const stored =
             await this.images.uploadProductImage(
               productId,
-              this.pendingImageFile
+              this.pendingImageFile,
+              true
             );
 
           updatedFields.imageUrl = stored.imageUrl;

@@ -1,3 +1,4 @@
+
 import { CommonModule } from '@angular/common';
 import { DuplicateError } from '../../../../../services/unique-key';
 import { Component, OnInit, inject, DestroyRef } from '@angular/core';
@@ -52,7 +53,6 @@ import {
 export class AddProductComponent implements OnInit {
 
   private destroyRef = inject(DestroyRef);
-
 
   private readonly dialog = inject(AppDialogService);
 
@@ -524,10 +524,13 @@ export class AddProductComponent implements OnInit {
 
         try {
 
+          // New product: skip unnecessary Firebase Storage
+          // DELETE requests for non-existing image variants.
           const stored =
             await this.images.uploadProductImage(
               result.id,
-              this.selectedImageFile
+              this.selectedImageFile,
+              false
             );
 
           await this.productService.updateProductImage(

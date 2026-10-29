@@ -22,7 +22,7 @@ export const appConfig: ApplicationConfig = {
     provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
     provideAuth(() => {
       const auth = getAuth();
-      if (isDevMode()) {
+      if (isDevMode() && window.location.hostname === 'localhost') {
         connectAuthEmulator(auth, 'http://localhost:9099');
       }
       return auth;
