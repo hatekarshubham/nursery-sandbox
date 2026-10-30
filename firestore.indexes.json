@@ -48,11 +48,11 @@
       "fields": [
         {
           "fieldPath": "totalQuantity",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         },
         {
           "fieldPath": "nameLower",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         }
       ]
     },
