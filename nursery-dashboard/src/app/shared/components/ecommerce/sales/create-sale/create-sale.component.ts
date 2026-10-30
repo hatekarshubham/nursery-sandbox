@@ -247,6 +247,8 @@ export class CreateSaleComponent implements OnInit {
 
   isLoading = true;
 
+  isProductsLoading = false;
+
   isCompletingSale = false;
 
   errorMessage = '';
@@ -274,6 +276,8 @@ export class CreateSaleComponent implements OnInit {
 
   // Warehouse whose stock is currently loaded (and live).
   private inventoryWarehouseId = '';
+
+  private confirmedWarehouseId = '';
 
   private inventorySubscription?: Subscription;
 
@@ -453,12 +457,14 @@ export class CreateSaleComponent implements OnInit {
 
           if (this.selectedWarehouseId) {
 
+            this.confirmedWarehouseId = this.selectedWarehouseId;
+          
             void this.reloadSaleProducts();
-
+          
           } else {
-
+          
             this.isLoading = false;
-
+          
           }
 
         },
@@ -614,10 +620,11 @@ export class CreateSaleComponent implements OnInit {
 
     if (!warehouseId) {
 
+      ++this.saleSerial;
       this.products = [];
-
       this.hasMoreProducts = false;
-
+      this.isProductsLoading = false;
+      this.isLoading = false;
       return;
 
     }
@@ -627,8 +634,8 @@ export class CreateSaleComponent implements OnInit {
     if (!more) {
 
       this.saleCursor = null;
-
-      this.isLoading = true;
+      this.isProductsLoading = true;
+      this.errorMessage = '';
 
     }
 
@@ -728,9 +735,8 @@ export class CreateSaleComponent implements OnInit {
       this.hasMoreProducts = !search && moreAvailable;
 
       this.productsLoaded = true;
-
       this.inventoryLoaded = true;
-
+      this.isProductsLoading = false;
       this.isLoading = false;
 
     } catch (error) {
@@ -744,7 +750,7 @@ export class CreateSaleComponent implements OnInit {
       console.error('Error loading products:', error);
 
       this.errorMessage = 'Unable to load products.';
-
+      this.isProductsLoading = false;
       this.isLoading = false;
 
     }
@@ -782,38 +788,37 @@ export class CreateSaleComponent implements OnInit {
   // WAREHOUSE CHANGE
   // =====================================================
 
-  async onWarehouseChange(): Promise<void> {
+  
+async onWarehouseChange(): Promise<void> {
 
-    if (
-      this.cartItems.length > 0
-    ) {
+  const newWarehouseId = this.selectedWarehouseId;
+  const previousWarehouseId = this.confirmedWarehouseId;
 
-      const confirmed =
-        await this.dialog.confirm(
-          'Changing the warehouse will clear the current cart. Continue?'
-        );
+  if (newWarehouseId === previousWarehouseId) {
+    return;
+  }
 
-      if (!confirmed) {
+  if (this.cartItems.length > 0) {
 
-        // Put the dropdown back on the warehouse whose stock is
-        // still loaded, so the screen never shows one warehouse's
-        // name next to another warehouse's quantities.
-        this.selectedWarehouseId =
-          this.inventoryWarehouseId;
+    const confirmed = await this.dialog.confirm(
+      'Changing the warehouse will clear the current cart. Continue?'
+    );
 
-        return;
-
-      }
-
-      this.cartItems = [];
-
+    if (!confirmed) {
+      this.selectedWarehouseId = previousWarehouseId;
+      return;
     }
 
-    void this.reloadSaleProducts();
-
-    this.focusBarcodeInput();
-
+    this.cartItems = [];
   }
+
+  this.confirmedWarehouseId = newWarehouseId;
+
+  void this.reloadSaleProducts();
+
+  this.focusBarcodeInput();
+}
+
 
 
   // =====================================================
