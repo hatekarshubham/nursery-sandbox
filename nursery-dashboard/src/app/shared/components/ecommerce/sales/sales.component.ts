@@ -40,6 +40,10 @@ import {
   WarehouseService
 } from '../../../../services/warehouse.service';
 
+import { AppDialogService } from '../../../services/app-dialog.service';
+
+import { printInvoiceDocument } from './invoice-print';
+
 
 type DatePreset =
   | 'today'
@@ -167,6 +171,9 @@ export class SalesComponent implements OnInit {
   } | null = null;
 
   private initialLoad: Promise<void> | null = null;
+
+
+  private readonly dialog = inject(AppDialogService);
 
 
   constructor(
@@ -1497,6 +1504,53 @@ export class SalesComponent implements OnInit {
     return Number.isNaN(date.getTime())
       ? 0
       : date.getTime();
+
+  }
+
+
+  async printSale(sale: Sale): Promise<void> {
+
+    const created =
+      sale.createdAt &&
+      typeof sale.createdAt.toDate === 'function'
+        ? sale.createdAt.toDate()
+        : new Date(sale.createdAt ?? Date.now());
+
+    try {
+
+      await printInvoiceDocument({
+        invoiceNumber: sale.invoiceNumber,
+        createdAt: Number.isNaN(created.getTime())
+          ? new Date()
+          : created,
+        customerName: '',
+        customerMobile: '',
+        warehouseName: sale.warehouseName || '',
+        items: (sale.items ?? []).map(item => ({
+          productName: item.productName,
+          barcode: item.barcode,
+          quantity: Number(item.quantity ?? 0),
+          unitPrice: Number(item.unitPrice ?? 0),
+          gst: Number(item.gst ?? 0),
+          gstAmount: Number(item.gstAmount ?? 0),
+          subtotal: Number(item.subtotal ?? 0),
+          total: Number(item.total ?? 0)
+        })),
+        subtotal: Number(sale.subtotal ?? 0),
+        gstAmount: Number(sale.gstAmount ?? 0),
+        discount: Number(sale.discount ?? 0),
+        grandTotal: Number(sale.grandTotal ?? 0),
+        paymentMode: sale.paymentMode || ''
+      });
+
+    } catch (error: any) {
+
+      await this.dialog.alert(
+        error?.message ??
+        'Unable to open print window. Please allow pop-ups for this site.'
+      );
+
+    }
 
   }
 

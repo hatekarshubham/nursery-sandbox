@@ -2337,7 +2337,7 @@ export class PrintBarcodesComponent
                 ${labelHeight}mm;
 
               padding:
-                1.5mm 2mm;
+                1.2mm 1.5mm 0.4mm;
 
               overflow:
                 hidden;
@@ -2454,16 +2454,16 @@ export class PrintBarcodesComponent
                 100%;
 
               max-height:
-                6.2mm;
+                4.6mm;
 
               margin-top:
-                0.4mm;
+                0;
 
               font-size:
-                7.5pt;
+                6.2pt;
 
               line-height:
-                1.15;
+                2.3mm;
 
               font-weight:
                 700;
@@ -2487,7 +2487,9 @@ export class PrintBarcodesComponent
                 normal;
 
               overflow-wrap:
-                break-word;
+                anywhere;
+
+              flex-shrink: 0;
 
             }
 
@@ -2498,7 +2500,7 @@ export class PrintBarcodesComponent
                 100%;
 
               margin-top:
-                0.4mm;
+                0.15mm;
 
               font-size:
                 6pt;
@@ -2530,11 +2532,17 @@ export class PrintBarcodesComponent
               width:
                 100%;
 
-              height:
-                11mm;
+              flex:
+                1 1 6.5mm;
+
+              min-height:
+                6.5mm;
+
+              max-height:
+                ${labelHeight > 28 ? "none" : "11mm"};
 
               margin-top:
-                1mm;
+                0.4mm;
 
               display:
                 flex;
@@ -2563,7 +2571,10 @@ export class PrintBarcodesComponent
                 100% !important;
 
               height:
-                10.5mm !important;
+                100% !important;
+
+              max-height:
+                ${labelHeight > 28 ? "none" : "10.5mm"} !important;
 
             }
 

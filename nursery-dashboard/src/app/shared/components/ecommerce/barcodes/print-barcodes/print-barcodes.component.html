@@ -573,7 +573,7 @@
             [disabled]="!canPrint"
             class="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50"
           >
-            Print A4 Sheet
+            Print
           </button>
 
         </div>
@@ -1085,6 +1085,7 @@
         <div
           id="barcode-print-area"
           class="barcode-a4-sheet mx-auto box-border bg-white shadow-lg"
+          [class.tall-labels]="labelSettings.labelHeightMm > 28"
           [style.width.mm]="labelSettings.pageWidthMm"
           [style.min-height.mm]="labelSettings.pageHeightMm"
           [style.padding-top.mm]="labelSettings.marginTopMm"
@@ -1265,7 +1266,7 @@
             [disabled]="!canPrint"
             class="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50"
           >
-            Print A4 Sheet
+            Print
           </button>
 
         </div>
