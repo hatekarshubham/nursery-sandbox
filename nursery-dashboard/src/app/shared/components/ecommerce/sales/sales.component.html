@@ -758,6 +758,14 @@
                         {{ formatDate(sale.createdAt) }}
                       </p>
 
+                      <button
+                        type="button"
+                        (click)="printSale(sale)"
+                        class="mt-2 text-xs font-semibold text-brand-500 hover:text-brand-600"
+                      >
+                        Print
+                      </button>
+
                     </td>
 
 
